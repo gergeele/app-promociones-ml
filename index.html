@@ -1,0 +1,2439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gráfica Límite · Promociones ML</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  /* ============================================================
+     CONFIG VISUAL — identidad Gráfica Límite (naranja + teal, claro)
+     Colores sacados de insumosgraficalimite.com.ar, no inventados.
+     ============================================================ */
+  :root {
+    --bg: #F7F6F3;
+    --panel: #FFFFFF;
+    --panel-2: #F1F0EC;
+    --panel-border: #E1DED6;
+    --amber: #FF740E;
+    --amber-dim: #C95A0A;
+    --amber-soft: #FFE9D9;
+    --text: #202524;
+    --text-dim: #6C7370;
+    --ok: #2F9E48;
+    --ok-soft: #E3F5E7;
+    --err: #D6473F;
+    --err-soft: #FBE7E5;
+    --info: #2E7980;
+    --teal: #004E55;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  .oculto { display: none !important; }
+  #cdnFail {
+    display: none; background: var(--err-soft); border: 1px solid var(--err); border-radius: 8px;
+    padding: 12px 16px; margin: 16px; font-size: 0.85rem;
+  }
+  #cdnFail.show { display: block; }
+
+  /* -------------------- Login gate -------------------- */
+  #gate { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  #gate .box { width: 100%; max-width: 340px; }
+  #gate h1 { text-align: center; color: var(--amber); font-size: 1.2rem; margin-bottom: 4px; }
+  #gate .sub { text-align: center; color: var(--text-dim); font-size: 0.8rem; margin-bottom: 24px; }
+
+  /* -------------------- Layout general -------------------- */
+  #app { max-width: 980px; margin: 0 auto; padding: 20px 16px 60px; }
+  header.top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
+  }
+  header.top h1 { font-size: 1.3rem; color: var(--amber); margin: 0; }
+  header.top .acciones { display: flex; gap: 8px; }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 12px; padding: 18px; margin-bottom: 16px;
+  }
+  label { display: block; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 6px; }
+  input, select {
+    padding: 9px 11px; border-radius: 6px;
+    border: 1px solid var(--panel-border); background: #FFFFFF; color: var(--text);
+    font-size: 0.88rem;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--amber-dim); }
+
+  button {
+    background: var(--amber); color: #201200; border: none; border-radius: 6px;
+    padding: 9px 15px; font-weight: 600; font-size: 0.85rem; cursor: pointer;
+    transition: background .15s;
+  }
+  button:hover { background: var(--amber-dim); }
+  button:disabled { background: var(--panel-border); color: var(--text-dim); cursor: not-allowed; }
+  button.secondary { background: transparent; border: 1px solid var(--amber-dim); color: var(--amber-dim); }
+  button.secondary:hover { background: var(--amber-soft); }
+  button.danger { background: var(--err); color: #FFFFFF; }
+  button.danger:hover { background: #B93830; }
+  button.chico { padding: 6px 10px; font-size: 0.78rem; }
+
+  .estado { font-size: 0.82rem; margin-top: 8px; min-height: 1.1em; }
+  .estado.ok { color: var(--ok); }
+  .estado.err { color: var(--err); }
+
+  /* -------------------- Tooltip "?" (premisa KPIs) -------------------- */
+  .kpi-help {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 16px; height: 16px; border-radius: 50%; background: var(--panel-border);
+    color: var(--text-dim); font-size: 10px; font-weight: 700; cursor: pointer;
+    margin-left: 5px; position: relative; flex-shrink: 0; user-select: none;
+  }
+  .kpi-help:hover, .kpi-help.abierto { background: var(--amber-dim); color: #FFFFFF; }
+  .kpi-help .globo {
+    display: none; position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%);
+    width: 220px; background: #FFFFFF; border: 1px solid var(--amber-dim); border-radius: 8px;
+    padding: 10px 12px; font-size: 0.75rem; font-weight: 400; color: var(--text-dim);
+    line-height: 1.4; z-index: 20; text-align: left; box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  }
+  .kpi-help.abierto .globo { display: block; }
+
+  /* -------------------- Hero cards por tipo -------------------- */
+  .grid-tipos { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  @media (min-width: 720px) { .grid-tipos { grid-template-columns: 1fr 1fr; } }
+
+  .hero {
+    background: var(--panel); border: 1px solid var(--panel-border); border-radius: 14px;
+    padding: 18px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .hero.controlable { border-color: var(--amber-dim); }
+  .hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .hero-nombre { font-weight: 700; font-size: 1rem; color: var(--text); }
+  .hero-badge {
+    font-size: 0.68rem; font-weight: 700; padding: 3px 8px; border-radius: 20px;
+    background: var(--panel-border); color: var(--text-dim); white-space: nowrap;
+  }
+  .hero-badge.controlable { background: var(--amber-soft); color: var(--amber); }
+  .hero-explicacion { font-size: 0.82rem; color: var(--text-dim); }
+
+  .instancias { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .instancia {
+    background: var(--panel-2); border: 1px solid var(--panel-border); border-radius: 10px;
+    padding: 10px 12px; font-size: 0.8rem;
+  }
+  .instancia .nombre { font-weight: 600; color: var(--text); }
+  .btn-alias {
+    background: transparent; border: none; color: var(--text-dim); cursor: pointer;
+    font-size: 0.78rem; padding: 0 2px; vertical-align: middle;
+  }
+  .btn-alias:hover { color: var(--amber-dim); }
+  .instancia .fechas { color: var(--text-dim); font-size: 0.72rem; margin-top: 2px; }
+  .instancia .estado-badge {
+    display: inline-block; font-size: 0.68rem; font-weight: 700; padding: 2px 7px;
+    border-radius: 20px; margin-left: 6px; vertical-align: middle;
+  }
+  .instancia .estado-badge.started { background: var(--ok-soft); color: var(--ok); }
+  .instancia .estado-badge.pending { background: var(--amber-soft); color: var(--amber); }
+  a.estado-badge:hover { background: var(--amber-dim) !important; color: #FFFFFF !important; }
+
+  .instancia-acciones { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
+  .conteo-preview { font-size: 0.75rem; color: var(--text-dim); }
+  .sin-instancias { font-size: 0.78rem; color: var(--text-dim); font-style: italic; }
+  .proximamente { font-size: 0.72rem; color: var(--text-dim); font-style: italic; margin-top: 4px; }
+
+  /* -------------------- Modal -------------------- */
+  .modal-fondo {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex;
+    align-items: center; justify-content: center; padding: 20px; z-index: 100;
+  }
+  .modal-fondo.oculto { display: none !important; }
+  .modal-caja {
+    background: var(--panel); border: 1px solid var(--panel-border); border-radius: 14px;
+    padding: 22px; max-width: 560px; width: 100%; max-height: 85vh; overflow-y: auto;
+  }
+  .modal-caja h2 { color: var(--amber); font-size: 1.1rem; margin-top: 0; }
+  .modal-caja h3 { color: var(--text); font-size: 0.95rem; margin: 14px 0 6px; }
+  .modal-caja p { font-size: 0.85rem; color: var(--text-dim); }
+  .modal-cerrar { display: flex; justify-content: flex-end; margin-top: 16px; }
+
+  table.log { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-top: 10px; }
+  table.log th, table.log td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--panel-border); }
+  table.log th { color: var(--text-dim); font-weight: 600; }
+  table.log th[data-sort]:hover { color: var(--amber); }
+  table.log th[data-sort].activo { color: var(--amber); }
+  .flecha-orden { display: inline-block; width: 12px; font-size: 0.7rem; margin-left: 2px; }
+  .tag-log { font-size: 0.68rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+  .tag-log.APLICADO, .tag-log.REMOVIDO { background: var(--ok-soft); color: var(--ok); }
+  .tag-log.ERROR { background: var(--err-soft); color: var(--err); }
+  .tag-log.REVISAR { background: var(--amber-soft); color: var(--amber); }
+  .tag-log.PARCIAL { background: var(--amber-soft); color: var(--amber); }
+  .tag-log.SIN_OFERTAS { background: var(--panel-border); color: var(--text-dim); }
+
+  /* -------------------- Config de % por SKU -------------------- */
+  .fila-sku { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--panel-border); font-size: 0.82rem; }
+  .fila-sku .sku { flex: 1; }
+  .fila-sku input[type="number"] { width: 70px; }
+  .form-sku { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; margin-top: 12px; }
+  .form-sku > div { display: flex; flex-direction: column; }
+
+  /* -------------------- Métricas de las ofertas -------------------- */
+  .metricas-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  @media (min-width: 560px) { .metricas-grid { grid-template-columns: repeat(4, 1fr); } }
+  .stat-box {
+    background: var(--panel-2); border: 1px solid var(--panel-border); border-radius: 10px;
+    padding: 12px 10px; text-align: center;
+  }
+  .stat-box .valor { font-size: 1.5rem; font-weight: 700; color: var(--amber); line-height: 1.1; }
+  .stat-box .valor.dim { color: var(--text-dim); }
+  .stat-box .etiqueta { font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; }
+  .tipo-fila {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.8rem; padding: 6px 0; border-bottom: 1px solid var(--panel-border);
+  }
+  .tipo-fila:last-child { border-bottom: none; }
+  .tipo-fila .cant { color: var(--amber); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div id="cdnFail">No cargó supabase-js desde el CDN. Revisá tu conexión y recargá la página.</div>
+
+<!-- ============================================================
+     LOGIN
+     ============================================================ -->
+<div id="gate">
+  <div class="box panel">
+    <h1>🏷️ Gráfica Límite</h1>
+    <div class="sub">App Promociones MercadoLibre — Iniciá sesión para continuar</div>
+    <label for="gateEmail">Email</label>
+    <input type="email" id="gateEmail" style="width:100%; margin-bottom:12px;" autocomplete="username" inputmode="email">
+    <label for="gatePass">Contraseña</label>
+    <input type="password" id="gatePass" style="width:100%; margin-bottom:14px;" autocomplete="current-password">
+    <button id="gateBtn" style="width:100%;">Ingresar</button>
+    <div id="gateError" class="estado err"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     APP
+     ============================================================ -->
+<div id="app" class="oculto">
+  <header class="top">
+    <h1>🏷️ Gráfica Límite — Promociones ML</h1>
+    <div class="acciones">
+      <button class="secondary chico" id="btnFuncionamiento">¿Cómo funciona?</button>
+      <button class="secondary chico" id="btnLogout">Salir</button>
+    </div>
+  </header>
+
+  <style>
+    .tabs-nav{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--panel-border);flex-wrap:wrap;}
+    .tab-btn{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-weight:600;padding:10px 14px;cursor:pointer;font-size:0.9rem;}
+    .tab-btn:hover{color:var(--amber);}
+    .tab-btn.activa{color:var(--amber);border-bottom-color:var(--amber);}
+    .precios-textarea{width:100%;min-height:150px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.85rem;resize:vertical;box-sizing:border-box;}
+    .grilla-entrada{width:100%;border-collapse:collapse;font-size:0.85rem;max-width:520px;}
+    .grilla-entrada th{text-align:left;padding:4px 8px;color:var(--text-dim);font-size:0.72rem;font-weight:600;border-bottom:1px solid var(--panel-border);}
+    .grilla-entrada td{padding:0;border:1px solid var(--panel-border);}
+    .grilla-entrada td.acc{border:none;text-align:center;width:34px;}
+    .grilla-entrada input{width:100%;border:none;background:transparent;color:inherit;font-size:0.85rem;padding:7px 8px;box-sizing:border-box;outline:none;font-variant-numeric:tabular-nums;}
+    .grilla-entrada input:focus{background:var(--panel-2);box-shadow:inset 0 0 0 1px var(--amber);}
+    .btn-x{background:transparent;border:none;color:var(--text-dim);cursor:pointer;font-size:0.85rem;line-height:1;padding:4px;}
+    .btn-x:hover{color:var(--err);}
+    .resumen-precios .kpi.clickable{cursor:pointer;user-select:none;transition:border-color .12s;}
+    .resumen-precios .kpi.clickable:hover{border-color:var(--amber);}
+    .resumen-precios .kpi.filtro-activo{border-color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber);}
+    .tabla-precios input.precio-edit{width:96px;border:1px solid var(--panel-border);background:var(--panel-2);color:inherit;padding:4px 6px;border-radius:4px;text-align:right;font-variant-numeric:tabular-nums;font-size:0.8rem;}
+    .tabla-precios input.precio-edit:focus{outline:none;border-color:var(--amber);}
+    .tabla-precios{width:100%;border-collapse:collapse;font-size:0.8rem;}
+    .tabla-precios th,.tabla-precios td{padding:6px 8px;border-bottom:1px solid var(--panel-border);text-align:left;vertical-align:top;}
+    .tabla-precios td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+    .tabla-precios tr.fila-warning{background:var(--amber-soft);}
+    .delta-sube{color:var(--err);font-weight:700;}
+    .delta-baja{color:var(--ok);font-weight:700;}
+    .resumen-precios{display:flex;gap:12px;flex-wrap:wrap;margin:4px 0 14px;}
+    .resumen-precios .kpi{background:var(--panel-2);border:1px solid var(--panel-border);border-radius:8px;padding:8px 12px;font-size:0.78rem;color:var(--text-dim);}
+    .resumen-precios .kpi b{font-size:1.15rem;display:block;color:inherit;}
+    textarea:focus{outline:none;border-color:var(--amber-dim);}
+    input[type="file"]{font-size:0.8rem;color:var(--text-dim);}
+    .fila-reporte{border:1px solid var(--panel-border);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--panel-2);}
+    .fila-reporte .cabecera{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;}
+    .fila-reporte .tag-tipo{font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:20px;}
+    .fila-reporte .tag-tipo.problema{background:var(--err-soft);color:var(--err);}
+    .fila-reporte .tag-tipo.mejora{background:var(--amber-soft);color:var(--amber-dim);}
+    .fila-reporte .tag-estado{font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--panel-border);color:var(--text-dim);}
+    .fila-reporte .tag-estado.en_proceso{background:var(--amber-soft);color:var(--amber-dim);}
+    .fila-reporte .tag-estado.terminado{background:var(--ok-soft);color:var(--ok);}
+    .fila-reporte select.selector-estado{font-size:0.75rem;padding:3px 6px;border-radius:20px;border:1px solid var(--panel-border);background:var(--panel);color:var(--text);}
+    .fila-reporte .meta{font-size:0.72rem;color:var(--text-dim);}
+    .fila-reporte .mensaje{font-size:0.85rem;margin:6px 0;}
+    .fila-reporte a.ver-captura{font-size:0.78rem;color:var(--amber-dim);}
+    .sin-reportes{font-size:0.82rem;color:var(--text-dim);font-style:italic;}
+  </style>
+
+  <nav class="tabs-nav">
+    <button class="tab-btn activa" id="tabPromos">🏷️ Promociones</button>
+    <button class="tab-btn" id="tabPrecios">💲 Actualizar precios</button>
+    <button class="tab-btn" id="tabReportes">🛠️ Reportes</button>
+  </nav>
+
+  <div id="vistaPromos">
+  <!-- Acciones globales: bajar/subir todo (para actualizaciones masivas de precio) -->
+  <div class="panel" style="border-color:var(--amber-dim);">
+    <label style="margin:0; color:var(--amber-dim); font-weight:600;">⚠️ Acciones globales</label>
+    <p style="font-size:0.8rem; color:var(--text-dim); margin:6px 0 12px;">Para cuando necesitás actualizar precios masivamente: bajás todas las promos activas (guarda el % de cada una), actualizás precios en ML, y después las volvés a subir con esos mismos %.</p>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+      <button class="danger chico" id="btnBajarTodo">⬇️ Bajar TODAS las promociones</button>
+      <button class="chico oculto" id="btnSubirTodoGuardado">⬆️ Subir TODAS (con los % guardados)</button>
+      <span id="estadoSnapshot" class="estado" style="margin:0;"></span>
+    </div>
+  </div>
+
+  <!-- Métricas de las ofertas -->
+  <div class="panel">
+    <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" id="toggleMetricas">
+      <label style="margin:0; color:var(--amber); font-weight:600;">📊 Métricas de las ofertas</label>
+      <span id="toggleMetricasIcono" style="color:var(--text-dim);">▸</span>
+    </div>
+    <div id="metricasBody" class="oculto" style="margin-top:12px;">
+      <div class="metricas-grid" id="metricasGrid"></div>
+      <div style="margin-top:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <button class="chico secondary" id="btnActualizarMetricas">Actualizar candidatos/activos de todas</button>
+        <span id="estadoMetricas" class="estado" style="margin:0;"></span>
+      </div>
+      <div id="metricasPorTipo" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- Grid de tipos de promoción -->
+  <div id="estadoCarga" class="estado">Cargando promociones activas...</div>
+  <div id="gridTipos" class="grid-tipos"></div>
+  </div><!-- /vistaPromos -->
+
+  <!-- ============================================================
+       VISTA: Actualizar precios (masivo por SKU)
+       ============================================================ -->
+  <div id="vistaPrecios" class="oculto">
+    <div class="panel" style="border-color:var(--amber-dim);">
+      <label style="margin:0;color:var(--amber-dim);font-weight:600;">💲 Actualización masiva de precios de lista</label>
+      <p style="font-size:0.8rem;color:var(--text-dim);margin:6px 0 10px;">
+        Cargá <b>SKU</b> y <b>precio</b> en la tabla (o copiá las dos columnas de Excel y pegalas en la primera celda: se completa sola).
+        El precio se aplica a <b>todas las publicaciones activas y pausadas</b> de ese SKU. Formato de precio AR: <code>12.500</code> o <code>12500</code> (decimales con coma, ej. <code>12500,50</code>).
+        Primero previsualizás (no toca nada), revisás el antes → después, y recién ahí aplicás.
+      </p>
+      <div style="overflow-x:auto;">
+        <table class="grilla-entrada" id="grillaEntrada">
+          <thead><tr><th>SKU</th><th>Precio</th><th></th></tr></thead>
+          <tbody id="grillaBody"></tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center;">
+        <button class="chico" id="btnPreviewPrecios">🔍 Previsualizar</button>
+        <button class="chico secondary" id="btnAgregarFilaPrecio" type="button">+ Fila</button>
+        <button class="chico secondary" id="btnLimpiarPrecios">Limpiar</button>
+        <span id="estadoPrecios" class="estado" style="margin:0;"></span>
+      </div>
+    </div>
+
+    <div id="panelResultadoPrecios" class="panel oculto">
+      <div class="resumen-precios" id="resumenPrecios"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+        <button class="chico" id="btnAplicarPrecios" disabled>✅ Aplicar en ML</button>
+        <button class="chico secondary" id="btnExportarPrecios">⬇️ Exportar CSV</button>
+        <span id="estadoAplicarPrecios" class="estado" style="margin:0;"></span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="tabla-precios" id="tablaPrecios"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       VISTA: Reportes del usuario (premisa obligatoria del proyecto)
+       ============================================================ -->
+  <div id="vistaReportes" class="oculto">
+    <div class="panel">
+      <label style="margin:0;color:var(--amber-dim);font-weight:600;">🛠️ Reportar un problema o proponer una mejora</label>
+      <p style="font-size:0.8rem;color:var(--text-dim);margin:6px 0 12px;">
+        Si algo no anduvo bien o se te ocurre algo que la app debería hacer, contalo acá. Podés adjuntar una captura de pantalla. Gerencia ve todos los reportes en la lista de abajo.
+      </p>
+      <label for="reporteTipo">Tipo</label>
+      <select id="reporteTipo" style="margin-bottom:10px;">
+        <option value="problema">🐞 Problema / algo no funciona</option>
+        <option value="mejora">💡 Propuesta de mejora</option>
+      </select>
+      <label for="reporteMensaje">Contanos qué pasó</label>
+      <textarea id="reporteMensaje" rows="4" style="width:100%;box-sizing:border-box;padding:9px 11px;border-radius:6px;border:1px solid var(--panel-border);background:#FFFFFF;color:var(--text);font-size:0.88rem;font-family:inherit;margin-bottom:10px;" placeholder="Ej: al aplicar precios en la publicación X, la app tardó y no mostró el resultado."></textarea>
+      <label for="reporteImagen">Captura de pantalla (opcional)</label>
+      <input type="file" id="reporteImagen" accept="image/png,image/jpeg,image/webp" style="margin-bottom:12px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <button class="chico" id="btnEnviarReporte">Enviar reporte</button>
+        <span id="estadoReporte" class="estado" style="margin:0;"></span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <label style="margin:0;color:var(--amber-dim);font-weight:600;">📋 Reportes ya cargados</label>
+        <button class="secondary chico" id="btnActualizarReportes">Actualizar</button>
+      </div>
+      <div id="listaReportes" style="margin-top:12px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: confirmar aplicar precios (dura)
+     ============================================================ -->
+<div id="modalAplicarPrecios" class="modal-fondo oculto">
+  <div class="modal-caja">
+    <h2>⚠️ Aplicar precios en Mercado Libre</h2>
+    <p id="aplicarPreciosResumen"></p>
+    <p>Esto cambia <b>precios reales de venta</b>. Para confirmar, escribí <b>APLICAR PRECIOS</b> en el campo:</p>
+    <input type="text" id="inputConfirmarAplicarPrecios" style="width:100%;margin-bottom:10px;" autocomplete="off">
+    <div class="modal-cerrar" style="justify-content:space-between;">
+      <button class="secondary" id="btnCancelarAplicarPrecios">Cancelar</button>
+      <button class="danger" id="btnConfirmarAplicarPrecios" disabled>Confirmar y aplicar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Funcionamiento de la app
+     ============================================================ -->
+<div id="modalFuncionamiento" class="modal-fondo oculto">
+  <div class="modal-caja">
+    <h2>¿Cómo funciona esta app?</h2>
+    <p>Gestiona las promociones de Mercado Libre de Gráfica Límite sin entrar publicación por publicación.</p>
+    <h3>De dónde salen los datos</h3>
+    <p>Se consulta en vivo la API de Mercado Libre (recurso <code>seller-promotions</code>) con la app propia de Gráfica Límite en el DevCenter de ML. No hay copia local de las promociones — lo que ves es el estado real en ML en el momento de cargar la página.</p>
+    <h3>Los 12 tipos de promoción</h3>
+    <p>Cada card muestra un tipo. Los que tienen borde ámbar y botones los controlás vos: podés subir todas las publicaciones candidatas de una campaña con un clic. "Bajar de todas" (por card) está disponible para Campaña propia, Campaña tradicional, Co-financiada, Descuento por volumen y Descuento pre-negociado. Los tipos automáticos (co-participación automática, ajuste a competencia, liquidación, cupón) no tienen botón de bajar por card: se sacan desde el botón global "Bajar TODAS". El resto son invitaciones de ML — se muestran para que sepas qué tenés corriendo. Las cards traen sus candidatos/activos <b>solas una única vez al abrir la app</b>; después no se recargan solas — cada una se actualiza a mano con su botón "🔄 Ver candidatos/activos" (o todas juntas con "Actualizar candidatos/activos de todas"). Así la app no dispara consultas a ML todo el tiempo.</p>
+    <h3>Subir a todas / Bajar de todas</h3>
+    <p>"Subir a todas" busca las publicaciones candidatas de esa campaña puntual y les aplica el precio calculado con el % que definas en el momento (ver siguiente punto). "Bajar de todas" saca las que están activas. Ambas acciones muestran un detalle publicación por publicación al terminar, con opción de reintentar si algo falló.</p>
+    <h3>¿Por qué el nombre de una campaña no coincide con lo que ves en Mercado Libre?</h3>
+    <p>Mercado Libre no expone en su API el nombre que ve el comprador — solo un nombre interno de marketing (ej. "MK T3 AO BELLEZA Q4 2026"). Es una limitación de ML, no de la app. Para esos casos, el lápiz ✏️ al lado del nombre te deja cargar el nombre público a mano, una sola vez — la app lo recuerda para la próxima vez que aparezca esa misma campaña, y sigue mostrando el nombre interno abajo para referencia.</p>
+    <h3>¿Por qué algunas campañas no tienen botón "Ver en ML"?</h3>
+    <p>Solo algunos tipos de campaña (Campaña propia y Campaña tradicional) tienen confirmado el link directo al panel web de Mercado Libre. Otros tipos —como las campañas co-fondeadas ("Potencia tus ventas") o las ofertas del día— todavía no tienen una vista propia en ese panel: se gestionan únicamente por API, que es justamente lo que hace esta app. En esos casos vas a ver la etiqueta "Solo por API" en vez de un link, para no mandarte a una pantalla que no corresponde.</p>
+    <h3>ML aporta X% · Nosotros aportamos Y%</h3>
+    <p>En las campañas co-fondeadas por Mercado Libre (donde ML pone parte de la plata del descuento), la app muestra cuánto pone cada uno. Ese dato lo informa la propia API de ML — no es algo que calculemos nosotros — y solo aparece cuando la campaña es de ese tipo.</p>
+    <h3>Bajar TODAS / Subir TODAS (para actualizar precios masivo)</h3>
+    <p>El botón "⬇️ Bajar TODAS las promociones" es para el flujo de actualización masiva de precios: saca cada publicación de <b>todas</b> sus promociones de una sola llamada (usa el borrado en bloque por publicación de ML). Antes de bajar nada, guarda el % que tenían las campañas reaplicables (Deal y Campaña propia) para poder volver a subirlas igual. El modal de confirmación te separa en tres grupos qué va a pasar: las que <b>se reaplican con "Subir TODAS"</b> (Deal / Campaña propia), las que <b>se bajan pero volvés a sumar a mano</b> (co-financiada, volumen, etc. — ahí el precio lo fija ML), y las que <b>no se pueden bajar desde acá</b> (Oferta del día y Relámpago, que ML no deja sacar por API — se gestionan desde el panel de ML). El flujo típico es: Bajar TODAS → actualizar precios en ML → "⬆️ Subir TODAS (con los % guardados)". Para que junte bien lo activo, primero apretá "Actualizar métricas" (o "Ver candidatos/activos" en las cards).</p>
+    <h3>Pestaña "Actualizar precios"</h3>
+    <p>Sirve para actualizar el <b>precio de lista</b> (no el de promo) de muchas publicaciones de una. Cargás <b>SKU y precio</b> en una tabla de dos columnas (podés copiar las dos columnas de Excel y pegarlas en la primera celda: se completa sola). Como un mismo SKU suele estar en varias publicaciones, el precio se aplica a <b>todas las publicaciones activas y pausadas</b> de ese SKU (a la pausada le queda listo para cuando la reactivés; las cerradas se omiten). El flujo es en dos pasos: primero <b>Previsualizar</b> (no toca nada: trae de ML el precio actual de cada publicación y te muestra antes → después → Δ%, con un tiempo estimado mientras corre), y recién después <b>Aplicar en ML</b> (con confirmación escribiendo "APLICAR PRECIOS"). En el preview podés <b>editar el precio de cualquier fila</b> a mano antes de aplicar, y <b>clickear las tarjetas</b> de arriba (A actualizar / A revisar / Omitidas / Con problema) para filtrar la tabla por ese estado. Las publicaciones con variaciones quedan "a revisar" (el precio va por variación). Podés exportar todo a CSV. Encaja con el flujo masivo: bajás las promos, actualizás precios acá, y volvés a subir las promos.</p>
+    <h3>% de descuento: se pregunta cada vez, por campaña</h3>
+    <p>Cuando apretás "Subir a todas" en una campaña con precio (Deal, Campaña propia, Oferta del día), la app te pide un <b>% base</b> para esa tanda puntual, y te deja agregar <b>excepciones por SKU</b> (tantas como quieras) que usan su propio % en vez del base. No es una configuración fija guardada — la definís de nuevo cada vez, campaña por campaña.</p>
+    <h3>¿Por qué a veces una publicación queda en "REVISAR"?</h3>
+    <p>Mercado Libre calcula, para cada publicación, un rango de precio que considera un descuento "creíble" — ni tan chico que parezca falso, ni tan grande que no se sostenga. Ese rango tiene un piso (<code>min_discounted_price</code>, el descuento más profundo permitido) y un techo (<code>max_discounted_price</code>, el descuento más chico que todavía cuenta como oferta real). Si el % que pediste da un precio fuera de ese rango, la app <b>no aplica nada solo</b> — la deja en estado "REVISAR" y te muestra el % mínimo y máximo que sí entran, más el precio que ML sugiere como alternativa. Vos decidís: ajustás el % (general o solo para ese SKU) y reintentás, o usás el botón "Usar precio sugerido de ML" para resolverlas rápido.</p>
+    <h3>Pestaña "Reportes"</h3>
+    <p>Si algo no anduvo bien o se te ocurre una mejora, cargalo acá: elegís si es un <b>problema</b> o una <b>mejora</b>, escribís qué pasó y, si querés, adjuntás una captura de pantalla (hasta 5 MB). Todos los usuarios habilitados ven la lista completa de reportes, con quién lo mandó y cuándo. Cada reporte tiene un estado — <b>Abierto</b> (recién cargado), <b>En proceso</b> (gerencia lo está atendiendo) o <b>Terminado</b> — y solo la cuenta de <b>gerencia</b> puede cambiarlo; el resto lo ve de solo lectura. Las capturas se guardan en un espacio privado — para verlas, la app pide un enlace temporal que vence a los pocos minutos, así no quedan expuestas.</p>
+    <div class="modal-cerrar"><button id="btnCerrarFuncionamiento">Cerrar</button></div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     MODAL: % base + excepciones por SKU (por campaña, cada vez que se sube)
+     ============================================================ -->
+<div id="modalPorcentaje" class="modal-fondo oculto">
+  <div class="modal-caja">
+    <h2>Descuento para "<span id="porcentajeNombreCampana"></span>"</h2>
+    <p>Definí el % para esta tanda. Podés agregar excepciones por SKU — esos usan su propio % en vez del base.</p>
+    <p style="font-size:0.78rem; color:var(--text-dim); background:var(--panel-2); border:1px solid var(--panel-border); border-radius:8px; padding:10px 12px;">
+      ⚠️ Mercado Libre le calcula a cada publicación un rango de descuento "creíble" (un % mínimo y un % máximo propio, que varía por item). Si el % que pongas queda afuera de ese rango para alguna publicación puntual, esa no se aplica sola — queda en <b>REVISAR</b> al final, mostrándote el rango real de esa publicación para que ajustes.
+    </p>
+
+    <label for="inputPctBase">% base (para todos los SKU sin excepción)</label>
+    <input type="number" id="inputPctBase" min="1" max="99" step="1" style="width:100%; margin-bottom:14px;">
+
+    <label style="margin-bottom:8px;">Excepciones por SKU</label>
+    <div id="excepcionesLista"></div>
+    <button class="chico secondary" id="btnAgregarExcepcion" type="button" style="margin-top:8px;">+ Agregar excepción por SKU</button>
+
+    <div id="estadoPorcentaje" class="estado err" style="margin-top:10px;"></div>
+
+    <div class="modal-cerrar" style="justify-content:space-between;">
+      <button class="secondary" id="btnCancelarPorcentaje">Cancelar</button>
+      <button id="btnContinuarPorcentaje">Continuar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Bajar TODAS -- paso 1 (resumen)
+     ============================================================ -->
+<div id="modalBajarTodo1" class="modal-fondo oculto">
+  <div class="modal-caja">
+    <h2>⚠️ ¿Bajar TODAS las promociones?</h2>
+    <p id="bajarTodoResumen1"></p>
+    <div id="bajarTodoListaGrupos" style="font-size:0.82rem; color:var(--text-dim); max-height:200px; overflow-y:auto;"></div>
+    <p style="font-size:0.8rem; color:var(--text-dim);">Antes de bajar nada se guarda el % de las campañas reaplicables (Deal y Campaña propia), para poder volver a subirlas igual con "Subir TODAS (con los % guardados)". Cada publicación se saca de <b>todas</b> sus promos de una sola vez.</p>
+    <div class="modal-cerrar" style="justify-content:space-between;">
+      <button class="secondary" id="btnCancelarBajarTodo1">Cancelar</button>
+      <button class="danger" id="btnContinuarBajarTodo1">Continuar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Bajar TODAS -- paso 2 (confirmación dura)
+     ============================================================ -->
+<div id="modalBajarTodo2" class="modal-fondo oculto">
+  <div class="modal-caja">
+    <h2>Última confirmación</h2>
+    <p>Esta acción saca publicaciones reales de promociones reales en Mercado Libre. Para confirmar, escribí <b>BAJAR TODO</b> en el campo:</p>
+    <input type="text" id="inputConfirmarBajarTodo" style="width:100%; margin-bottom:10px;" autocomplete="off">
+    <div class="modal-cerrar" style="justify-content:space-between;">
+      <button class="secondary" id="btnCancelarBajarTodo2">Cancelar</button>
+      <button class="danger" id="btnConfirmarBajarTodo2" disabled>Confirmar y bajar todo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: % aplicados por campaña (editable, ordenable)
+     ============================================================ -->
+<div id="modalPctAplicados" class="modal-fondo oculto">
+  <div class="modal-caja" style="max-width:720px;">
+    <h2>% aplicados — <span id="pctAplicadosNombreCampana"></span></h2>
+    <div id="pctAplicadosEstado" class="estado"></div>
+    <div style="overflow-x:auto;">
+      <table class="log" id="tablaPctAplicados">
+        <thead>
+          <tr>
+            <th data-sort="id" style="cursor:pointer;">MLA<span class="flecha-orden"></span></th>
+            <th data-sort="original_price" style="cursor:pointer;">Precio lista<span class="flecha-orden"></span></th>
+            <th data-sort="pct" style="cursor:pointer;">% aplicado<span class="flecha-orden"></span></th>
+            <th data-sort="price" style="cursor:pointer;">Precio actual<span class="flecha-orden"></span></th>
+            <th>Editar %</th>
+          </tr>
+        </thead>
+        <tbody id="tablaPctAplicadosBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-cerrar"><button id="btnCerrarPctAplicados">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Confirmación de acción en bloque
+     ============================================================ -->
+<div id="modalConfirmar" class="modal-fondo oculto">
+  <div class="modal-caja">
+    <h2 id="confirmarTitulo">Confirmar acción</h2>
+    <p id="confirmarTexto"></p>
+    <div class="modal-cerrar" style="justify-content:space-between;">
+      <button class="secondary" id="btnCancelarAccion">Cancelar</button>
+      <button id="btnConfirmarAccion">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Resultado de acción en bloque
+     ============================================================ -->
+<div id="modalResultado" class="modal-fondo oculto">
+  <div class="modal-caja">
+    <h2 id="resultadoTitulo">Resultado</h2>
+    <p id="resultadoResumen"></p>
+    <div id="resultadoTablaWrap"></div>
+
+    <div id="bloqueAplicarPctRevisar" class="oculto" style="margin-top:14px; padding-top:14px; border-top:1px solid var(--panel-border); display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <label style="margin:0; white-space:nowrap;">Aplicar % a las de "REVISAR":</label>
+      <input type="number" id="inputPctRevisar" min="1" max="99" step="0.1" style="width:80px;">
+      <button class="chico secondary" id="btnAplicarPctRevisar">Aplicar</button>
+    </div>
+
+    <div class="modal-cerrar" style="justify-content:space-between;">
+      <div style="display:flex; gap:8px;">
+        <button class="secondary oculto" id="btnReintentarFallidos">Reintentar fallidos</button>
+        <button class="secondary oculto" id="btnUsarSugerido">Usar precio sugerido de ML</button>
+      </div>
+      <button id="btnCerrarResultado">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ============================================================
+     CONFIG
+     ============================================================ */
+  var SUPABASE_URL = "https://mdupatknzanlxuwbcost.supabase.co";
+  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kdXBhdGtuemFubHh1d2Jjb3N0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2Njc0MjUsImV4cCI6MjEwNTI0MzQyNX0.AhakIOXd7pQCZVLlPGOElmpMc_uTCL8bGzR5YB6j-5E";
+  var FN_BASE = SUPABASE_URL + "/functions/v1";
+  var URL_DIAG = FN_BASE + "/ml-promos-diag";
+  var URL_BULK = FN_BASE + "/ml-promos-bulk";
+  var URL_SNAPSHOT = FN_BASE + "/ml-promos-snapshot-crud";
+  var URL_REPORTES = FN_BASE + "/app-reportes-crud";
+  var URL_ALIAS = FN_BASE + "/ml-promos-nombre-publico-crud";
+  var TIMEOUT_MS = 20000;
+
+  // Los 12 tipos de /seller-promotions. subir/bajar controlan si el tipo tiene
+  // botones de bulk funcionales (confirmado contra doc oficial, 2026-09-01).
+  var TIPOS = [
+    { codigo: "SELLER_CAMPAIGN", nombre: "Campaña propia", explicacion: "La armás y controlás vos (ej: tu promo fija mensual). Descuento fijo o flexible que vos definís.", subir: true, bajar: true },
+    { codigo: "DEAL", nombre: "Campaña tradicional (Deal)", explicacion: "ML te invita, vos elegís el precio final dentro del rango permitido.", subir: true, bajar: true },
+    { codigo: "DOD", nombre: "Oferta del día", explicacion: "ML sugiere el precio, vos definís el tuyo dentro del rango. Una vez activada no se puede sacar, solo pausar la publicación.", subir: true, bajar: false },
+    { codigo: "MARKETPLACE_CAMPAIGN", nombre: "Campaña co-financiada", explicacion: "ML te invita y paga parte del descuento — el precio lo calcula ML solo, vos solo te sumás.", subir: true, bajar: true },
+    { codigo: "SMART", nombre: "Co-participación automática", explicacion: "Parecida a la co-financiada, pero ML elige los candidatos solo. Vos igual tenés que sumarte a cada item.", subir: true, bajar: false },
+    { codigo: "VOLUME", nombre: "Descuento por volumen", explicacion: "Tipo 3x2. ML te invita y calcula el descuento, vos adherís los items candidatos.", subir: true, bajar: true },
+    { codigo: "PRE_NEGOTIATED", nombre: "Descuento pre-negociado", explicacion: "Acuerdo puntual por item entre vos y ML. Solo hace falta aceptar la invitación.", subir: true, bajar: true },
+    { codigo: "UNHEALTHY_STOCK", nombre: "Liquidación de stock parado", explicacion: "ML te invita sobre publicaciones con baja rotación y calcula el descuento.", subir: true, bajar: false },
+    { codigo: "SELLER_COUPON_CAMPAIGN", nombre: "Cupón propio", explicacion: "Cupón que armás vos, se aplica en el checkout — no cambia el precio de lista.", subir: true, bajar: false },
+    { codigo: "PRICE_MATCHING", nombre: "Ajuste a la competencia", explicacion: "ML ajusta el precio automáticamente para igualar a la competencia.", subir: true, bajar: false },
+    { codigo: "LIGHTNING", nombre: "Oferta relámpago", explicacion: "Oferta corta con stock reservado. Mecanismo de alta todavía no confirmado del todo — por ahora solo informativo.", subir: false, bajar: false },
+    { codigo: "PRICE_DISCOUNT", nombre: "Descuento simple", explicacion: "Descuento puntual sobre una publicación, no es una campaña con candidatos — necesita otra pantalla, no bulk por tipo.", subir: false, bajar: false },
+  ];
+
+  // Tipos donde el vendedor define el precio (los otros: ML lo calcula solo, no hace falta preguntar %).
+  var TIPOS_NECESITAN_PRECIO = ["DEAL", "SELLER_CAMPAIGN", "DOD"];
+
+  if (typeof window.supabase === "undefined") {
+    document.getElementById("cdnFail").classList.add("show");
+    return;
+  }
+
+  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  var AUTH = null;
+  var promoItemsState = {}; // promotion_id -> { candidatos: [...], activos: [...] }, lo llena "Ver candidatos/activos"
+  var aliasNombresPublicos = {}; // promotion_id -> nombre público cargado a mano (ver ml-promos-nombre-publico-crud)
+  var BATCH_SIZE = 12; // por debajo de MAX_ITEMS_POR_TANDA (15) del servidor, con margen
+  var TIMEOUT_TANDA_MS = 40000; // las tandas de bulk tardan más que una consulta simple
+
+  var els = {
+    gate: document.getElementById("gate"),
+    gateEmail: document.getElementById("gateEmail"),
+    gatePass: document.getElementById("gatePass"),
+    gateBtn: document.getElementById("gateBtn"),
+    gateError: document.getElementById("gateError"),
+    app: document.getElementById("app"),
+    btnLogout: document.getElementById("btnLogout"),
+    btnFuncionamiento: document.getElementById("btnFuncionamiento"),
+    modalFuncionamiento: document.getElementById("modalFuncionamiento"),
+    btnCerrarFuncionamiento: document.getElementById("btnCerrarFuncionamiento"),
+    estadoCarga: document.getElementById("estadoCarga"),
+    gridTipos: document.getElementById("gridTipos"),
+    toggleMetricas: document.getElementById("toggleMetricas"),
+    toggleMetricasIcono: document.getElementById("toggleMetricasIcono"),
+    metricasBody: document.getElementById("metricasBody"),
+    metricasGrid: document.getElementById("metricasGrid"),
+    metricasPorTipo: document.getElementById("metricasPorTipo"),
+    btnActualizarMetricas: document.getElementById("btnActualizarMetricas"),
+    estadoMetricas: document.getElementById("estadoMetricas"),
+    modalConfirmar: document.getElementById("modalConfirmar"),
+    btnBajarTodo: document.getElementById("btnBajarTodo"),
+    btnSubirTodoGuardado: document.getElementById("btnSubirTodoGuardado"),
+    estadoSnapshot: document.getElementById("estadoSnapshot"),
+    modalBajarTodo1: document.getElementById("modalBajarTodo1"),
+    bajarTodoResumen1: document.getElementById("bajarTodoResumen1"),
+    bajarTodoListaGrupos: document.getElementById("bajarTodoListaGrupos"),
+    btnCancelarBajarTodo1: document.getElementById("btnCancelarBajarTodo1"),
+    btnContinuarBajarTodo1: document.getElementById("btnContinuarBajarTodo1"),
+    modalBajarTodo2: document.getElementById("modalBajarTodo2"),
+    inputConfirmarBajarTodo: document.getElementById("inputConfirmarBajarTodo"),
+    btnCancelarBajarTodo2: document.getElementById("btnCancelarBajarTodo2"),
+    btnConfirmarBajarTodo2: document.getElementById("btnConfirmarBajarTodo2"),
+    modalPctAplicados: document.getElementById("modalPctAplicados"),
+    pctAplicadosNombreCampana: document.getElementById("pctAplicadosNombreCampana"),
+    pctAplicadosEstado: document.getElementById("pctAplicadosEstado"),
+    tablaPctAplicadosBody: document.getElementById("tablaPctAplicadosBody"),
+    btnCerrarPctAplicados: document.getElementById("btnCerrarPctAplicados"),
+    modalPorcentaje: document.getElementById("modalPorcentaje"),
+    porcentajeNombreCampana: document.getElementById("porcentajeNombreCampana"),
+    inputPctBase: document.getElementById("inputPctBase"),
+    excepcionesLista: document.getElementById("excepcionesLista"),
+    btnAgregarExcepcion: document.getElementById("btnAgregarExcepcion"),
+    estadoPorcentaje: document.getElementById("estadoPorcentaje"),
+    btnCancelarPorcentaje: document.getElementById("btnCancelarPorcentaje"),
+    btnContinuarPorcentaje: document.getElementById("btnContinuarPorcentaje"),
+    confirmarTitulo: document.getElementById("confirmarTitulo"),
+    confirmarTexto: document.getElementById("confirmarTexto"),
+    btnCancelarAccion: document.getElementById("btnCancelarAccion"),
+    btnConfirmarAccion: document.getElementById("btnConfirmarAccion"),
+    modalResultado: document.getElementById("modalResultado"),
+    resultadoTitulo: document.getElementById("resultadoTitulo"),
+    resultadoResumen: document.getElementById("resultadoResumen"),
+    resultadoTablaWrap: document.getElementById("resultadoTablaWrap"),
+    btnCerrarResultado: document.getElementById("btnCerrarResultado"),
+    btnReintentarFallidos: document.getElementById("btnReintentarFallidos"),
+    btnUsarSugerido: document.getElementById("btnUsarSugerido"),
+    bloqueAplicarPctRevisar: document.getElementById("bloqueAplicarPctRevisar"),
+    inputPctRevisar: document.getElementById("inputPctRevisar"),
+    btnAplicarPctRevisar: document.getElementById("btnAplicarPctRevisar"),
+  };
+
+  /* ============================================================
+     HELPERS
+     ============================================================ */
+  function fetchConTimeout(url, opciones, timeoutMs) {
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function () { controller.abort(); }, timeoutMs || TIMEOUT_MS);
+    return fetch(url, Object.assign({}, opciones, { signal: controller.signal }))
+      .then(function (resp) {
+        clearTimeout(timeoutId);
+        return resp.json().then(function (data) { return { status: resp.status, data: data }; });
+      })
+      .catch(function (err) {
+        clearTimeout(timeoutId);
+        if (err.name === "AbortError") throw new Error("timeout");
+        throw err;
+      });
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function fechaCorta(iso) {
+    if (!iso) return "";
+    try {
+      var d = new Date(iso);
+      return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
+    } catch (e) { return iso; }
+  }
+
+  function kpiHelp(texto) {
+    return '<span class="kpi-help" data-help="' + escapeHtml(texto) + '">?<span class="globo">' + escapeHtml(texto) + '</span></span>';
+  }
+
+  document.addEventListener("click", function (e) {
+    var abiertos = document.querySelectorAll(".kpi-help.abierto");
+    var target = e.target.closest ? e.target.closest(".kpi-help") : null;
+    abiertos.forEach(function (el) { if (el !== target) el.classList.remove("abierto"); });
+    if (target) target.classList.toggle("abierto");
+  });
+
+  /* ============================================================
+     LOGIN
+     ============================================================ */
+  async function hacerLogin() {
+    var email = els.gateEmail.value.trim();
+    var password = els.gatePass.value;
+    els.gateError.textContent = "";
+    if (!email || !password) { els.gateError.textContent = "Completá email y contraseña."; return; }
+
+    els.gateBtn.disabled = true;
+    els.gateBtn.textContent = "Ingresando…";
+    try {
+      var res = await sb.auth.signInWithPassword({ email: email, password: password });
+      if (res.error) throw res.error;
+    } catch (e) {
+      els.gateError.textContent = "No se pudo iniciar sesión. Revisá tus datos.";
+      els.gateBtn.disabled = false;
+      els.gateBtn.textContent = "Ingresar";
+    }
+  }
+
+  els.gateBtn.addEventListener("click", hacerLogin);
+  els.gatePass.addEventListener("keydown", function (e) { if (e.key === "Enter") hacerLogin(); });
+  els.btnLogout.addEventListener("click", function () { sb.auth.signOut(); });
+
+  sb.auth.onAuthStateChange(function (_event, session) {
+    if (session) {
+      AUTH = "Bearer " + session.access_token;
+      els.gate.classList.add("oculto");
+      els.app.classList.remove("oculto");
+      arrancarApp();
+    } else {
+      AUTH = null;
+      els.app.classList.add("oculto");
+      els.gate.classList.remove("oculto");
+      els.gateBtn.disabled = false;
+      els.gateBtn.textContent = "Ingresar";
+    }
+  });
+
+  sb.auth.getSession();
+
+  /* ============================================================
+     MODAL FUNCIONAMIENTO
+     ============================================================ */
+  els.btnFuncionamiento.addEventListener("click", function () { els.modalFuncionamiento.classList.remove("oculto"); });
+  els.btnCerrarFuncionamiento.addEventListener("click", function () { els.modalFuncionamiento.classList.add("oculto"); });
+
+  /* ============================================================
+     CARGA DE PROMOCIONES ACTIVAS Y RENDER DE HERO CARDS
+     ============================================================ */
+  function arrancarApp() {
+    els.estadoCarga.textContent = "Cargando promociones activas...";
+    els.estadoCarga.className = "estado";
+    els.gridTipos.innerHTML = "";
+    cargarEstadoSnapshot();
+
+    var pDiag = fetchConTimeout(URL_DIAG, { headers: { Authorization: AUTH } });
+    var pAlias = fetchConTimeout(URL_ALIAS, { headers: { Authorization: AUTH } })
+      .then(function (res) { return (res.data && res.data.ok) ? (res.data.alias || {}) : {}; })
+      .catch(function () { return {}; }); // si falla, seguimos con nombres internos -- no bloquea el arranque
+
+    Promise.all([pDiag, pAlias])
+      .then(function (resultados) {
+        var res = resultados[0];
+        aliasNombresPublicos = resultados[1];
+        if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "no se pudo leer");
+        var promos = (res.data.data && res.data.data.results) || [];
+        els.estadoCarga.textContent = "";
+        renderGrid(promos);
+      })
+      .catch(function (err) {
+        els.estadoCarga.textContent = "No se pudieron cargar las promociones: " + err.message;
+        els.estadoCarga.className = "estado err";
+        renderGrid([]);
+      });
+  }
+
+  var gridYaAutoActualizado = false; // el PRIMER render auto-actualiza todas las cards una vez; después, manual
+  function renderGrid(promosActivas) {
+    ultimasPromosActivas = promosActivas;
+    var porTipo = {};
+    promosActivas.forEach(function (p) {
+      if (!porTipo[p.type]) porTipo[p.type] = [];
+      porTipo[p.type].push(p);
+    });
+
+    els.gridTipos.innerHTML = TIPOS.map(function (tipo) {
+      return renderHero(tipo, porTipo[tipo.codigo] || []);
+    }).join("");
+
+    renderMetricasBase(promosActivas, porTipo);
+
+    // Wire de botones subir/bajar por instancia
+    els.gridTipos.querySelectorAll("[data-accion]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var promotionId = btn.getAttribute("data-promotion-id");
+        var promotionType = btn.getAttribute("data-promotion-type");
+        var accion = btn.getAttribute("data-accion");
+        var nombre = btn.getAttribute("data-nombre");
+        if (accion === "subir" && TIPOS_NECESITAN_PRECIO.indexOf(promotionType) !== -1) {
+          abrirModalPorcentaje(promotionId, promotionType, nombre);
+        } else {
+          abrirConfirmacion(promotionId, promotionType, accion, nombre);
+        }
+      });
+    });
+
+    var botonesConteo = els.gridTipos.querySelectorAll("[data-ver-conteo]");
+    botonesConteo.forEach(function (btn) {
+      btn.addEventListener("click", function () { cargarConteo(btn); });
+    });
+
+    els.gridTipos.querySelectorAll("[data-editar-alias]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        editarAliasPromocion(
+          btn.getAttribute("data-editar-alias"),
+          btn.getAttribute("data-nombre-interno"),
+          btn.getAttribute("data-nombre-actual")
+        );
+      });
+    });
+    // Auto-actualización SOLO en el primer render de la sesión: trae candidatos/activos de
+    // todas las cards una vez. Después, cada card se refresca a mano con su propio botón (o con
+    // "Actualizar candidatos/activos de todas"). Así no se recarga todo tras cada acción.
+    if (!gridYaAutoActualizado) {
+      gridYaAutoActualizado = true;
+      botonesConteo.forEach(function (btn) { cargarConteo(btn); });
+    }
+
+    els.gridTipos.querySelectorAll("[data-ver-pct]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        abrirModalPctAplicados(btn.getAttribute("data-promotion-id"), btn.getAttribute("data-promotion-type"), btn.getAttribute("data-nombre"));
+      });
+    });
+  }
+
+  function renderHero(tipo, instancias) {
+    var esControlable = tipo.subir || tipo.bajar;
+    var badgeClase = esControlable ? "hero-badge controlable" : "hero-badge";
+    var badgeTexto = esControlable ? "Control disponible" : "Solo informativo";
+
+    var instanciasHtml;
+    if (instancias.length === 0) {
+      instanciasHtml = '<div class="sin-instancias">Sin campañas activas o pendientes de este tipo ahora.</div>';
+    } else {
+      instanciasHtml = '<div class="instancias">' + instancias.map(function (inst) {
+        return renderInstancia(tipo, inst);
+      }).join("") + '</div>';
+    }
+
+    if (!esControlable) {
+      instanciasHtml += '<div class="proximamente">Control en bloque para este tipo: próximamente.</div>';
+    }
+
+    return '<div class="hero ' + (esControlable ? "controlable" : "") + '">' +
+      '<div class="hero-top">' +
+        '<div class="hero-nombre">' + escapeHtml(tipo.nombre) + '</div>' +
+        '<div class="' + badgeClase + '">' + badgeTexto + '</div>' +
+      '</div>' +
+      '<div class="hero-explicacion">' + escapeHtml(tipo.explicacion) + '</div>' +
+      instanciasHtml +
+    '</div>';
+  }
+
+  // Filtros del listado de promos del panel de ML por tipo de campaña.
+  // Confirmado por Lauti:
+  //   SELLER_CAMPAIGN -> filtro por id: "seller_campaign_offer-{id en minúscula}"
+  //   DEAL             -> filtro por id: "meli_campaign_offer-{id en minúscula}"
+  //                       (el link real de ML suma tambien "official_event-..." y "qf_card-...",
+  //                       pero esos valores son internos de ML y no salen de nuestra API -- se omiten,
+  //                       el filtro por id solo debería alcanzar para llegar a esa campaña puntual)
+  //   LIGHTNING        -> filtro estático, no hay filtro por campaña individual
+  // Los demás tipos: sin filtro confirmado todavía, va al listado general.
+  var FILTROS_ML_POR_TIPO = {
+    SELLER_CAMPAIGN: { modo: "id", prefijo: "seller_campaign_offer" },
+    DEAL: { modo: "id", prefijo: "meli_campaign_offer" },
+    LIGHTNING: { modo: "estatico", valor: "flash_deal|qf_active|qf_card-flash_deals|ml|seller" },
+  };
+
+  function urlVerEnML(promotionType, promotionId) {
+    var base = "https://vendedores.mercadolibre.com.ar/publicaciones/listado/promos?tab=promotions&page=1";
+    var cfg = FILTROS_ML_POR_TIPO[promotionType];
+    if (!cfg) return base;
+    if (cfg.modo === "id" && promotionId) {
+      return base + "&filters=" + encodeURIComponent(cfg.prefijo + "-" + promotionId.toLowerCase());
+    }
+    if (cfg.modo === "estatico") {
+      return base + "&filters=" + encodeURIComponent(cfg.valor);
+    }
+    return base;
+  }
+
+  function renderInstancia(tipo, inst) {
+    var idSeguro = escapeHtml(inst.id || "");
+    var nombreInterno = inst.name || inst.id || "(sin nombre)";
+    var alias = inst.id ? aliasNombresPublicos[inst.id] : null;
+    var nombre = alias || nombreInterno; // el que se usa en toda la UI (títulos de modales incluidos)
+    var subNombreInterno = alias ? '<div class="fechas">ML interno: ' + escapeHtml(nombreInterno) + '</div>' : '';
+    var botonAlias = inst.id
+      ? '<button type="button" class="btn-alias" data-editar-alias="' + idSeguro + '" data-nombre-interno="' + escapeHtml(nombreInterno) + '" data-nombre-actual="' + escapeHtml(alias || "") + '" title="' + (alias ? "Editar" : "Cargar") + ' el nombre público (el que ve el comprador en Mercado Libre)">✏️</button>'
+      : '';
+    var badgeEstado = inst.status === "started" ? "started" : "pending";
+    var badgeTexto = inst.status === "started" ? "Corriendo" : (inst.status || "—");
+
+    var fechas = "";
+    if (inst.start_date || inst.finish_date) {
+      fechas = fechaCorta(inst.start_date) + (inst.finish_date ? " → " + fechaCorta(inst.finish_date) : "");
+    }
+
+    // Campañas co-fondeadas (MARKETPLACE_CAMPAIGN, y a veces VOLUME) traen benefits.meli_percent
+    // y benefits.seller_percent -- quién pone qué parte del descuento. Pedido por Stock (18/09).
+    var desgloseBenef = "";
+    if (inst.benefits && (typeof inst.benefits.meli_percent === "number" || typeof inst.benefits.seller_percent === "number")) {
+      var partesBenef = [];
+      if (typeof inst.benefits.meli_percent === "number") partesBenef.push("🅼🅻 aporta " + inst.benefits.meli_percent + "%");
+      if (typeof inst.benefits.seller_percent === "number") partesBenef.push("Nosotros aportamos " + inst.benefits.seller_percent + "%");
+      desgloseBenef = '<div class="fechas">' + partesBenef.join(" · ") + '</div>';
+    }
+
+    // "Ver en ML" solo para tipos con filtro CONFIRMADO (ver FILTROS_ML_POR_TIPO). Para el
+    // resto -- confirmado por Albano el 18/09: MARKETPLACE_CAMPAIGN y DOD todavía ni figuran
+    // en el panel web de ML, se gestionan solo por API -- no tiene sentido mandar a un link
+    // que cae en cualquier lado. Se avisa en vez de mostrar un link engañoso.
+    var linkML = "";
+    if (inst.id && FILTROS_ML_POR_TIPO[tipo.codigo]) {
+      linkML = '<a href="' + escapeHtml(urlVerEnML(tipo.codigo, inst.id)) + '" target="_blank" rel="noopener" class="estado-badge" style="background:var(--panel-border); color:var(--text-dim); text-decoration:none;">Ver en ML ↗</a>';
+    } else if (inst.id) {
+      linkML = '<span class="estado-badge" style="background:var(--panel-border); color:var(--text-dim); cursor:help;" title="Esta campaña todavía no tiene una vista propia en el panel web de Mercado Libre -- se gestiona solo desde acá.">Solo por API</span>';
+    }
+
+    var acciones = "";
+    if ((tipo.subir || tipo.bajar) && inst.id) {
+      acciones =
+        '<div class="instancia-acciones">' +
+          '<span class="conteo-preview" data-conteo-de="' + idSeguro + '">' +
+            '<button class="chico secondary" data-ver-conteo data-promotion-id="' + idSeguro + '" data-promotion-type="' + tipo.codigo + '">🔄 Ver candidatos/activos</button>' +
+          '</span>' +
+        '</div>' +
+        '<div class="instancia-acciones oculto" data-botones-de="' + idSeguro + '">' +
+          (tipo.subir ? '<button class="chico" data-accion="subir" data-promotion-id="' + idSeguro + '" data-promotion-type="' + tipo.codigo + '" data-nombre="' + escapeHtml(nombre) + '">Subir a todas</button>' : "") +
+          (tipo.bajar ? '<button class="chico danger" data-accion="bajar" data-promotion-id="' + idSeguro + '" data-promotion-type="' + tipo.codigo + '" data-nombre="' + escapeHtml(nombre) + '">Bajar de todas</button>' : "") +
+          '<button class="chico secondary" data-ver-pct data-promotion-id="' + idSeguro + '" data-promotion-type="' + tipo.codigo + '" data-nombre="' + escapeHtml(nombre) + '">Ver % aplicados</button>' +
+        '</div>';
+    }
+
+    return '<div class="instancia">' +
+      '<span class="nombre">' + escapeHtml(nombre) + '</span>' + botonAlias +
+      '<span class="estado-badge ' + badgeEstado + '">' + escapeHtml(badgeTexto) + '</span>' +
+      linkML +
+      (fechas ? '<div class="fechas">' + escapeHtml(fechas) + '</div>' : "") +
+      desgloseBenef +
+      subNombreInterno +
+      acciones +
+    '</div>';
+  }
+
+  function editarAliasPromocion(promotionId, nombreInterno, nombreActual) {
+    var propuesto = window.prompt(
+      "Nombre público de esta campaña (el que ve el comprador en Mercado Libre).\n\nNombre interno de ML: " + nombreInterno,
+      nombreActual || ""
+    );
+    if (propuesto === null) return; // canceló
+    var limpio = propuesto.trim();
+    if (!limpio) return;
+
+    fetchConTimeout(URL_ALIAS, { method: "POST", headers: { Authorization: AUTH, "Content-Type": "application/json" }, body: JSON.stringify({ promotion_id: promotionId, nombre_publico: limpio }) })
+      .then(function (res) {
+        if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error");
+        aliasNombresPublicos[promotionId] = limpio;
+        renderGrid(ultimasPromosActivas);
+      })
+      .catch(function (err) {
+        alert("No se pudo guardar el nombre público: " + err.message);
+      });
+  }
+
+  function cargarConteo(btnVerConteo) {
+    var promotionId = btnVerConteo.getAttribute("data-promotion-id");
+    var promotionType = btnVerConteo.getAttribute("data-promotion-type");
+    var contenedor = btnVerConteo.closest("[data-conteo-de]");
+    var botonesAccion = els.gridTipos.querySelector('[data-botones-de="' + cssEscape(promotionId) + '"]');
+
+    btnVerConteo.disabled = true;
+    btnVerConteo.textContent = "Consultando...";
+
+    var url = URL_BULK + "?promotion_id=" + encodeURIComponent(promotionId) + "&promotion_type=" + encodeURIComponent(promotionType);
+    return fetchConTimeout(url, { headers: { Authorization: AUTH } })
+      .then(function (res) {
+        if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error");
+        promoItemsState[promotionId] = {
+          candidatos: res.data.items_candidatos || [],
+          activos: res.data.items_activos || [],
+        };
+        contenedor.innerHTML = kpiHelp("Candidatas: publicaciones invitadas a esta campaña que todavía no están aplicadas. Activas: ya están corriendo con el descuento puesto. Se calcula consultando en vivo /seller-promotions/promotions/{id}/items en ML.") +
+          ' Candidatas: <b>' + res.data.candidatos + '</b> · Activas: <b>' + res.data.activos + '</b> ' +
+          '<button class="chico secondary" data-ver-conteo data-promotion-id="' + escapeHtml(promotionId) + '" data-promotion-type="' + escapeHtml(promotionType) + '">🔄 Actualizar</button>';
+        var btnActualizar = contenedor.querySelector("[data-ver-conteo]");
+        if (btnActualizar) btnActualizar.addEventListener("click", function () { cargarConteo(btnActualizar); });
+        if (botonesAccion) {
+          botonesAccion.classList.remove("oculto");
+          var btnSubir = botonesAccion.querySelector('[data-accion="subir"]');
+          var btnBajar = botonesAccion.querySelector('[data-accion="bajar"]');
+          if (btnSubir) { btnSubir.textContent = "Subir a todas (" + res.data.candidatos + ")"; btnSubir.disabled = res.data.candidatos === 0; }
+          if (btnBajar) { btnBajar.textContent = "Bajar de todas (" + res.data.activos + ")"; btnBajar.disabled = res.data.activos === 0; }
+        }
+      })
+      .catch(function (err) {
+        contenedor.innerHTML = '<span class="estado err">Error: ' + escapeHtml(err.message) + '</span> <button class="chico secondary" data-ver-conteo data-promotion-id="' + escapeHtml(promotionId) + '" data-promotion-type="' + escapeHtml(promotionType) + '">Reintentar</button>';
+        var nuevoBtn = contenedor.querySelector("[data-ver-conteo]");
+        if (nuevoBtn) nuevoBtn.addEventListener("click", function () { cargarConteo(nuevoBtn); });
+      });
+  }
+
+  function cssEscape(s) {
+    return String(s).replace(/["\\]/g, "\\$&");
+  }
+
+  /* ============================================================
+     MODAL: % base + excepciones por SKU (se pregunta cada vez que se sube)
+     ============================================================ */
+  var pctPendiente = null; // { promotionId, promotionType, nombre }
+
+  function abrirModalPorcentaje(promotionId, promotionType, nombre) {
+    pctPendiente = { promotionId: promotionId, promotionType: promotionType, nombre: nombre };
+    els.porcentajeNombreCampana.textContent = nombre;
+    els.inputPctBase.value = "";
+    els.excepcionesLista.innerHTML = "";
+    els.estadoPorcentaje.textContent = "";
+    els.modalPorcentaje.classList.remove("oculto");
+  }
+
+  function agregarFilaExcepcion() {
+    var fila = document.createElement("div");
+    fila.className = "fila-sku";
+    fila.innerHTML =
+      '<input type="text" class="exc-sku" placeholder="SKU" style="flex:1;">' +
+      '<input type="number" class="exc-pct" placeholder="%" min="1" max="99" style="width:70px;">' +
+      '<button type="button" class="chico secondary btn-quitar-excepcion">Quitar</button>';
+    els.excepcionesLista.appendChild(fila);
+    fila.querySelector(".btn-quitar-excepcion").addEventListener("click", function () { fila.remove(); });
+  }
+
+  els.btnAgregarExcepcion.addEventListener("click", agregarFilaExcepcion);
+
+  function leerExcepciones() {
+    var filas = els.excepcionesLista.querySelectorAll(".fila-sku");
+    var out = [];
+    filas.forEach(function (fila) {
+      var sku = fila.querySelector(".exc-sku").value.trim();
+      var pct = Number(fila.querySelector(".exc-pct").value);
+      if (sku && pct > 0 && pct < 100) out.push({ sku: sku, porcentaje: pct });
+    });
+    return out;
+  }
+
+  els.btnCancelarPorcentaje.addEventListener("click", function () {
+    pctPendiente = null;
+    els.modalPorcentaje.classList.add("oculto");
+  });
+
+  els.btnContinuarPorcentaje.addEventListener("click", function () {
+    if (!pctPendiente) return;
+    var pctBase = Number(els.inputPctBase.value);
+    if (!pctBase || pctBase <= 0 || pctBase >= 100) {
+      els.estadoPorcentaje.textContent = "Poné un % base válido (entre 1 y 99).";
+      return;
+    }
+    var excepciones = leerExcepciones();
+    var p = pctPendiente;
+    els.modalPorcentaje.classList.add("oculto");
+    pctPendiente = null;
+    abrirConfirmacion(p.promotionId, p.promotionType, "subir", p.nombre, { porcentaje_base: pctBase, excepciones: excepciones });
+  });
+
+  /* ============================================================
+     CONFIRMACIÓN + EJECUCIÓN DE ACCIÓN EN BLOQUE
+     ============================================================ */
+  var accionPendiente = null;
+
+  function abrirConfirmacion(promotionId, promotionType, accion, nombre, pctConfig) {
+    accionPendiente = { promotionId: promotionId, promotionType: promotionType, accion: accion, pctConfig: pctConfig || null };
+    els.confirmarTitulo.textContent = accion === "subir" ? "¿Subir todas las candidatas?" : "¿Bajar todas las activas?";
+
+    var texto;
+    if (accion === "subir") {
+      texto = 'Va a aplicar precio a cada publicación candidata de "' + nombre + '"';
+      if (pctConfig) {
+        texto += " — % base: " + pctConfig.porcentaje_base + "%";
+        if (pctConfig.excepciones.length > 0) {
+          texto += ", con " + pctConfig.excepciones.length + " excepción(es) por SKU (" +
+            pctConfig.excepciones.map(function (e) { return e.sku + ": " + e.porcentaje + "%"; }).join(", ") + ")";
+        }
+      }
+      texto += ". Esto cambia precios reales visibles en ML.";
+    } else {
+      texto = 'Va a sacar de "' + nombre + '" a cada publicación que esté activa ahí. No se puede deshacer con un botón — habría que volver a aplicarlas a mano.';
+    }
+    els.confirmarTexto.textContent = texto;
+    els.modalConfirmar.classList.remove("oculto");
+  }
+
+  els.btnCancelarAccion.addEventListener("click", function () {
+    accionPendiente = null;
+    els.modalConfirmar.classList.add("oculto");
+  });
+
+  els.btnConfirmarAccion.addEventListener("click", function () {
+    if (!accionPendiente) return;
+    var a = accionPendiente;
+    els.modalConfirmar.classList.add("oculto");
+    els.btnConfirmarAccion.disabled = true;
+
+    var estado = promoItemsState[a.promotionId];
+    var itemsTotal = estado ? (a.accion === "subir" ? estado.candidatos : estado.activos) : [];
+
+    if (!itemsTotal || itemsTotal.length === 0) {
+      mostrarResultadoFinal({ ok: true, log: [] }, a.accion, 0, 0, 0);
+      els.btnConfirmarAccion.disabled = false;
+      accionPendiente = null;
+      return;
+    }
+
+    ejecutarEnTandas(a, itemsTotal, { pctConfig: a.pctConfig });
+  });
+
+  var ultimoContextoTanda = null; // { a, itemsTotal, logAcumulado } -- para poder armar "Reintentar fallidos"
+  var ultimasPromosActivas = []; // cache de la última carga de arrancarApp(), la usan las métricas
+
+  els.toggleMetricas.addEventListener("click", function () {
+    var abierto = !els.metricasBody.classList.contains("oculto");
+    els.metricasBody.classList.toggle("oculto");
+    els.toggleMetricasIcono.textContent = abierto ? "▸" : "▾";
+  });
+
+  var NOMBRES_TIPO = {};
+  TIPOS.forEach(function (t) { NOMBRES_TIPO[t.codigo] = t.nombre; });
+
+  function renderMetricasBase(promosActivas, porTipo) {
+    var corriendo = promosActivas.filter(function (p) { return p.status === "started"; }).length;
+    var pendientes = promosActivas.length - corriendo;
+
+    // Si ya se consultó "Ver candidatos/activos" en alguna card, sumamos lo que hay cacheado.
+    var totales = sumarPromoItemsState();
+
+    els.metricasGrid.innerHTML =
+      statBox(promosActivas.length, "Campañas activas + pendientes") +
+      statBox(corriendo, "Corriendo ahora") +
+      statBox(totales.activos, "Publicaciones con oferta activa" + (totales.consultadas < promosActivas.length ? " *" : ""), totales.consultadas === 0) +
+      statBox(totales.candidatos, "Candidatas sin aplicar" + (totales.consultadas < promosActivas.length ? " *" : ""), totales.consultadas === 0);
+
+    var filasTipo = Object.keys(porTipo).sort(function (a, b) { return porTipo[b].length - porTipo[a].length; }).map(function (codigo) {
+      return '<div class="tipo-fila"><span>' + escapeHtml(NOMBRES_TIPO[codigo] || codigo) + '</span><span class="cant">' + porTipo[codigo].length + '</span></div>';
+    }).join("");
+
+    els.metricasPorTipo.innerHTML = (filasTipo || '<div class="sin-instancias">Sin campañas para mostrar.</div>') +
+      (promosActivas.length > 0 ? '<div class="proximamente" style="margin-top:8px;">* Publicaciones activas/candidatas: solo cuenta las campañas que ya consultaste con "Ver candidatos/activos" (en cada card) o con el botón de abajo — no se traen todas solas para no demorar la carga.</div>' : "");
+  }
+
+  function sumarPromoItemsState() {
+    var activos = 0, candidatos = 0, consultadas = 0;
+    Object.keys(promoItemsState).forEach(function (id) {
+      var e = promoItemsState[id];
+      activos += (e.activos || []).length;
+      candidatos += (e.candidatos || []).length;
+      consultadas++;
+    });
+    return { activos: activos, candidatos: candidatos, consultadas: consultadas };
+  }
+
+  function statBox(valor, etiqueta, esDim) {
+    return '<div class="stat-box"><div class="valor' + (esDim ? " dim" : "") + '">' + valor + '</div><div class="etiqueta">' + escapeHtml(etiqueta) + '</div></div>';
+  }
+
+  els.btnActualizarMetricas.addEventListener("click", function () {
+    var botones = Array.prototype.slice.call(els.gridTipos.querySelectorAll("[data-ver-conteo]"));
+    if (botones.length === 0) {
+      els.estadoMetricas.textContent = "No hay campañas controlables para consultar.";
+      els.estadoMetricas.className = "estado";
+      return;
+    }
+
+    els.btnActualizarMetricas.disabled = true;
+    var i = 0;
+    function siguiente() {
+      if (i >= botones.length) {
+        els.estadoMetricas.textContent = "Actualizado.";
+        els.estadoMetricas.className = "estado ok";
+        els.btnActualizarMetricas.disabled = false;
+        var porTipo = {};
+        ultimasPromosActivas.forEach(function (p) { (porTipo[p.type] = porTipo[p.type] || []).push(p); });
+        renderMetricasBase(ultimasPromosActivas, porTipo);
+        return;
+      }
+      els.estadoMetricas.textContent = "Consultando " + (i + 1) + "/" + botones.length + "...";
+      els.estadoMetricas.className = "estado";
+      cargarConteo(botones[i]).then(function () {
+        i++;
+        siguiente();
+      });
+    }
+    siguiente();
+  });
+
+  function chunk(arr, size) {
+    var out = [];
+    for (var i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+    return out;
+  }
+
+  function textoError(detalle) {
+    if (!detalle) return "sin detalle";
+    if (typeof detalle === "string") return detalle;
+    if (detalle.message) return detalle.message;
+    if (detalle.cause) return Array.isArray(detalle.cause) ? detalle.cause.join("; ") : String(detalle.cause);
+    try { return JSON.stringify(detalle); } catch (e) { return "error desconocido"; }
+  }
+
+  function ejecutarEnTandas(a, itemsTotal, opciones) {
+    opciones = opciones || {};
+    var modoPrecio = opciones.modoPrecio || null;
+    var pctConfig = opciones.pctConfig || null;
+
+    var tandas = chunk(itemsTotal, BATCH_SIZE);
+    var logAcumulado = [];
+    var exitosos = 0, errores = 0, revisar = 0, indice = 0;
+    var t0Tanda = Date.now();
+
+    els.resultadoTitulo.textContent = a.accion === "subir" ? "Subiendo a todas..." : "Bajando de todas...";
+    els.resultadoResumen.textContent = "Procesando 0/" + itemsTotal.length + " (estimado " + fmtSeg(itemsTotal.length * 0.5) + ")...";
+    els.resultadoTablaWrap.innerHTML = "";
+    els.btnReintentarFallidos.classList.add("oculto");
+    els.btnUsarSugerido.classList.add("oculto");
+    els.bloqueAplicarPctRevisar.classList.add("oculto");
+    els.inputPctRevisar.value = "";
+    els.modalResultado.classList.remove("oculto");
+
+    function siguienteTanda() {
+      if (indice >= tandas.length) {
+        els.resultadoTitulo.textContent = a.accion === "subir" ? "Resultado — Subir a todas" : "Resultado — Bajar de todas";
+        var resumen = itemsTotal.length + " publicaciones procesadas — " + exitosos + " OK, " + errores + " con error";
+        if (revisar > 0) resumen += ", " + revisar + " necesitan revisión (el % pedido queda fuera del rango que ML considera creíble)";
+        els.resultadoResumen.textContent = resumen + ".";
+        renderTablaLog(logAcumulado, a.accion);
+
+        ultimoContextoTanda = { a: a, itemsTotal: itemsTotal, logAcumulado: logAcumulado };
+        els.btnReintentarFallidos.classList.toggle("oculto", errores === 0);
+        els.btnUsarSugerido.classList.toggle("oculto", revisar === 0);
+        els.bloqueAplicarPctRevisar.classList.toggle("oculto", revisar === 0);
+
+        els.btnConfirmarAccion.disabled = false;
+        accionPendiente = null;
+        arrancarApp();
+        return;
+      }
+
+      var tanda = tandas[indice];
+      var payload = { promotion_id: a.promotionId, promotion_type: a.promotionType, accion: a.accion, items: tanda };
+      if (modoPrecio) payload.modo_precio = modoPrecio;
+      if (pctConfig) {
+        payload.porcentaje_base = pctConfig.porcentaje_base;
+        payload.excepciones = pctConfig.excepciones;
+      }
+
+      fetchConTimeout(URL_BULK, {
+        method: "POST",
+        headers: { Authorization: AUTH, "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }, TIMEOUT_TANDA_MS)
+        .then(function (res) {
+          if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error en tanda");
+          logAcumulado = logAcumulado.concat(res.data.log || []);
+          exitosos += res.data.exitosos || 0;
+          errores += res.data.errores || 0;
+          revisar += res.data.revisar || 0;
+          indice++;
+          var restTanda = (Date.now() - t0Tanda) / 1000 / indice * (tandas.length - indice);
+          els.resultadoResumen.textContent = "Procesando " + logAcumulado.length + "/" + itemsTotal.length + " (resta " + fmtSeg(restTanda) + ")...";
+          renderTablaLog(logAcumulado, a.accion);
+          siguienteTanda();
+        })
+        .catch(function (err) {
+          els.resultadoTitulo.textContent = "Se cortó a mitad de camino";
+          els.resultadoResumen.textContent = logAcumulado.length + "/" + itemsTotal.length + " procesadas antes del error (" + err.message + "). Podés reintentar: las que ya quedaron aplicadas/removidas no se vuelven a tocar dos veces, porque \"Ver candidatos/activos\" te va a traer el estado real actualizado.";
+          renderTablaLog(logAcumulado, a.accion);
+          els.btnConfirmarAccion.disabled = false;
+          accionPendiente = null;
+        });
+    }
+
+    siguienteTanda();
+  }
+
+  els.btnReintentarFallidos.addEventListener("click", function () {
+    if (!ultimoContextoTanda) return;
+    var ctx = ultimoContextoTanda;
+    var idsFallidos = {};
+    ctx.logAcumulado.forEach(function (l) { if (l.estado === "ERROR") idsFallidos[l.item_id] = true; });
+    var itemsFallidos = ctx.itemsTotal.filter(function (it) { return idsFallidos[it.id]; });
+    if (itemsFallidos.length === 0) return;
+    ejecutarEnTandas(ctx.a, itemsFallidos, { pctConfig: ctx.a.pctConfig });
+  });
+
+  function itemsEnRevision(ctx) {
+    var ids = {};
+    ctx.logAcumulado.forEach(function (l) { if (l.estado === "REVISAR") ids[l.item_id] = true; });
+    return ctx.itemsTotal.filter(function (it) { return ids[it.id]; });
+  }
+
+  els.btnUsarSugerido.addEventListener("click", function () {
+    if (!ultimoContextoTanda) return;
+    var ctx = ultimoContextoTanda;
+    var idsConSugerido = {};
+    ctx.logAcumulado.forEach(function (l) { if (l.estado === "REVISAR" && l.sugerido != null) idsConSugerido[l.item_id] = true; });
+    var itemsRevisar = ctx.itemsTotal.filter(function (it) { return idsConSugerido[it.id]; });
+    if (itemsRevisar.length === 0) return;
+    ejecutarEnTandas(ctx.a, itemsRevisar, { modoPrecio: "sugerido" });
+  });
+
+  els.btnAplicarPctRevisar.addEventListener("click", function () {
+    if (!ultimoContextoTanda) return;
+    var pct = Number(els.inputPctRevisar.value);
+    if (!pct || pct <= 0 || pct >= 100) {
+      els.inputPctRevisar.style.borderColor = "var(--err)";
+      return;
+    }
+    els.inputPctRevisar.style.borderColor = "";
+    var ctx = ultimoContextoTanda;
+    var itemsRevisar = itemsEnRevision(ctx);
+    if (itemsRevisar.length === 0) return;
+    ejecutarEnTandas(ctx.a, itemsRevisar, { pctConfig: { porcentaje_base: pct, excepciones: [] } });
+  });
+
+  function renderTablaLog(log, accion) {
+    var filas = log.map(function (l) {
+      var extra = "";
+      if (l.estado === "ERROR") {
+        extra = '<span style="color:var(--err); font-size:0.72rem;">' + escapeHtml(textoError(l.detalle)) + '</span>';
+      } else if (l.estado === "REVISAR") {
+        var partes = [];
+        if (l.porcentaje_pedido != null) partes.push(l.porcentaje_pedido + "% pedido → $" + l.precio_pedido);
+        if (l.porcentaje_minimo != null || l.porcentaje_maximo != null) {
+          var rango = "rango válido: ";
+          rango += l.porcentaje_minimo != null ? l.porcentaje_minimo + "%" : "sin mínimo";
+          rango += " a ";
+          rango += l.porcentaje_maximo != null ? l.porcentaje_maximo + "%" : "sin máximo";
+          partes.push(rango);
+        }
+        if (l.sugerido) partes.push("sugerido ML $" + l.sugerido);
+        extra = '<span style="color:var(--amber); font-size:0.72rem;">' + escapeHtml(partes.join(" · ")) + '</span>';
+      } else if (l.estado === "PARCIAL") {
+        var txtParc = (l.offers_bajados != null ? l.offers_bajados + " bajada(s), pero: " : "") + textoError(l.detalle);
+        extra = '<span style="color:var(--amber); font-size:0.72rem;">' + escapeHtml(txtParc) + '</span>';
+      } else if (l.estado === "SIN_OFERTAS") {
+        extra = '<span style="color:var(--text-dim); font-size:0.72rem;">No tenía promos activas para bajar.</span>';
+      } else if (l.estado === "REMOVIDO" && l.offers_bajados != null) {
+        extra = '<span style="color:var(--text-dim); font-size:0.72rem;">' + l.offers_bajados + ' promo(s) bajada(s)</span>';
+      } else if (accion === "subir" && l.precio_aplicado) {
+        extra = "$" + l.precio_aplicado + (l.porcentaje != null ? " (" + l.porcentaje + "%)" : "");
+      }
+      return "<tr><td>" + escapeHtml(l.item_id) + "</td><td>" + escapeHtml(l.sku || "—") + "</td>" +
+        "<td><span class='tag-log " + escapeHtml(l.estado) + "'>" + escapeHtml(l.estado) + "</span></td><td>" + extra + "</td></tr>";
+    }).join("");
+    els.resultadoTablaWrap.innerHTML = '<table class="log"><thead><tr><th>Item</th><th>SKU</th><th>Estado</th><th></th></tr></thead><tbody>' + filas + '</tbody></table>';
+  }
+
+  function mostrarResultadoFinal(data, accion, total, exitosos, errores) {
+    els.resultadoTitulo.textContent = accion === "subir" ? "Resultado — Subir a todas" : "Resultado — Bajar de todas";
+    els.resultadoResumen.textContent = total === 0 ? "No había nada para procesar." : (total + " publicaciones procesadas — " + exitosos + " OK, " + errores + " con error.");
+    els.btnReintentarFallidos.classList.add("oculto");
+    els.btnUsarSugerido.classList.add("oculto");
+    els.bloqueAplicarPctRevisar.classList.add("oculto");
+    renderTablaLog((data && data.log) || [], accion);
+    els.modalResultado.classList.remove("oculto");
+  }
+
+  els.btnCerrarResultado.addEventListener("click", function () { els.modalResultado.classList.add("oculto"); });
+
+  /* ============================================================
+     MODAL: % aplicados por campaña (editable, ordenable)
+     ============================================================ */
+  var pctAplicadosContexto = null; // { promotionId, promotionType }
+  var pctAplicadosOrden = { campo: "id", asc: true };
+
+  function abrirModalPctAplicados(promotionId, promotionType, nombre) {
+    pctAplicadosContexto = { promotionId: promotionId, promotionType: promotionType };
+    els.pctAplicadosNombreCampana.textContent = nombre;
+    pctAplicadosOrden = { campo: "id", asc: true };
+    actualizarFlechasOrden();
+
+    var estado = promoItemsState[promotionId];
+    if (!estado || !estado.activos) {
+      els.pctAplicadosEstado.textContent = "Todavía no se cargaron las publicaciones activas de esta campaña — esperá un segundo y volvé a abrir.";
+      els.pctAplicadosEstado.className = "estado err";
+      els.tablaPctAplicadosBody.innerHTML = "";
+      els.modalPctAplicados.classList.remove("oculto");
+      return;
+    }
+
+    els.pctAplicadosEstado.textContent = estado.activos.length === 0 ? "No hay publicaciones activas en esta campaña."
+      : (TIPOS_NECESITAN_PRECIO.indexOf(promotionType) === -1 ? "Este tipo lo gestiona ML automáticamente — el % es solo informativo, no editable." : "");
+    els.pctAplicadosEstado.className = "estado";
+    renderTablaPctAplicados(estado.activos);
+    els.modalPctAplicados.classList.remove("oculto");
+  }
+
+  function renderTablaPctAplicados(activos) {
+    var campo = pctAplicadosOrden.campo;
+    var asc = pctAplicadosOrden.asc;
+
+    var filas = activos.map(function (it) {
+      var pct = it.original_price > 0 ? Math.round((1 - it.price / it.original_price) * 1000) / 10 : 0;
+      return { id: it.id, original_price: it.original_price, price: it.price, min_discounted_price: it.min_discounted_price, max_discounted_price: it.max_discounted_price, pct: pct };
+    });
+
+    filas.sort(function (a, b) {
+      var va = a[campo], vb = b[campo];
+      if (typeof va === "string") { va = va.toLowerCase(); vb = vb.toLowerCase(); }
+      if (va < vb) return asc ? -1 : 1;
+      if (va > vb) return asc ? 1 : -1;
+      return 0;
+    });
+
+    var editable = pctAplicadosContexto && TIPOS_NECESITAN_PRECIO.indexOf(pctAplicadosContexto.promotionType) !== -1;
+
+    els.tablaPctAplicadosBody.innerHTML = filas.map(function (f) {
+      return "<tr data-fila-item='" + escapeHtml(f.id) + "'>" +
+        "<td>" + escapeHtml(f.id) + "</td>" +
+        "<td>$" + f.original_price + "</td>" +
+        "<td class='celda-pct'>" + f.pct + "%</td>" +
+        "<td class='celda-precio'>$" + f.price + "</td>" +
+        "<td style='display:flex; gap:6px; align-items:center;'>" +
+          (editable
+            ? "<input type='number' class='input-editar-pct' value='" + f.pct + "' min='1' max='99' step='0.1' style='width:70px;'>" +
+              "<button class='chico secondary btn-guardar-pct'>Guardar</button>"
+            : "<span style='color:var(--text-dim); font-size:0.75rem;'>gestiona ML</span>") +
+        "</td>" +
+      "</tr>";
+    }).join("");
+
+    if (!editable) return;
+
+    els.tablaPctAplicadosBody.querySelectorAll(".btn-guardar-pct").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var tr = btn.closest("tr");
+        var itemId = tr.getAttribute("data-fila-item");
+        var input = tr.querySelector(".input-editar-pct");
+        var nuevoPct = Number(input.value);
+        var filaData = filas.filter(function (f) { return f.id === itemId; })[0];
+        guardarPctFila(itemId, nuevoPct, tr, filaData);
+      });
+    });
+  }
+
+  function actualizarFlechasOrden() {
+    document.querySelectorAll("#tablaPctAplicados th[data-sort]").forEach(function (t) {
+      var esActivo = t.getAttribute("data-sort") === pctAplicadosOrden.campo;
+      t.classList.toggle("activo", esActivo);
+      var flecha = t.querySelector(".flecha-orden");
+      if (flecha) flecha.textContent = esActivo ? (pctAplicadosOrden.asc ? "▲" : "▼") : "";
+    });
+  }
+
+  document.querySelectorAll("#tablaPctAplicados th[data-sort]").forEach(function (th) {
+    th.addEventListener("click", function () {
+      var campo = th.getAttribute("data-sort");
+      if (pctAplicadosOrden.campo === campo) {
+        pctAplicadosOrden.asc = !pctAplicadosOrden.asc;
+      } else {
+        pctAplicadosOrden = { campo: campo, asc: true };
+      }
+      actualizarFlechasOrden();
+      var estado = pctAplicadosContexto ? promoItemsState[pctAplicadosContexto.promotionId] : null;
+      if (estado && estado.activos) renderTablaPctAplicados(estado.activos);
+    });
+  });
+
+  function guardarPctFila(itemId, nuevoPct, tr, filaData) {
+    if (!pctAplicadosContexto || !filaData) return;
+    if (!nuevoPct || nuevoPct <= 0 || nuevoPct >= 100) {
+      tr.querySelector(".input-editar-pct").style.borderColor = "var(--err)";
+      return;
+    }
+    tr.querySelector(".input-editar-pct").style.borderColor = "";
+    var btn = tr.querySelector(".btn-guardar-pct");
+    btn.disabled = true;
+    btn.textContent = "...";
+
+    var item = {
+      id: itemId, original_price: filaData.original_price,
+      min_discounted_price: filaData.min_discounted_price, max_discounted_price: filaData.max_discounted_price,
+      porcentaje_item: nuevoPct,
+    };
+
+    fetchConTimeout(URL_BULK, {
+      method: "POST",
+      headers: { Authorization: AUTH, "Content-Type": "application/json" },
+      body: JSON.stringify({ promotion_id: pctAplicadosContexto.promotionId, promotion_type: pctAplicadosContexto.promotionType, accion: "subir", items: [item], porcentaje_base: nuevoPct, excepciones: [] }),
+    }, TIMEOUT_TANDA_MS)
+      .then(function (res) {
+        if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error");
+        var log0 = (res.data.log || [])[0];
+        if (!log0) throw new Error("sin respuesta");
+
+        if (log0.estado === "APLICADO") {
+          var estado = promoItemsState[pctAplicadosContexto.promotionId];
+          if (estado) {
+            estado.activos = estado.activos.map(function (it) {
+              return it.id === itemId ? Object.assign({}, it, { price: log0.precio_aplicado }) : it;
+            });
+          }
+          tr.querySelector(".celda-pct").textContent = log0.porcentaje + "%";
+          tr.querySelector(".celda-precio").textContent = "$" + log0.precio_aplicado;
+          btn.textContent = "Guardado ✓";
+          setTimeout(function () { btn.textContent = "Guardar"; btn.disabled = false; }, 1500);
+        } else if (log0.estado === "REVISAR") {
+          btn.textContent = "Guardar";
+          btn.disabled = false;
+          alert("Ese % queda fuera de rango. Válido entre " + (log0.porcentaje_minimo != null ? log0.porcentaje_minimo : "?") + "% y " + (log0.porcentaje_maximo != null ? log0.porcentaje_maximo : "?") + "%. Sugerido ML: $" + log0.sugerido);
+        } else {
+          btn.textContent = "Guardar";
+          btn.disabled = false;
+          alert("Error: " + textoError(log0.detalle));
+        }
+      })
+      .catch(function (err) {
+        btn.textContent = "Guardar";
+        btn.disabled = false;
+        alert("Error: " + err.message);
+      });
+  }
+
+  els.btnCerrarPctAplicados.addEventListener("click", function () { els.modalPctAplicados.classList.add("oculto"); });
+
+  /* ============================================================
+     ACCIONES GLOBALES: Bajar TODAS / Subir TODAS (con % guardados)
+     ============================================================ */
+  var planBajarPendiente = null;
+
+  // Tipos "con precio" que el vendedor define -> se pueden reaplicar despues con
+  // "Subir TODAS (con los % guardados)". El resto de los tipos bajables tambien
+  // se sacan, pero para volver a sumarlos hay que usar "Subir a todas" por card
+  // (ML fija el precio, no hay % que reaplicar).
+  var TIPOS_REAPLICABLES = ["DEAL", "SELLER_CAMPAIGN"];
+  // El bulk-delete-por-item de ML NO puede bajar estos (los rechaza) -> se avisan aparte.
+  var TIPOS_NO_BAJABLES_BULK = ["DOD", "LIGHTNING"];
+
+  // Recorre TODAS las campañas activas y arma el plan del boton global.
+  // El motor es el bulk-delete-por-item: una llamada por publicacion saca al item
+  // de TODAS sus promos de una, asi que deduplicamos por item_id.
+  function recolectarPlanBajarTodo() {
+    var porItem = {};          // item_id -> true (dedup)
+    var filasSnapshot = [];    // solo tipos reaplicables (para "Subir TODAS")
+    var resumenReaplic = {};   // nombre campaña -> cantidad (se reaplican con %)
+    var resumenResumar = {};   // nombre campaña -> cantidad (se bajan, se re-suman a mano)
+    var noBajables = {};       // nombre campaña -> cantidad (DOD / relampago, no se pueden)
+
+    ultimasPromosActivas.forEach(function (p) {
+      if (!p.id) return;
+      var estado = promoItemsState[p.id];
+      if (!estado || !estado.activos || estado.activos.length === 0) return;
+      var nombre = p.name || p.id;
+      var esReaplic = TIPOS_REAPLICABLES.indexOf(p.type) !== -1;
+      var esNoBajable = TIPOS_NO_BAJABLES_BULK.indexOf(p.type) !== -1;
+
+      estado.activos.forEach(function (it) {
+        if (esNoBajable) {
+          noBajables[nombre] = (noBajables[nombre] || 0) + 1;
+          return; // no entran al bulk
+        }
+        porItem[it.id] = true;
+        if (esReaplic) {
+          resumenReaplic[nombre] = (resumenReaplic[nombre] || 0) + 1;
+          var pct = it.original_price > 0 ? Math.round((1 - it.price / it.original_price) * 1000) / 10 : 0;
+          filasSnapshot.push({ item_id: it.id, promotion_id: p.id, promotion_type: p.type, porcentaje: pct, precio_original: it.original_price });
+        } else {
+          resumenResumar[nombre] = (resumenResumar[nombre] || 0) + 1;
+        }
+      });
+    });
+
+    var itemIdsUnicos = Object.keys(porItem).map(function (id) { return { id: id }; });
+    return {
+      itemIdsUnicos: itemIdsUnicos,
+      totalItemsUnicos: itemIdsUnicos.length,
+      filasSnapshot: filasSnapshot,
+      resumenReaplic: resumenReaplic,
+      resumenResumar: resumenResumar,
+      noBajables: noBajables,
+    };
+  }
+
+  // Arma el bloque HTML de una seccion del modal (titulo + lista de campañas con conteo).
+  function seccionResumenBajar(titulo, mapaNombreCount, colorTitulo) {
+    var nombres = Object.keys(mapaNombreCount);
+    if (nombres.length === 0) return "";
+    var filas = nombres.map(function (n) {
+      return "<div>• " + escapeHtml(n) + " — " + mapaNombreCount[n] + " publicaciones</div>";
+    }).join("");
+    return '<div style="margin-top:10px;"><div style="font-weight:700; font-size:0.8rem; color:' + colorTitulo + ';">' + escapeHtml(titulo) + '</div>' + filas + '</div>';
+  }
+
+  els.btnBajarTodo.addEventListener("click", function () {
+    var plan = recolectarPlanBajarTodo();
+    var hayNoBajables = Object.keys(plan.noBajables).length > 0;
+
+    if (plan.totalItemsUnicos === 0) {
+      if (hayNoBajables) {
+        alert("Las únicas promos activas son Oferta del día / Relámpago, que ML no deja bajar desde acá. Se gestionan desde el panel de ML.");
+      } else {
+        alert("No hay publicaciones activas para bajar ahora mismo. Tip: usá \"Actualizar métricas\" o \"Ver candidatos/activos\" en las cards para que la app las cargue.");
+      }
+      return;
+    }
+
+    els.bajarTodoResumen1.textContent = "Esto va a sacar " + plan.totalItemsUnicos + " publicación(es) de todas sus promociones (una llamada por publicación):";
+    els.bajarTodoListaGrupos.innerHTML =
+      seccionResumenBajar("Se reaplican con \"Subir TODAS (con los % guardados)\":", plan.resumenReaplic, "var(--ok)") +
+      seccionResumenBajar("Se bajan, pero las volvés a sumar a mano (ML fija el precio):", plan.resumenResumar, "var(--amber)") +
+      (Object.keys(plan.noBajables).length > 0
+        ? seccionResumenBajar("No se pueden bajar desde acá (se gestionan en ML):", plan.noBajables, "var(--text-dim)")
+        : "");
+
+    planBajarPendiente = plan;
+    els.modalBajarTodo1.classList.remove("oculto");
+  });
+
+  els.btnCancelarBajarTodo1.addEventListener("click", function () {
+    planBajarPendiente = null;
+    els.modalBajarTodo1.classList.add("oculto");
+  });
+
+  els.btnContinuarBajarTodo1.addEventListener("click", function () {
+    els.modalBajarTodo1.classList.add("oculto");
+    els.inputConfirmarBajarTodo.value = "";
+    els.btnConfirmarBajarTodo2.disabled = true;
+    els.modalBajarTodo2.classList.remove("oculto");
+  });
+
+  els.inputConfirmarBajarTodo.addEventListener("input", function () {
+    els.btnConfirmarBajarTodo2.disabled = els.inputConfirmarBajarTodo.value.trim() !== "BAJAR TODO";
+  });
+
+  els.btnCancelarBajarTodo2.addEventListener("click", function () {
+    planBajarPendiente = null;
+    els.modalBajarTodo2.classList.add("oculto");
+  });
+
+  els.btnConfirmarBajarTodo2.addEventListener("click", function () {
+    if (!planBajarPendiente) return;
+    var plan = planBajarPendiente;
+    planBajarPendiente = null;
+    els.modalBajarTodo2.classList.add("oculto");
+
+    // Si no hay filas reaplicables, no llamamos al snapshot (rechaza filas vacias) y bajamos directo.
+    if (!plan.filasSnapshot || plan.filasSnapshot.length === 0) {
+      ejecutarBajaGlobalPorItem(plan);
+      return;
+    }
+
+    fetchConTimeout(URL_SNAPSHOT, {
+      method: "POST",
+      headers: { Authorization: AUTH, "Content-Type": "application/json" },
+      body: JSON.stringify({ filas: plan.filasSnapshot }),
+    })
+      .then(function (res) {
+        if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error guardando el respaldo");
+        ejecutarBajaGlobalPorItem(plan);
+      })
+      .catch(function (err) {
+        alert("No se pudo guardar el respaldo de % — se cancela para no perder esa info. " + err.message);
+      });
+  });
+
+  // Ejecuta el bulk-delete-por-item en tandas chicas, con progreso visible.
+  function ejecutarBajaGlobalPorItem(plan) {
+    var items = plan.itemIdsUnicos;
+    var logGlobal = [];
+    var exitosos = 0, parciales = 0, sinOfertas = 0, errores = 0;
+    var totalItems = items.length;
+    var procesados = 0;
+    var tandas = chunk(items, BATCH_SIZE);
+    var ti = 0;
+    var t0Bajar = Date.now();
+
+    els.resultadoTitulo.textContent = "Bajando TODAS las promociones...";
+    els.resultadoResumen.textContent = "Procesando 0/" + totalItems + " (estimado " + fmtSeg(totalItems * 0.5) + ")...";
+    els.resultadoTablaWrap.innerHTML = "";
+    els.btnReintentarFallidos.classList.add("oculto");
+    els.btnUsarSugerido.classList.add("oculto");
+    els.bloqueAplicarPctRevisar.classList.add("oculto");
+    els.modalResultado.classList.remove("oculto");
+
+    function siguienteTanda() {
+      if (ti >= tandas.length) {
+        els.resultadoTitulo.textContent = "Resultado — Bajar TODAS las promociones";
+        var resumen = totalItems + " publicación(es) procesada(s) — " + exitosos + " bajada(s), " + errores + " con error";
+        if (parciales > 0) resumen += ", " + parciales + " parcial(es)";
+        if (sinOfertas > 0) resumen += ", " + sinOfertas + " sin promos activas";
+        els.resultadoResumen.textContent = resumen + ".";
+        renderTablaLog(logGlobal, "bajar");
+        cargarEstadoSnapshot();
+        arrancarApp();
+        return;
+      }
+      var tanda = tandas[ti];
+      fetchConTimeout(URL_BULK, {
+        method: "POST",
+        headers: { Authorization: AUTH, "Content-Type": "application/json" },
+        body: JSON.stringify({ accion: "bajar_todo_item", items: tanda }),
+      }, TIMEOUT_TANDA_MS)
+        .then(function (res) {
+          if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error en tanda");
+          logGlobal = logGlobal.concat(res.data.log || []);
+          exitosos += res.data.exitosos || 0;
+          parciales += res.data.parciales || 0;
+          sinOfertas += res.data.sin_ofertas || 0;
+          errores += res.data.errores || 0;
+          procesados += tanda.length; ti++;
+          var restBajar = (Date.now() - t0Bajar) / 1000 / ti * (tandas.length - ti);
+          els.resultadoResumen.textContent = "Procesando " + procesados + "/" + totalItems + " (resta " + fmtSeg(restBajar) + ")...";
+          renderTablaLog(logGlobal, "bajar");
+          siguienteTanda();
+        })
+        .catch(function (err) {
+          els.resultadoTitulo.textContent = "Se cortó a mitad de camino";
+          els.resultadoResumen.textContent = procesados + "/" + totalItems + " procesadas antes del error (" + err.message + "). El respaldo de % (si había) ya está guardado — podés usar \"Subir TODAS (con los % guardados)\" cuando quieras para terminar.";
+          renderTablaLog(logGlobal, "bajar");
+          cargarEstadoSnapshot();
+        });
+    }
+
+    siguienteTanda();
+  }
+
+  function cargarEstadoSnapshot() {
+    fetchConTimeout(URL_SNAPSHOT, { headers: { Authorization: AUTH } })
+      .then(function (res) {
+        if (!res.data || !res.data.ok) return;
+        var filas = res.data.filas || [];
+        if (filas.length > 0) {
+          els.btnSubirTodoGuardado.classList.remove("oculto");
+          els.estadoSnapshot.textContent = filas.length + " publicaciones esperando volver a subirse.";
+          els.estadoSnapshot.className = "estado";
+        } else {
+          els.btnSubirTodoGuardado.classList.add("oculto");
+          els.estadoSnapshot.textContent = "";
+        }
+      })
+      .catch(function () { /* no crítico */ });
+  }
+
+  els.btnSubirTodoGuardado.addEventListener("click", function () {
+    els.btnSubirTodoGuardado.disabled = true;
+    fetchConTimeout(URL_SNAPSHOT, { headers: { Authorization: AUTH } })
+      .then(function (res) {
+        if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error");
+        var filas = res.data.filas || [];
+        if (filas.length === 0) { alert("No hay nada guardado para reaplicar."); return; }
+
+        var grupos = {};
+        filas.forEach(function (f) {
+          var key = f.promotion_id + "||" + f.promotion_type;
+          if (!grupos[key]) grupos[key] = { promotionId: f.promotion_id, promotionType: f.promotion_type, filas: [] };
+          grupos[key].filas.push(f);
+        });
+
+        var listaGrupos = Object.keys(grupos).map(function (k) { return grupos[k]; });
+        if (!confirm("Se van a reaplicar " + filas.length + " publicaciones con el % que tenían guardado, en " + listaGrupos.length + " campaña(s). ¿Continuar?")) return;
+
+        prepararYEjecutarRestore(listaGrupos);
+      })
+      .catch(function (err) { alert("Error leyendo el respaldo: " + err.message); })
+      .finally(function () { els.btnSubirTodoGuardado.disabled = false; });
+  });
+
+  function prepararYEjecutarRestore(gruposSnapshot) {
+    var promesas = gruposSnapshot.map(function (g) {
+      var url = URL_BULK + "?promotion_id=" + encodeURIComponent(g.promotionId) + "&promotion_type=" + encodeURIComponent(g.promotionType);
+      return fetchConTimeout(url, { headers: { Authorization: AUTH } }).then(function (res) {
+        var candidatosPorId = {};
+        if (res.data && res.data.ok) {
+          (res.data.items_candidatos || []).forEach(function (it) { candidatosPorId[it.id] = it; });
+        }
+        var items = [];
+        var idsSnapshotPorItemId = {};
+        g.filas.forEach(function (f) {
+          idsSnapshotPorItemId[f.item_id] = f.id;
+          var base = candidatosPorId[f.item_id];
+          if (!base) return; // ya no aparece como candidato -- se salta, queda en el respaldo para revisar a mano
+          items.push({ id: base.id, original_price: base.original_price, min_discounted_price: base.min_discounted_price, max_discounted_price: base.max_discounted_price, porcentaje_item: f.porcentaje });
+        });
+        return { promotionId: g.promotionId, promotionType: g.promotionType, nombre: g.promotionId, items: items, idsSnapshotPorItemId: idsSnapshotPorItemId };
+      });
+    });
+
+    Promise.all(promesas).then(function (preparados) {
+      ejecutarSubidaGlobal(preparados.filter(function (p) { return p.items.length > 0; }));
+    });
+  }
+
+  function ejecutarSubidaGlobal(grupos) {
+    if (grupos.length === 0) {
+      alert("Ninguna de las publicaciones guardadas aparece como candidata ahora mismo — revisalas a mano (puede que ya no tengan la invitación vigente).");
+      return;
+    }
+
+    var logGlobal = [];
+    var exitosos = 0, errores = 0, revisar = 0;
+    var idsSnapshotExitosos = [];
+    var totalItems = grupos.reduce(function (s, g) { return s + g.items.length; }, 0);
+    var procesados = 0;
+    var gi = 0;
+    var t0Subir = Date.now();
+
+    els.resultadoTitulo.textContent = "Subiendo TODAS (con % guardados)...";
+    els.resultadoResumen.textContent = "Procesando 0/" + totalItems + " (estimado " + fmtSeg(totalItems * 0.5) + ")...";
+    els.resultadoTablaWrap.innerHTML = "";
+    els.btnReintentarFallidos.classList.add("oculto");
+    els.btnUsarSugerido.classList.add("oculto");
+    els.bloqueAplicarPctRevisar.classList.add("oculto");
+    els.modalResultado.classList.remove("oculto");
+
+    function siguienteGrupo() {
+      if (gi >= grupos.length) {
+        els.resultadoTitulo.textContent = "Resultado — Subir TODAS (con % guardados)";
+        els.resultadoResumen.textContent = totalItems + " publicaciones procesadas — " + exitosos + " OK, " + errores + " con error, " + revisar + " en revisión.";
+        renderTablaLog(logGlobal, "subir");
+
+        if (idsSnapshotExitosos.length > 0) {
+          fetchConTimeout(URL_SNAPSHOT + "?ids=" + idsSnapshotExitosos.join(","), { method: "DELETE", headers: { Authorization: AUTH } })
+            .catch(function () { /* si falla el borrado del respaldo no es grave, quedan filas viejas */ })
+            .finally(function () { cargarEstadoSnapshot(); arrancarApp(); });
+        } else {
+          cargarEstadoSnapshot();
+          arrancarApp();
+        }
+        return;
+      }
+      var grupo = grupos[gi];
+      var tandas = chunk(grupo.items, BATCH_SIZE);
+      var ti = 0;
+      function siguienteTandaGrupo() {
+        if (ti >= tandas.length) { gi++; siguienteGrupo(); return; }
+        var tanda = tandas[ti];
+        fetchConTimeout(URL_BULK, {
+          method: "POST",
+          headers: { Authorization: AUTH, "Content-Type": "application/json" },
+          body: JSON.stringify({ promotion_id: grupo.promotionId, promotion_type: grupo.promotionType, accion: "subir", items: tanda, porcentaje_base: 15, excepciones: [] }),
+        }, TIMEOUT_TANDA_MS)
+          .then(function (res) {
+            if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error en tanda");
+            logGlobal = logGlobal.concat(res.data.log || []);
+            exitosos += res.data.exitosos || 0;
+            errores += res.data.errores || 0;
+            revisar += res.data.revisar || 0;
+            (res.data.log || []).forEach(function (l) {
+              if (l.estado === "APLICADO" && grupo.idsSnapshotPorItemId[l.item_id]) {
+                idsSnapshotExitosos.push(grupo.idsSnapshotPorItemId[l.item_id]);
+              }
+            });
+            procesados += tanda.length;
+            var restSubir = (Date.now() - t0Subir) / 1000 / procesados * (totalItems - procesados);
+            els.resultadoResumen.textContent = "Procesando " + procesados + "/" + totalItems + " (" + grupo.nombre + ", resta " + fmtSeg(restSubir) + ")...";
+            renderTablaLog(logGlobal, "subir");
+            ti++;
+            siguienteTandaGrupo();
+          })
+          .catch(function (err) {
+            els.resultadoTitulo.textContent = "Se cortó a mitad de camino";
+            els.resultadoResumen.textContent = procesados + "/" + totalItems + " procesadas antes del error (" + err.message + ").";
+            renderTablaLog(logGlobal, "subir");
+          });
+      }
+      siguienteTandaGrupo();
+    }
+
+    siguienteGrupo();
+  }
+
+  /* ============================================================
+     MÓDULO: Actualización masiva de precios de lista (por SKU)
+     Backend: Edge Function ml-precios-bulk (preview / aplicar).
+     ============================================================ */
+  var URL_PRECIOS = FN_BASE + "/ml-precios-bulk";
+  var BATCH_SKUS_PREVIEW = 8;                 // ≤ MAX_SKUS_POR_PREVIEW (12) del server
+  var filasPreviewPrecios = [];               // último preview
+  var filasResultadoPrecios = null;           // último aplicar (si ya se aplicó)
+
+  // --- pestañas ---
+  var reportesCargadosUnaVez = false;
+  function mostrarVista(cual) {
+    document.getElementById("vistaPromos").classList.toggle("oculto", cual !== "promos");
+    document.getElementById("vistaPrecios").classList.toggle("oculto", cual !== "precios");
+    document.getElementById("vistaReportes").classList.toggle("oculto", cual !== "reportes");
+    document.getElementById("tabPromos").classList.toggle("activa", cual === "promos");
+    document.getElementById("tabPrecios").classList.toggle("activa", cual === "precios");
+    document.getElementById("tabReportes").classList.toggle("activa", cual === "reportes");
+    if (cual === "reportes" && !reportesCargadosUnaVez) {
+      reportesCargadosUnaVez = true;
+      cargarReportes();
+    }
+  }
+  document.getElementById("tabPromos").addEventListener("click", function () { mostrarVista("promos"); });
+  document.getElementById("tabPrecios").addEventListener("click", function () { mostrarVista("precios"); });
+  document.getElementById("tabReportes").addEventListener("click", function () { mostrarVista("reportes"); });
+
+  /* ============================================================
+     REPORTES DEL USUARIO (premisa obligatoria del proyecto)
+     ============================================================ */
+  function fechaHoraCorta(iso) {
+    if (!iso) return "";
+    try {
+      var d = new Date(iso);
+      return d.toLocaleString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    } catch (e) { return iso; }
+  }
+
+  function archivoABase64(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () { resolve(reader.result); };
+      reader.onerror = function () { reject(new Error("No se pudo leer la imagen.")); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  document.getElementById("btnEnviarReporte").addEventListener("click", function () {
+    var btn = document.getElementById("btnEnviarReporte");
+    var estado = document.getElementById("estadoReporte");
+    var tipo = document.getElementById("reporteTipo").value;
+    var mensaje = document.getElementById("reporteMensaje").value.trim();
+    var archivoInput = document.getElementById("reporteImagen");
+    var archivo = archivoInput.files && archivoInput.files[0] ? archivoInput.files[0] : null;
+
+    estado.className = "estado";
+    if (!mensaje) { estado.textContent = "Contanos qué pasó antes de enviar."; estado.className = "estado err"; return; }
+    if (archivo && archivo.size > 5 * 1024 * 1024) { estado.textContent = "La imagen no puede pesar más de 5 MB."; estado.className = "estado err"; return; }
+
+    btn.disabled = true;
+    estado.textContent = "Enviando...";
+
+    var pImagen = archivo ? archivoABase64(archivo) : Promise.resolve(null);
+    pImagen
+      .then(function (imagenBase64) {
+        var body = { tipo: tipo, mensaje: mensaje };
+        if (imagenBase64) body.imagen_base64 = imagenBase64;
+        return fetchConTimeout(URL_REPORTES, { method: "POST", headers: { Authorization: AUTH, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      })
+      .then(function (res) {
+        if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error desconocido");
+        estado.textContent = "¡Reporte enviado! Gracias.";
+        estado.className = "estado ok";
+        document.getElementById("reporteMensaje").value = "";
+        archivoInput.value = "";
+        cargarReportes();
+      })
+      .catch(function (err) {
+        estado.textContent = "No se pudo enviar: " + err.message;
+        estado.className = "estado err";
+      })
+      .finally(function () { btn.disabled = false; });
+  });
+
+  var puedeGestionarEstadoReportes = false;
+
+  function cargarReportes() {
+    var cont = document.getElementById("listaReportes");
+    cont.innerHTML = '<div class="sin-reportes">Cargando reportes...</div>';
+    fetchConTimeout(URL_REPORTES, { headers: { Authorization: AUTH } })
+      .then(function (res) {
+        if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error");
+        puedeGestionarEstadoReportes = !!res.data.puede_gestionar_estado;
+        renderListaReportes(res.data.reportes || []);
+      })
+      .catch(function (err) {
+        cont.innerHTML = '<div class="sin-reportes">No se pudieron cargar los reportes: ' + escapeHtml(err.message) + '</div>';
+      });
+  }
+  document.getElementById("btnActualizarReportes").addEventListener("click", cargarReportes);
+
+  var ETIQUETA_ESTADO_REPORTE = { abierto: "Abierto", en_proceso: "En proceso", terminado: "Terminado" };
+
+  function renderListaReportes(reportes) {
+    var cont = document.getElementById("listaReportes");
+    if (reportes.length === 0) {
+      cont.innerHTML = '<div class="sin-reportes">Todavía no hay reportes cargados.</div>';
+      return;
+    }
+    cont.innerHTML = reportes.map(function (r) {
+      var tagTipo = r.tipo === "mejora" ? '<span class="tag-tipo mejora">💡 Mejora</span>' : '<span class="tag-tipo problema">🐞 Problema</span>';
+      var estadoActual = r.estado || "abierto";
+      var controlEstado;
+      if (puedeGestionarEstadoReportes) {
+        controlEstado = '<select class="selector-estado" data-cambiar-estado="' + r.id + '">' +
+          ["abierto", "en_proceso", "terminado"].map(function (e) {
+            return '<option value="' + e + '"' + (e === estadoActual ? " selected" : "") + '>' + ETIQUETA_ESTADO_REPORTE[e] + '</option>';
+          }).join("") +
+          '</select>';
+      } else {
+        controlEstado = '<span class="tag-estado' + (estadoActual !== "abierto" ? " " + estadoActual : "") + '">' + ETIQUETA_ESTADO_REPORTE[estadoActual] + '</span>';
+      }
+      var captura = r.captura_path ? ' · <a href="#" class="ver-captura" data-captura="' + escapeHtml(r.captura_path) + '">Ver captura</a>' : '';
+      return '<div class="fila-reporte">' +
+        '<div class="cabecera">' + tagTipo + controlEstado + '<span class="meta">' + escapeHtml(r.email || "") + ' — ' + fechaHoraCorta(r.creado_at) + '</span></div>' +
+        '<div class="mensaje">' + escapeHtml(r.mensaje) + captura + '</div>' +
+        '</div>';
+    }).join("");
+
+    cont.querySelectorAll("[data-captura]").forEach(function (a) {
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        var path = a.getAttribute("data-captura");
+        a.textContent = "Abriendo...";
+        fetchConTimeout(URL_REPORTES, { method: "POST", headers: { Authorization: AUTH, "Content-Type": "application/json" }, body: JSON.stringify({ accion: "firmar_url", captura_path: path }) })
+          .then(function (res) {
+            if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error");
+            window.open(res.data.url, "_blank", "noopener");
+            a.textContent = "Ver captura";
+          })
+          .catch(function (err) {
+            a.textContent = "Error: " + err.message;
+          });
+      });
+    });
+
+    cont.querySelectorAll("[data-cambiar-estado]").forEach(function (sel) {
+      sel.addEventListener("change", function () {
+        var id = Number(sel.getAttribute("data-cambiar-estado"));
+        var nuevoEstado = sel.value;
+        sel.disabled = true;
+        fetchConTimeout(URL_REPORTES, { method: "PATCH", headers: { Authorization: AUTH, "Content-Type": "application/json" }, body: JSON.stringify({ id: id, estado: nuevoEstado }) })
+          .then(function (res) {
+            if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error");
+            sel.disabled = false;
+          })
+          .catch(function (err) {
+            alert("No se pudo actualizar el estado: " + err.message);
+            sel.disabled = false;
+            cargarReportes();
+          });
+      });
+    });
+  }
+
+  // --- parsing de entrada ---
+  // Precio AR: "12.500"/"12500" -> 12500 ; "12.500,50"/"12500,50" -> 12500.5
+  // Precio AR robusto para montos enteros grandes (contexto inflacionario, sin centavos
+  // en la práctica): "." y "," se tratan como separador de MILES. Solo se interpreta
+  // como decimal cuando el ÚLTIMO separador va seguido de 1-2 dígitos (centavos reales).
+  // Ej: "41.169"->41169, "41,169"->41169, "41.169,00"->41169, "12500,50"->12500.5, "1.234.567"->1234567
+  function parsearPrecioAR(raw) {
+    if (raw == null) return NaN;
+    var s = String(raw).replace(/[^\d.,]/g, ""); // deja solo dígitos, punto y coma
+    if (s === "") return NaN;
+    var lastSep = Math.max(s.lastIndexOf(","), s.lastIndexOf("."));
+    var n;
+    if (lastSep === -1) {
+      n = Number(s);
+    } else {
+      var dec = s.slice(lastSep + 1);
+      if (dec.length >= 1 && dec.length <= 2) {
+        // centavos: parte entera (sin separadores) + los decimales
+        var ent = s.slice(0, lastSep).replace(/[.,]/g, "");
+        n = Number((ent || "0") + "." + dec);
+      } else {
+        // 3+ dígitos tras el último separador => separador de miles => entero
+        n = Number(s.replace(/[.,]/g, ""));
+      }
+    }
+    return isFinite(n) ? n : NaN;
+  }
+
+  // ---------- Grilla de entrada tipo Excel (2 columnas: SKU | Precio) ----------
+  var FILAS_INICIALES = 6;
+
+  function crearFilaEntrada(sku, precio) {
+    var tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td><input type="text" class="cel-sku" autocomplete="off" spellcheck="false"></td>' +
+      '<td><input type="text" class="cel-precio" inputmode="decimal" autocomplete="off"></td>' +
+      '<td class="acc"><button type="button" class="btn-x" title="Quitar fila">✕</button></td>';
+    var inpSku = tr.querySelector(".cel-sku"), inpPrecio = tr.querySelector(".cel-precio");
+    inpSku.value = sku || ""; inpPrecio.value = precio || "";
+    tr.querySelector(".btn-x").addEventListener("click", function () {
+      var body = document.getElementById("grillaBody");
+      if (body.rows.length > 1) tr.remove();
+      else { inpSku.value = ""; inpPrecio.value = ""; }
+    });
+    [inpSku, inpPrecio].forEach(function (inp, col) {
+      inp.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          var body = document.getElementById("grillaBody");
+          if (tr === body.rows[body.rows.length - 1]) agregarFilaEntrada().querySelector(".cel-sku").focus();
+          else body.rows[Array.prototype.indexOf.call(body.rows, tr) + 1].querySelector(".cel-sku").focus();
+        }
+      });
+      inp.addEventListener("paste", function (e) { manejarPastePrecios(e, tr, col); });
+    });
+    return tr;
+  }
+  function agregarFilaEntrada(sku, precio) {
+    var tr = crearFilaEntrada(sku, precio);
+    document.getElementById("grillaBody").appendChild(tr);
+    return tr;
+  }
+  // Pega un bloque de Excel (filas con \n, columnas con \t) desde la celda (fila, col) hacia abajo.
+  function manejarPastePrecios(e, trInicio, colInicio) {
+    var texto = (e.clipboardData || window.clipboardData).getData("text");
+    if (!texto || (texto.indexOf("\t") === -1 && texto.indexOf("\n") === -1)) return; // pegado de una sola celda: normal
+    e.preventDefault();
+    var body = document.getElementById("grillaBody");
+    var lineas = texto.replace(/\r/g, "").split("\n");
+    if (lineas.length && lineas[lineas.length - 1] === "") lineas.pop();
+    var idx = Array.prototype.indexOf.call(body.rows, trInicio);
+    lineas.forEach(function (linea, i) {
+      var cols = linea.split("\t");
+      var sku, precio;
+      if (colInicio === 0) { sku = (cols[0] || "").trim(); precio = (cols[1] || "").trim(); }
+      else { precio = (cols[0] || "").trim(); sku = (cols[1] || "").trim(); }
+      var fila = body.rows[idx + i] || agregarFilaEntrada();
+      if (sku !== "") fila.querySelector(".cel-sku").value = sku;
+      if (precio !== "") fila.querySelector(".cel-precio").value = precio;
+    });
+  }
+  function leerGrillaEntrada() {
+    var out = [];
+    Array.prototype.forEach.call(document.getElementById("grillaBody").rows, function (tr) {
+      var sku = tr.querySelector(".cel-sku").value.trim();
+      var precioRaw = tr.querySelector(".cel-precio").value.trim();
+      if (sku === "" && precioRaw === "") return;
+      var precio = parsearPrecioAR(precioRaw);
+      out.push({ sku: sku, precio: precio, error: sku === "" ? "falta SKU" : ((isFinite(precio) && precio > 0) ? null : "precio inválido") });
+    });
+    return out;
+  }
+  (function initGrilla() {
+    for (var i = 0; i < FILAS_INICIALES; i++) agregarFilaEntrada();
+    document.getElementById("btnAgregarFilaPrecio").addEventListener("click", function () {
+      agregarFilaEntrada().querySelector(".cel-sku").focus();
+    });
+  })();
+
+  document.getElementById("btnLimpiarPrecios").addEventListener("click", function () {
+    var body = document.getElementById("grillaBody");
+    body.innerHTML = "";
+    for (var i = 0; i < FILAS_INICIALES; i++) agregarFilaEntrada();
+    document.getElementById("estadoPrecios").textContent = "";
+    document.getElementById("panelResultadoPrecios").classList.add("oculto");
+    filasPreviewPrecios = []; filasResultadoPrecios = null; filtroEstadoPrecios = null;
+  });
+
+  document.getElementById("btnPreviewPrecios").addEventListener("click", previsualizarPrecios);
+
+  // ---------- Estimación de tiempo (1 GET por publicación) ----------
+  var SEG_POR_PUBLICACION_EST = 0.42;   // sleep 120ms + latencia media
+  var PUBLIC_POR_SKU_EST = 3.5;         // 659 publicaciones / 190 SKUs del catálogo
+  function fmtSeg(s) {
+    s = Math.max(1, Math.round(s));
+    if (s < 60) return "~" + s + "s";
+    var m = Math.floor(s / 60), r = s % 60;
+    return "~" + m + "m" + (r ? (" " + r + "s") : "");
+  }
+
+  function previsualizarPrecios() {
+    var est = document.getElementById("estadoPrecios");
+    var parsed = leerGrillaEntrada();
+    if (parsed.length === 0) { est.textContent = "Cargá al menos un SKU y su precio."; est.className = "estado err"; return; }
+
+    var conError = parsed.filter(function (p) { return p.error; });
+    var precioPorSku = {}, orden = [];
+    parsed.forEach(function (p) {
+      if (p.error) return;
+      if (precioPorSku[p.sku] === undefined) orden.push(p.sku);
+      precioPorSku[p.sku] = p.precio; // si se repite el SKU, gana el último
+    });
+    var skus = orden.map(function (s) { return { sku: s, precio: precioPorSku[s] }; });
+    if (skus.length === 0) { est.textContent = "No hay filas válidas. Revisá que cada fila tenga SKU y un precio > 0."; est.className = "estado err"; return; }
+
+    filasPreviewPrecios = []; filasResultadoPrecios = null; filtroEstadoPrecios = null;
+    var tandas = chunk(skus, BATCH_SKUS_PREVIEW), ti = 0, proc = 0;
+    var t0 = Date.now();
+    var estTotal = skus.length * PUBLIC_POR_SKU_EST * SEG_POR_PUBLICACION_EST;
+    document.getElementById("btnPreviewPrecios").disabled = true;
+    document.getElementById("btnAplicarPrecios").disabled = true;
+    document.getElementById("panelResultadoPrecios").classList.remove("oculto");
+    est.textContent = "Previsualizando 0/" + skus.length + " SKUs (estimado " + fmtSeg(estTotal) + ")..."; est.className = "estado";
+
+    function sig() {
+      if (ti >= tandas.length) {
+        conError.forEach(function (p) {
+          filasPreviewPrecios.push({ sku: p.sku || "(vacío)", item_id: null, title: null, estado: (p.error === "falta SKU" ? "SKU_NO_ENCONTRADO" : "PRECIO_INVALIDO"), detalle: p.error });
+        });
+        document.getElementById("btnPreviewPrecios").disabled = false;
+        est.textContent = "Preview listo en " + fmtSeg((Date.now() - t0) / 1000) + ". Revisá y editá lo que haga falta antes de aplicar."; est.className = "estado ok";
+        renderResumenPrecios();
+        renderTablaPrecios();
+        var hayOk = filasPreviewPrecios.some(function (f) { return f.estado === "OK"; });
+        document.getElementById("btnAplicarPrecios").disabled = !hayOk;
+        return;
+      }
+      var tanda = tandas[ti];
+      fetchConTimeout(URL_PRECIOS, {
+        method: "POST",
+        headers: { Authorization: AUTH, "Content-Type": "application/json" },
+        body: JSON.stringify({ accion: "preview", skus: tanda }),
+      }, TIMEOUT_TANDA_MS)
+        .then(function (res) {
+          if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error en el preview");
+          filasPreviewPrecios = filasPreviewPrecios.concat(res.data.filas || []);
+          proc += tanda.length; ti++;
+          var transc = (Date.now() - t0) / 1000;
+          var restante = ti > 0 ? (transc / ti) * (tandas.length - ti) : estTotal;
+          est.textContent = "Previsualizando " + proc + "/" + skus.length + " SKUs (resta " + fmtSeg(restante) + ")...";
+          renderResumenPrecios();
+          renderTablaPrecios();
+          sig();
+        })
+        .catch(function (err) {
+          est.textContent = "Se cortó el preview: " + err.message + " (revisá y reintentá)."; est.className = "estado err";
+          document.getElementById("btnPreviewPrecios").disabled = false;
+          renderResumenPrecios(); renderTablaPrecios();
+        });
+    }
+    sig();
+  }
+
+  var ETIQUETA_ESTADO_PRECIO = {
+    OK: "Se actualiza", APLICADO: "Aplicado",
+    REVISAR_VARIACIONES: "Revisar (variaciones)",
+    OMITIDA_STATUS: "Omitida (cerrada)", OMITIDA_TOPE: "Omitida (tope)",
+    SKU_NO_ENCONTRADO: "SKU no encontrado", PRECIO_INVALIDO: "Precio inválido", ERROR: "Error",
+  };
+  function claseEstadoPrecio(estado) {
+    if (estado === "OK" || estado === "APLICADO") return "APLICADO";
+    if (estado === "REVISAR_VARIACIONES" || estado === "OMITIDA_STATUS" || estado === "OMITIDA_TOPE") return "REVISAR";
+    return "ERROR";
+  }
+  function fmtPrecio(n) {
+    if (n == null || n === "" || isNaN(Number(n))) return "—";
+    return "$" + Number(n).toLocaleString("es-AR");
+  }
+  function celdaDelta(pct) {
+    if (pct == null) return "—";
+    var cls = pct > 0 ? "delta-sube" : (pct < 0 ? "delta-baja" : "");
+    var signo = pct > 0 ? "+" : "";
+    return '<span class="' + cls + '">' + signo + pct + "%</span>";
+  }
+
+  // ---------- Filtro por tarjeta de estado (null = todos) ----------
+  var filtroEstadoPrecios = null;
+  var GRUPOS_FILTRO = {
+    OK: ["OK", "APLICADO"],
+    REVISAR: ["REVISAR_VARIACIONES"],
+    OMITIDAS: ["OMITIDA_STATUS", "OMITIDA_TOPE"],
+    PROBLEMA: ["SKU_NO_ENCONTRADO", "PRECIO_INVALIDO", "ERROR"],
+  };
+  function filaEditablePrecio(f) { return f.estado === "OK" && !filasResultadoPrecios; }
+
+  function renderTablaPrecios() {
+    var esResultado = !!filasResultadoPrecios;
+    var fuente = esResultado ? filasResultadoPrecios : filasPreviewPrecios;
+    var colPrecio = esResultado ? "Después" : "Nuevo (editable)";
+    var estadosVisibles = filtroEstadoPrecios ? GRUPOS_FILTRO[filtroEstadoPrecios] : null;
+    var thead = "<thead><tr><th>SKU</th><th>Publicación</th><th>Estado</th><th class='num'>Antes</th><th class='num'>" + colPrecio + "</th><th class='num'>Δ%</th></tr></thead>";
+    var body = "";
+    fuente.forEach(function (f, idx) {
+      if (estadosVisibles && estadosVisibles.indexOf(f.estado) === -1) return;
+      var precioDespues = esResultado ? f.precio_despues : f.precio_nuevo;
+      var pub = f.item_id
+        ? '<a href="https://articulo.mercadolibre.com.ar/' + escapeHtml(String(f.item_id).replace("MLA", "MLA-")) + '" target="_blank" rel="noopener" style="color:var(--amber);text-decoration:none;">' + escapeHtml(f.item_id) + "</a>" + (f.title ? '<div style="color:var(--text-dim);font-size:0.72rem;">' + escapeHtml(String(f.title).slice(0, 60)) + "</div>" : "")
+        : (f.title ? '<span style="color:var(--text-dim);">' + escapeHtml(String(f.title).slice(0, 60)) + "</span>" : "—");
+      var detalle = f.detalle ? '<div style="color:var(--text-dim);font-size:0.7rem;">' + escapeHtml(textoError(f.detalle)) + "</div>" : "";
+      var filaCls = f.warning_grande ? ' class="fila-warning"' : "";
+      var celdaNuevo = filaEditablePrecio(f)
+        ? '<input type="text" class="precio-edit" inputmode="decimal" data-idx="' + idx + '" value="' + (f.precio_nuevo != null ? f.precio_nuevo : "") + '">'
+        : fmtPrecio(precioDespues);
+      body += "<tr" + filaCls + "><td>" + escapeHtml(f.sku || "—") + "</td><td>" + pub + "</td>" +
+        "<td><span class='tag-log " + claseEstadoPrecio(f.estado) + "'>" + escapeHtml(ETIQUETA_ESTADO_PRECIO[f.estado] || f.estado) + "</span>" +
+        (f.warning_grande ? ' ⚠️' : "") + detalle + "</td>" +
+        "<td class='num'>" + fmtPrecio(f.precio_antes) + "</td>" +
+        "<td class='num'>" + celdaNuevo + "</td>" +
+        "<td class='num'>" + celdaDelta(f.pct) + "</td></tr>";
+    });
+    var tabla = document.getElementById("tablaPrecios");
+    tabla.innerHTML = thead + "<tbody>" + body + "</tbody>";
+    // edición de precio por fila
+    tabla.querySelectorAll("input.precio-edit").forEach(function (inp) {
+      inp.addEventListener("change", function () {
+        var idx = Number(inp.getAttribute("data-idx"));
+        var f = filasPreviewPrecios[idx];
+        if (!f) return;
+        var nuevo = parsearPrecioAR(inp.value);
+        if (isFinite(nuevo) && nuevo > 0) {
+          f.precio_nuevo = nuevo;
+          f.pct = (f.precio_antes > 0) ? Math.round(((nuevo - f.precio_antes) / f.precio_antes) * 1000) / 10 : null;
+          f.warning_grande = f.pct != null && Math.abs(f.pct) >= 40;
+        }
+        renderTablaPrecios();
+      });
+    });
+  }
+
+  function renderResumenPrecios() {
+    var c = { OK: 0, REVISAR_VARIACIONES: 0, OMITIDA_STATUS: 0, OMITIDA_TOPE: 0, SKU_NO_ENCONTRADO: 0, PRECIO_INVALIDO: 0, ERROR: 0 };
+    filasPreviewPrecios.forEach(function (f) { if (c[f.estado] != null) c[f.estado]++; });
+    var omit = c.OMITIDA_STATUS + c.OMITIDA_TOPE;
+    var probl = c.SKU_NO_ENCONTRADO + c.PRECIO_INVALIDO + c.ERROR;
+    function kpi(filtro, help, label, valor) {
+      var activo = filtroEstadoPrecios === filtro ? " filtro-activo" : "";
+      return '<div class="kpi clickable' + activo + '" data-filtro="' + filtro + '">' + kpiHelp(help) + ' ' + label + ' <b>' + valor + '</b></div>';
+    }
+    document.getElementById("resumenPrecios").innerHTML =
+      kpi("OK", "Publicaciones activas/pausadas que se van a actualizar. Solo estas se aplican. Clic para filtrar la tabla.", "A actualizar", c.OK) +
+      kpi("REVISAR", "Publicaciones con variaciones: el precio va por variación, no se toca desde acá. Clic para filtrar.", "A revisar", c.REVISAR_VARIACIONES) +
+      kpi("OMITIDAS", "Publicaciones cerradas/finalizadas que ML no deja editar, o que superaron el tope por tanda. Clic para filtrar.", "Omitidas", omit) +
+      kpi("PROBLEMA", "SKU sin publicación en el mapeo, precio inválido, o error consultando ML. Clic para filtrar.", "Con problema", probl);
+    document.querySelectorAll("#resumenPrecios .kpi.clickable").forEach(function (k) {
+      k.addEventListener("click", function (e) {
+        if (e.target.closest && e.target.closest(".kpi-help")) return; // el "?" abre su globo, no filtra
+        var f = k.getAttribute("data-filtro");
+        filtroEstadoPrecios = (filtroEstadoPrecios === f) ? null : f;
+        renderResumenPrecios();
+        renderTablaPrecios();
+      });
+    });
+  }
+
+  // --- exportar CSV (de resultado si ya se aplicó, si no del preview) ---
+  document.getElementById("btnExportarPrecios").addEventListener("click", function () {
+    var esResultado = !!filasResultadoPrecios;
+    var filas = esResultado ? filasResultadoPrecios : filasPreviewPrecios;
+    if (!filas || filas.length === 0) { alert("No hay nada para exportar todavía."); return; }
+    var cab = ["sku", "item_id", "titulo", "estado", "precio_antes", esResultado ? "precio_despues" : "precio_nuevo", "pct_dif", "detalle"];
+    var lineas = [cab.join(",")];
+    filas.forEach(function (f) {
+      var precioDespues = esResultado ? f.precio_despues : f.precio_nuevo;
+      var fila = [f.sku, f.item_id, f.title, f.estado, f.precio_antes, precioDespues, f.pct, (f.detalle != null ? textoError(f.detalle) : "")];
+      lineas.push(fila.map(function (v) {
+        var s = v == null ? "" : String(v);
+        return '"' + s.replace(/"/g, '""') + '"';
+      }).join(","));
+    });
+    var blob = new Blob(["﻿" + lineas.join("\n")], { type: "text/csv;charset=utf-8;" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "precios_grafica_limite_" + new Date().toISOString().slice(0, 10) + ".csv";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  });
+
+  // --- aplicar ---
+  document.getElementById("btnAplicarPrecios").addEventListener("click", function () {
+    var ok = filasPreviewPrecios.filter(function (f) { return f.estado === "OK"; });
+    if (ok.length === 0) return;
+    document.getElementById("aplicarPreciosResumen").textContent = "Vas a aplicar el precio nuevo a " + ok.length + " publicación(es) activa(s) en Mercado Libre.";
+    document.getElementById("inputConfirmarAplicarPrecios").value = "";
+    document.getElementById("btnConfirmarAplicarPrecios").disabled = true;
+    document.getElementById("modalAplicarPrecios").classList.remove("oculto");
+  });
+  document.getElementById("inputConfirmarAplicarPrecios").addEventListener("input", function () {
+    document.getElementById("btnConfirmarAplicarPrecios").disabled = this.value.trim() !== "APLICAR PRECIOS";
+  });
+  document.getElementById("btnCancelarAplicarPrecios").addEventListener("click", function () {
+    document.getElementById("modalAplicarPrecios").classList.add("oculto");
+  });
+  document.getElementById("btnConfirmarAplicarPrecios").addEventListener("click", ejecutarAplicarPrecios);
+
+  function ejecutarAplicarPrecios() {
+    document.getElementById("modalAplicarPrecios").classList.add("oculto");
+    var ok = filasPreviewPrecios.filter(function (f) { return f.estado === "OK"; })
+      .map(function (f) { return { item_id: f.item_id, sku: f.sku, precio: f.precio_nuevo }; });
+    var est = document.getElementById("estadoAplicarPrecios");
+    if (ok.length === 0) return;
+
+    var tandas = chunk(ok, BATCH_SIZE), ti = 0, proc = 0;
+    var logAcum = [], aplicados = 0, errores = 0;
+    var t0Aplicar = Date.now();
+    document.getElementById("btnAplicarPrecios").disabled = true;
+    document.getElementById("btnPreviewPrecios").disabled = true;
+    est.textContent = "Aplicando 0/" + ok.length + " (estimado " + fmtSeg(ok.length * 0.7) + ")..."; est.className = "estado";
+
+    function sig() {
+      if (ti >= tandas.length) {
+        filasResultadoPrecios = logAcum;
+        filtroEstadoPrecios = null;
+        est.textContent = "Listo — " + aplicados + " aplicados, " + errores + " con error. (Para volver a operar, previsualizá de nuevo.)";
+        est.className = errores ? "estado err" : "estado ok";
+        document.getElementById("btnPreviewPrecios").disabled = false;
+        renderResumenPrecios();
+        renderTablaPrecios();
+        return;
+      }
+      var tanda = tandas[ti];
+      fetchConTimeout(URL_PRECIOS, {
+        method: "POST",
+        headers: { Authorization: AUTH, "Content-Type": "application/json" },
+        body: JSON.stringify({ accion: "aplicar", items: tanda }),
+      }, TIMEOUT_TANDA_MS)
+        .then(function (res) {
+          if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error aplicando");
+          logAcum = logAcum.concat(res.data.log || []);
+          aplicados += res.data.aplicados || 0;
+          errores += res.data.errores || 0;
+          proc += tanda.length; ti++;
+          var restApl = (Date.now() - t0Aplicar) / 1000 / ti * (tandas.length - ti);
+          est.textContent = "Aplicando " + proc + "/" + ok.length + " (resta " + fmtSeg(restApl) + ")...";
+          filasResultadoPrecios = logAcum; renderTablaPrecios();
+          sig();
+        })
+        .catch(function (err) {
+          filasResultadoPrecios = logAcum;
+          est.textContent = "Se cortó: " + err.message + " (" + proc + "/" + ok.length + " hechos). Podés previsualizar de nuevo para ver el estado real."; est.className = "estado err";
+          document.getElementById("btnPreviewPrecios").disabled = false;
+          renderResumenPrecios(); renderTablaPrecios();
+        });
+    }
+    sig();
+  }
+})();
+</script>
+</body>
+</html>
