@@ -144,7 +144,10 @@
   .desglose-aporte { width: 100%; font-size: 0.75rem; margin-top: 6px; padding: 5px 8px; border-radius: 6px; background: var(--panel-2); border: 1px solid var(--panel-border); }
   .aporte-celda { font-size: 0.75rem; color: var(--text-dim); white-space: nowrap; }
   .aporte-celda b { color: var(--text); }
-  .nota-escalones { display: block; font-size: 0.7rem; color: var(--text-dim); margin-top: 3px; line-height: 1.3; }
+  /* white-space normal: la celda de escalones es td.num (nowrap) y la nota ensanchaba la tabla */
+  .nota-escalones { display: block; font-size: 0.7rem; color: var(--text-dim); margin-top: 3px; line-height: 1.3; white-space: normal; min-width: 150px; max-width: 220px; margin-left: auto; text-align: right; }
+  .tabla-precios td.td-may .quitar-esc, .tabla-precios td.td-may .may-ok { white-space: normal; }
+  .tabla-precios td .aviso-may { min-width: 160px; }
 
   .instancia-acciones { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
   .conteo-preview { font-size: 0.75rem; color: var(--text-dim); }
@@ -265,7 +268,10 @@
     .esc-lista{font-size:0.74rem;line-height:1.45;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
     .th-may label{display:inline-flex;gap:5px;align-items:center;margin:0;cursor:pointer;color:inherit;font-weight:600;}
     .grilla-entrada td.td-may{text-align:center;}
-    .grilla-entrada input.cel-may{width:18px;height:18px;padding:0;accent-color:var(--amber);cursor:pointer;}
+    .grilla-entrada select.cel-may{width:auto;min-width:92px;padding:4px 6px;font-size:0.8rem;border-radius:6px;cursor:pointer;}
+    .grilla-entrada select.cel-may.may-quitar,select.sel-esc.may-quitar{border-color:var(--danger,#c0392b);color:var(--danger,#c0392b);font-weight:600;}
+    select.sel-esc{font-size:0.72rem;padding:2px 4px;border-radius:6px;margin-bottom:3px;cursor:pointer;}
+    .quitar-esc{font-size:0.72rem;color:var(--danger,#c0392b);font-weight:600;text-align:right;}
     .chk-esc{accent-color:var(--amber);cursor:pointer;vertical-align:middle;margin-right:4px;}
     .grilla-entrada th{text-align:left;padding:4px 8px;color:var(--text-dim);font-size:0.72rem;font-weight:600;border-bottom:1px solid var(--panel-border);}
     .grilla-entrada td{padding:0;border:1px solid var(--panel-border);}
@@ -428,8 +434,8 @@
     <div class="panel" style="border-color:var(--amber-dim);">
       <label style="margin:0;color:var(--amber);font-weight:600;">💲 Actualización masiva de precios de lista y mayorista</label>
       <p style="font-size:0.8rem;color:var(--text-dim);margin:6px 0 10px;">
-        Cargá <b>SKU</b> y <b>precio de lista</b>, y tildá <b>Mayorista</b> para cargarle también los <b>escalones mayoristas</b> de abajo (o copiá las columnas de Excel y pegalas en la primera celda: se completa sola; en la columna Mayorista vale "si"/"no").
-        Podés cambiar solo el precio, solo los escalones (precio vacío + Mayorista tildado), o los dos. Se aplica a <b>todas las publicaciones activas y pausadas</b> de ese SKU. Formato de precio AR: <code>12.500</code> o <code>12500</code> (decimales con coma, ej. <code>12500,50</code>).
+        Cargá <b>SKU</b> y <b>precio de lista</b>, y en <b>Mayorista</b> elegí <b>Sí</b> para cargarle también los <b>escalones mayoristas</b> de abajo, <b>No</b> para no tocarlos o <b>Quitar</b> para borrárselos (o copiá las columnas de Excel y pegalas en la primera celda: se completa sola; en la columna Mayorista vale "si"/"no"/"quitar").
+        Podés cambiar solo el precio, solo los escalones (precio vacío + Mayorista en Sí o Quitar), o los dos. Se aplica a <b>todas las publicaciones activas y pausadas</b> de ese SKU. Formato de precio AR: <code>12.500</code> o <code>12500</code> (decimales con coma, ej. <code>12500,50</code>).
         Primero previsualizás (no toca nada), revisás el antes → después, y recién ahí aplicás.
       </p>
       <!-- Escalones mayoristas: preset compartido (lo edita Gerencia). Se guarda en app_config vía ml-precios-bulk. -->
@@ -456,7 +462,7 @@
       </div>
       <div style="overflow-x:auto;">
         <table class="grilla-entrada" id="grillaEntrada">
-          <thead><tr><th>SKU</th><th>Precio lista</th><th class="th-may"><label title="Tildar / destildar todas las filas"><input type="checkbox" id="chkMayTodos" class="chk-esc" checked> Mayorista</label></th><th></th></tr></thead>
+          <thead><tr><th>SKU</th><th>Precio lista</th><th class="th-may"><label for="selMayTodos" style="display:inline;margin:0;">Mayorista</label> <select id="selMayTodos" class="sel-esc" title="Cambia la opción de todas las filas (y la de las filas nuevas)"><option value="si">Sí a todas</option><option value="no">No a todas</option><option value="quitar">Quitar a todas</option></select></th><th></th></tr></thead>
           <tbody id="grillaBody"></tbody>
         </table>
       </div>
@@ -675,8 +681,9 @@
     <h3>Escalones mayoristas (precio por cantidad)</h3>
     <p>En Mercado Libre, el "precio por cantidad" es un precio por unidad más bajo cuando alguien compra <b>desde N unidades</b>, y <b>solo lo ven los compradores empresa</b> (cuentas con factura A). La app lo maneja con <b>escalones</b>: por ejemplo "desde 2 u. 5% menos", "desde 4 u. 8% menos", "desde 5 u. 10% menos". ML permite <b>hasta 5 escalones</b> por publicación, con unidades que crecen y un precio que baja en cada escalón.</p>
     <p><b>Quién los define:</b> los escalones son un <b>preset compartido</b> que carga <b>Gerencia</b> con "✏️ Editar escalones" (arriba de la tabla). Stock los ve y los usa, pero no los puede cambiar. Se guardan en la base, así que todos usan los mismos desde cualquier compu.</p>
-    <p><b>Cómo se aplican:</b> en la tabla, tildá <b>Mayorista</b> en las filas que querés que lleven los escalones (el tilde del encabezado marca o desmarca todas; al pegar desde Excel, la tercera columna acepta "si"/"no"). Podés dejar el precio de lista vacío para cargar <b>solo los escalones</b> sobre la lista actual. Los montos <b>no se escriben a mano</b>: se calculan como % sobre el <b>precio de lista final</b> de cada publicación (el nuevo si lo cambiás, el actual si no) y se redondean a pesos. Por eso, cuando subís la lista por inflación, alcanza con volver a aplicar con Mayorista tildado para que los escalones acompañen.</p>
-    <p><b>Qué muestra el preview:</b> los <b>escalones actuales</b> de cada publicación y los <b>nuevos</b> con su monto y %. Podés destildar Mayorista en cualquier fila antes de aplicar. Te marca con ⚠️ dos casos: si la publicación tiene una <b>promo vigente más barata</b> que algún escalón (el comprador empresa paga el precio más bajo disponible, así que ese escalón no sirve mientras dure la promo), y si cambiás la lista <b>sin</b> recalcular escalones que ya tenía (quedan en monto fijo y se desalinean). Al aplicar, la app confirma contra la respuesta de ML que todos los escalones quedaron cargados ("✓ confirmado en ML"); cargar escalones <b>reemplaza</b> los que tuviera la publicación. Si ML rechaza por permisos, la cuenta de ML no tiene habilitado el precio por cantidad (B2B).</p>
+    <p><b>Cómo se aplican:</b> en la tabla, poné <b>Mayorista = Sí</b> en las filas que querés que lleven los escalones (el selector del encabezado cambia todas las filas; al pegar desde Excel, la tercera columna acepta "si"/"no"/"quitar"). Podés dejar el precio de lista vacío para cargar <b>solo los escalones</b> sobre la lista actual. Los montos <b>no se escriben a mano</b>: se calculan como % sobre el <b>precio de lista final</b> de cada publicación (el nuevo si lo cambiás, el actual si no) y se redondean a pesos. Por eso, cuando subís la lista por inflación, alcanza con volver a aplicar con Mayorista en Sí para que los escalones acompañen.</p>
+    <p><b>Quitar los escalones:</b> poné <b>Mayorista = Quitar</b> en la fila del SKU (con o sin precio nuevo) y previsualizá. Se borran <b>todos</b> los escalones de <b>todas</b> las publicaciones activas y pausadas de ese SKU, y el comprador empresa vuelve a ver el precio de lista. El preview muestra "✕ se quitan todos" y el conteo "Se quitan escalones"; si la publicación no tenía escalones, esa fila queda "Sin cambios". También podés cambiar a "Quitar escalones" fila por fila en el preview. Al aplicar, la app verifica en ML que no quedó ninguno ("✓ confirmado en ML"); si la publicación tiene una promo más barata, ML no muestra los escalones y queda <b>"sin confirmar"</b>: revisalo cuando termine la promo.</p>
+    <p><b>Qué muestra el preview:</b> los <b>escalones actuales</b> de cada publicación y los <b>nuevos</b> con su monto y %. Podés cambiar la opción de escalones (aplicar / sin cambio / quitar) en cualquier fila antes de aplicar. Te marca con ⚠️ dos casos: si la publicación tiene una <b>promo vigente más barata</b> que algún escalón (el comprador empresa paga el precio más bajo disponible, así que ese escalón no sirve mientras dure la promo), y si cambiás la lista <b>sin</b> recalcular escalones que ya tenía (quedan en monto fijo y se desalinean). Al aplicar, la app confirma contra la respuesta de ML que todos los escalones quedaron cargados ("✓ confirmado en ML"); cargar escalones <b>reemplaza</b> los que tuviera la publicación. Si ML rechaza por permisos, la cuenta de ML no tiene habilitado el precio por cantidad (B2B).</p>
     <p><b>Promo activa tapa los escalones:</b> mientras una publicación tiene una promo más barata, Mercado Libre <b>no muestra</b> su precio por cantidad (ni en la publicación ni por API), aunque esté cargado. Por eso la app guarda un registro de los escalones que se cargan <b>desde acá</b>: en "Escalones actuales" vas a ver "Según lo cargado desde la app el dd/mm" cuando el dato sale de ese registro, o "no visible" si hay promo y no hay registro (puede que se hayan cargado desde el panel de ML). Cuando termina la promo, los escalones vuelven a aparecer solos.</p>
     <h3>Catálogo de publicaciones: cómo encuentra cada SKU</h3>
     <p>Para saber a qué publicaciones aplicar un precio, la app usa un <b>catálogo</b> guardado en la base con el SKU de cada publicación (y de cada variación). Ese catálogo <b>se actualiza solo todas las mañanas</b>, entre las 5 y las 8: recorre todas las publicaciones activas y pausadas de Mercado Libre, suma las nuevas y saca las cerradas o las que cambiaron de SKU. Si necesitás que tome algo recién publicado, tocá <b>"🔄 Actualizar catálogo ahora"</b> en esta pestaña (tarda alrededor de un minuto).</p>
@@ -906,7 +913,7 @@
 
   // --- Tickets (módulo transversal: mismo backend para todas las apps) ---
   var TICKETS_APP_ID = "grafica-promociones"; // identifica a ESTA app en el embudo común (cambiar al clonar/replicar)
-  var APP_VERSION = "2026-09-28.4";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
+  var APP_VERSION = "2026-09-28.5";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
 
   // Captura de errores recientes (se adjuntan como contexto técnico a los tickets). Buffer de 5.
   var ERRORES_RECIENTES = [];
@@ -3024,34 +3031,48 @@
     return isFinite(n) ? n : NaN;
   }
 
-  // ---------- Grilla de entrada tipo Excel (3 columnas: SKU | Precio lista | Mayorista sí/no) ----------
+  // ---------- Grilla de entrada tipo Excel (3 columnas: SKU | Precio lista | Mayorista sí/no/quitar) ----------
   // Para sumar una columna: agregala a COLS_GRILLA (clase del input) y leela en leerGrillaEntrada().
   var FILAS_INICIALES = 6;
   var COLS_GRILLA = ["cel-sku", "cel-precio", "cel-may"];
 
-  // "si"/"no" pegado desde Excel -> boolean (null = no se reconoce y se deja como estaba)
-  function parsearSiNo(v) {
+  // Columna Mayorista (v2026-09-28.5): "si" = aplicar los escalones del preset · "no" = no tocarlos ·
+  // "quitar" = borrar TODOS los escalones de las publicaciones de ese SKU.
+  var OPCIONES_MAYORISTA = [
+    { v: "si", t: "Sí" },
+    { v: "no", t: "No" },
+    { v: "quitar", t: "Quitar" },
+  ];
+  // Texto pegado desde Excel -> "si" | "no" | "quitar" (null = no se reconoce y se deja como estaba)
+  function parsearMayorista(v) {
     var t = String(v || "").trim().toLowerCase();
-    if (/^(s|si|sí|x|1|true|verdadero|ok)$/.test(t)) return true;
-    if (/^(n|no|0|false|falso|-)$/.test(t)) return false;
+    if (/^(s|si|sí|x|1|true|verdadero|ok|aplicar)$/.test(t)) return "si";
+    if (/^(n|no|0|false|falso|-)$/.test(t)) return "no";
+    if (/^(q|quitar|sacar|borrar|eliminar)$/.test(t)) return "quitar";
     return null;
   }
-  function mayoristaPorDefecto() { var c = document.getElementById("chkMayTodos"); return c ? c.checked : true; }
+  function mayoristaPorDefecto() { var c = document.getElementById("selMayTodos"); return c ? c.value : "si"; }
+  function htmlOpcionesMayorista(valor) {
+    return OPCIONES_MAYORISTA.map(function (o) { return '<option value="' + o.v + '"' + (o.v === valor ? " selected" : "") + ">" + o.t + "</option>"; }).join("");
+  }
+  function marcarSelectMayorista(sel) { sel.classList.toggle("may-quitar", sel.value === "quitar"); }
 
   function crearFilaEntrada(sku, precio, mayorista) {
     var tr = document.createElement("tr");
     tr.innerHTML =
       '<td><input type="text" class="cel-sku" autocomplete="off" spellcheck="false"></td>' +
       '<td><input type="text" class="cel-precio" inputmode="decimal" autocomplete="off" placeholder="sin cambio"></td>' +
-      '<td class="td-may"><input type="checkbox" class="cel-may" title="Cargarle a este SKU los escalones mayoristas"></td>' +
+      '<td class="td-may"><select class="cel-may" title="Sí: le carga los escalones del preset · No: no los toca · Quitar: le borra todos los escalones">' + htmlOpcionesMayorista("si") + '</select></td>' +
       '<td class="acc"><button type="button" class="btn-x" title="Quitar fila">✕</button></td>';
     var inpSku = tr.querySelector(".cel-sku"), inpPrecio = tr.querySelector(".cel-precio"), chkMay = tr.querySelector(".cel-may");
     inpSku.value = sku || ""; inpPrecio.value = precio || "";
-    chkMay.checked = typeof mayorista === "boolean" ? mayorista : mayoristaPorDefecto();
+    chkMay.value = parsearMayorista(mayorista) || mayoristaPorDefecto();
+    marcarSelectMayorista(chkMay);
+    chkMay.addEventListener("change", function () { marcarSelectMayorista(chkMay); });
     tr.querySelector(".btn-x").addEventListener("click", function () {
       var body = document.getElementById("grillaBody");
       if (body.rows.length > 1) tr.remove();
-      else { inpSku.value = ""; inpPrecio.value = ""; chkMay.checked = mayoristaPorDefecto(); }
+      else { inpSku.value = ""; inpPrecio.value = ""; chkMay.value = mayoristaPorDefecto(); marcarSelectMayorista(chkMay); }
     });
     [inpSku, inpPrecio, chkMay].forEach(function (inp, col) {
       inp.addEventListener("keydown", function (e) {
@@ -3083,12 +3104,12 @@
     lineas.forEach(function (linea, i) {
       var cols = linea.split("\t");
       var fila = body.rows[idx + i] || agregarFilaEntrada();
-      // Cada columna pegada cae en la celda siguiente a partir de donde pegaste (SKU → Precio → Mayorista sí/no).
+      // Cada columna pegada cae en la celda siguiente a partir de donde pegaste (SKU → Precio → Mayorista sí/no/quitar).
       cols.forEach(function (valor, j) {
         var clase = COLS_GRILLA[colInicio + j];
         var v = (valor || "").trim();
         if (!clase || v === "") return;
-        if (clase === "cel-may") { var b = parsearSiNo(v); if (b !== null) fila.querySelector(".cel-may").checked = b; }
+        if (clase === "cel-may") { var b = parsearMayorista(v); if (b !== null) { var sel = fila.querySelector(".cel-may"); sel.value = b; marcarSelectMayorista(sel); } }
         else fila.querySelector("." + clase).value = v;
       });
     });
@@ -3098,25 +3119,29 @@
     Array.prototype.forEach.call(document.getElementById("grillaBody").rows, function (tr) {
       var sku = tr.querySelector(".cel-sku").value.trim();
       var precioRaw = tr.querySelector(".cel-precio").value.trim();
-      var may = tr.querySelector(".cel-may").checked;
-      if (sku === "" && precioRaw === "") return; // fila vacía (el tilde solo no cuenta)
-      // Precio vacío = "no cambiar la lista" (null). Tiene que venir precio o Mayorista tildado.
+      var modo = tr.querySelector(".cel-may").value;
+      var may = modo === "si", quitar = modo === "quitar";
+      if (sku === "" && precioRaw === "") return; // fila vacía (la opción de Mayorista sola no cuenta)
+      // Precio vacío = "no cambiar la lista" (null). Tiene que venir precio o Mayorista en Sí / Quitar.
       var precio = precioRaw === "" ? null : parsearPrecioAR(precioRaw);
       var error = null;
       if (sku === "") error = "falta SKU";
-      else if (precio === null && !may) error = "falta precio de lista (o tildar Mayorista para cargar solo los escalones)";
+      else if (precio === null && modo === "no") error = "falta precio de lista (o elegir Mayorista Sí / Quitar para tocar solo los escalones)";
       else if (precio !== null && !(isFinite(precio) && precio > 0)) error = "precio inválido";
       else if (may && escalonesPreset.length === 0) error = "no hay escalones mayoristas definidos (los carga Gerencia arriba de la tabla)";
-      out.push({ sku: sku, precio: precio, mayorista: may, error: error });
+      out.push({ sku: sku, precio: precio, mayorista: may, quitar: quitar, error: error });
     });
     return out;
   }
   (function initGrilla() {
     for (var i = 0; i < FILAS_INICIALES; i++) agregarFilaEntrada();
-    // El tilde del encabezado marca o desmarca "Mayorista" en todas las filas.
-    document.getElementById("chkMayTodos").addEventListener("change", function () {
-      var v = this.checked;
-      document.querySelectorAll("#grillaBody .cel-may").forEach(function (c) { c.checked = v; });
+    // El selector del encabezado cambia "Mayorista" en todas las filas (y es el valor de las filas nuevas).
+    var selTodos = document.getElementById("selMayTodos");
+    marcarSelectMayorista(selTodos);
+    selTodos.addEventListener("change", function () {
+      var v = this.value;
+      marcarSelectMayorista(selTodos);
+      document.querySelectorAll("#grillaBody .cel-may").forEach(function (c) { c.value = v; marcarSelectMayorista(c); });
     });
     document.getElementById("btnAgregarFilaPrecio").addEventListener("click", function () {
       agregarFilaEntrada().querySelector(".cel-sku").focus();
@@ -3126,7 +3151,7 @@
   document.getElementById("btnLimpiarPrecios").addEventListener("click", function () {
     var body = document.getElementById("grillaBody");
     body.innerHTML = "";
-    document.getElementById("chkMayTodos").checked = true;
+    document.getElementById("selMayTodos").value = "si"; marcarSelectMayorista(document.getElementById("selMayTodos"));
     for (var i = 0; i < FILAS_INICIALES; i++) agregarFilaEntrada();
     document.getElementById("estadoPrecios").textContent = "";
     document.getElementById("panelResultadoPrecios").classList.add("oculto");
@@ -3163,7 +3188,7 @@
       .catch(function (err) {
         escalonesConsultados = false; // se reintenta la próxima vez que entres a la pestaña
         document.getElementById("escalonesChips").innerHTML = "";
-        est.textContent = "No se pudieron leer los escalones mayoristas: " + err.message + ". Sin escalones, las filas con Mayorista tildado no se pueden previsualizar.";
+        est.textContent = "No se pudieron leer los escalones mayoristas: " + err.message + ". Sin escalones, las filas con Mayorista en Sí no se pueden previsualizar (Quitar sí).";
         est.className = "estado err";
       });
   }
@@ -3291,11 +3316,13 @@
     parsed.forEach(function (p) {
       if (p.error) return;
       if (pedidoPorSku[p.sku] === undefined) orden.push(p.sku);
-      pedidoPorSku[p.sku] = { precio: p.precio, mayorista: p.mayorista }; // si se repite el SKU, gana el último
+      pedidoPorSku[p.sku] = { precio: p.precio, mayorista: p.mayorista, quitar: p.quitar }; // si se repite el SKU, gana el último
     });
-    var skus = orden.map(function (s) { return { sku: s, precio: pedidoPorSku[s].precio, aplicar_escalones: pedidoPorSku[s].mayorista === true }; });
+    var skus = orden.map(function (s) {
+      return { sku: s, precio: pedidoPorSku[s].precio, aplicar_escalones: pedidoPorSku[s].mayorista === true, quitar_escalones: pedidoPorSku[s].quitar === true };
+    });
     if (skus.length === 0) {
-      est.textContent = conError.length ? "No hay filas válidas: " + conError[0].error + "." : "No hay filas válidas. Revisá que cada fila tenga SKU y un precio (o Mayorista tildado).";
+      est.textContent = conError.length ? "No hay filas válidas: " + conError[0].error + "." : "No hay filas válidas. Revisá que cada fila tenga SKU y un precio (o Mayorista en Sí / Quitar).";
       est.className = "estado err"; return;
     }
 
@@ -3336,7 +3363,7 @@
           if (Array.isArray(res.data.skus_encontrados_en_vivo)) skusEnVivo = skusEnVivo.concat(res.data.skus_encontrados_en_vivo);
           if (Array.isArray(res.data.escalones_usados) && res.data.escalones_usados.length) escalonesUsadosPreview = res.data.escalones_usados;
           (res.data.filas || []).forEach(function (f) {
-            // Editables en ML: se puede corregir el precio o destildar Mayorista a mano antes de aplicar.
+            // Editables en ML: se puede corregir el precio o cambiar la opción de escalones a mano antes de aplicar.
             f._editable = !!f.item_id && (f.estado === "OK" || f.estado === "MAYORISTA_INVALIDO");
             filasPreviewPrecios.push(f);
           });
@@ -3382,7 +3409,16 @@
     f.warning_grande = f.pct != null && Math.abs(f.pct) >= 40;
     f.escalones_nuevos = null; f.detalle = undefined;
     var avisos = [];
-    if (f.aplicar_escalones) {
+    // "Quitar" solo tiene sentido si ML no confirma que no tenga (escalones_actuales [] leído de ML = no tiene).
+    var noTiene = Array.isArray(f.escalones_actuales) && f.escalones_actuales.length === 0 && f.escalones_fuente !== "registro_app";
+    if (f.quitar_escalones && noTiene) {
+      f.quitar_escalones = false;
+      if (f.precio_nuevo == null) { f.estado = "SIN_CAMBIOS"; f.detalle = "no tiene escalones mayoristas cargados: no hay nada que quitar"; f.aviso_mayorista = null; return; }
+      avisos.push("no tenía escalones mayoristas: solo se cambia el precio de lista");
+    }
+    if (f.quitar_escalones) {
+      if (f.escalones_actuales == null) avisos.push("ML no deja ver si tiene escalones (hay una promo más barata o no se pudo leer): se manda igual el pedido de quitar; puede quedar sin confirmar");
+    } else if (f.aplicar_escalones) {
       var calc = montosEscalonesFront(lista, escalonesUsadosPreview);
       if (calc.error) { f.estado = "MAYORISTA_INVALIDO"; f.detalle = calc.error; f.aviso_mayorista = null; return; }
       f.escalones_nuevos = calc.montos;
@@ -3393,11 +3429,11 @@
     } else if (f.precio_nuevo != null && f.escalones_actuales && f.escalones_actuales.length) {
       var altos = f.escalones_actuales.filter(function (e) { return e.monto >= f.precio_nuevo; });
       avisos.push(altos.length
-        ? "los escalones mayoristas vigentes (" + textoEscalonesCorto(altos) + ") quedan igual o por encima del precio de lista nuevo; tildá Mayorista para recalcularlos"
-        : "los escalones mayoristas vigentes son montos fijos y no acompañan el cambio de lista; tildá Mayorista para recalcularlos con el %");
+        ? "los escalones mayoristas vigentes (" + textoEscalonesCorto(altos) + ") quedan igual o por encima del precio de lista nuevo; elegí \"Aplicar escalones\" para recalcularlos"
+        : "los escalones mayoristas vigentes son montos fijos y no acompañan el cambio de lista; elegí \"Aplicar escalones\" para recalcularlos con el %");
     }
     f.aviso_mayorista = avisos.length ? avisos.join(" · ") : null;
-    if (f.precio_nuevo == null && !f.escalones_nuevos) { f.estado = "SIN_CAMBIOS"; f.detalle = "no hay precio ni escalones para aplicar"; }
+    if (f.precio_nuevo == null && !f.escalones_nuevos && !f.quitar_escalones) { f.estado = "SIN_CAMBIOS"; f.detalle = "no hay precio ni escalones para aplicar"; }
     else f.estado = "OK";
   }
 
@@ -3436,6 +3472,7 @@
   var FILTROS_ESPECIALES = {
     MAYORISTA: function (f) { return !!f.escalones_nuevos || f.mayorista_verificado === true; },
     AVISO_MAY: function (f) { return !!f.aviso_mayorista; },
+    QUITAR: function (f) { return filasResultadoPrecios ? !!f.quitar_metodo : (f.estado === "OK" && !!f.quitar_escalones); },
   };
   function pasaFiltroPrecios(f) {
     if (!filtroEstadoPrecios) return true;
@@ -3506,11 +3543,24 @@
           notaFuenteEscalones(f)
         : "—";
       var celdaEscNuevo;
+      var modoFila = f.quitar_escalones ? "quitar" : (f.aplicar_escalones ? "si" : "no");
       if (editable) {
-        celdaEscNuevo = '<label style="display:flex;gap:4px;align-items:center;justify-content:flex-end;font-size:0.72rem;margin:0 0 3px;cursor:pointer;">' +
-          '<input type="checkbox" class="chk-esc" data-campo="escalones" data-idx="' + idx + '"' + (f.aplicar_escalones ? " checked" : "") +
-          (escalonesUsadosPreview.length ? "" : ' disabled title="No hay escalones definidos"') + "> Mayorista</label>" +
-          (f.escalones_nuevos ? htmlEscalones(f.escalones_nuevos, listaFinal, "") : '<div class="sin-cambio" style="text-align:right;">sin cambio</div>');
+        // Sin preset cargado, "Sí" no se puede elegir (Quitar sí).
+        var opcionesFila = OPCIONES_MAYORISTA.map(function (o) {
+          var sinPreset = o.v === "si" && !escalonesUsadosPreview.length;
+          return '<option value="' + o.v + '"' + (o.v === modoFila ? " selected" : "") + (sinPreset ? " disabled" : "") + ">" + (o.v === "si" ? "Aplicar escalones" : o.v === "no" ? "Sin cambio" : "Quitar escalones") + "</option>";
+        }).join("");
+        celdaEscNuevo = '<select class="sel-esc' + (modoFila === "quitar" ? " may-quitar" : "") + '" data-campo="escalones" data-idx="' + idx + '" title="Qué hacer con los escalones mayoristas de esta publicación">' + opcionesFila + "</select>" +
+          (f.quitar_escalones ? '<div class="quitar-esc">✕ se quitan todos</div>'
+            : f.escalones_nuevos ? htmlEscalones(f.escalones_nuevos, listaFinal, "") : '<div class="sin-cambio" style="text-align:right;">sin cambio</div>');
+      } else if (esResultado && f.quitar_metodo) {
+        // v2026-09-28.5: resultado de quitar escalones
+        celdaEscNuevo = f.estado === "APLICADO"
+          ? (f.quitar_verificado === true ? '<div class="quitar-esc">sin escalones</div><div class="may-ok" style="text-align:right;">✓ confirmado en ML</div>'
+              : '<div class="quitar-esc">quitados</div><div class="sin-cambio" style="text-align:right;" title="Con una promo más barata vigente ML no muestra los escalones, así que no se puede confirmar">sin confirmar (promo)</div>')
+          : '<span class="sin-cambio">—</span>';
+      } else if (!esResultado && f.quitar_escalones) {
+        celdaEscNuevo = '<div class="quitar-esc">✕ se quitan todos</div>';
       } else if (esResultado ? f.escalones_despues : f.escalones_nuevos) {
         celdaEscNuevo = htmlEscalones(esResultado ? f.escalones_despues : f.escalones_nuevos, listaFinal, "—") +
           (esResultado && f.mayorista_verificado ? '<div class="may-ok" style="text-align:right;">✓ confirmado en ML</div>' : "");
@@ -3530,7 +3580,7 @@
     if (!body) body = "<tr><td colspan='8' style='color:var(--text-dim);text-align:center;padding:14px;'>No hay filas para este filtro.</td></tr>";
     var tabla = document.getElementById("tablaPrecios");
     tabla.innerHTML = thead + "<tbody>" + body + "</tbody>";
-    // Edición por fila: precio de lista (vacío = "no cambiar") y tilde Mayorista.
+    // Edición por fila: precio de lista (vacío = "no cambiar") y qué hacer con los escalones (aplicar / sin cambio / quitar).
     tabla.querySelectorAll("input.precio-edit").forEach(function (inp) {
       inp.addEventListener("change", function () {
         var f = filasPreviewPrecios[Number(inp.getAttribute("data-idx"))];
@@ -3545,11 +3595,12 @@
         renderResumenPrecios(); renderTablaPrecios(); actualizarBotonAplicarPrecios();
       });
     });
-    tabla.querySelectorAll('input.chk-esc[data-campo="escalones"]').forEach(function (chk) {
-      chk.addEventListener("change", function () {
-        var f = filasPreviewPrecios[Number(chk.getAttribute("data-idx"))];
+    tabla.querySelectorAll('select.sel-esc[data-campo="escalones"]').forEach(function (sel) {
+      sel.addEventListener("change", function () {
+        var f = filasPreviewPrecios[Number(sel.getAttribute("data-idx"))];
         if (!f) return;
-        f.aplicar_escalones = chk.checked;
+        f.aplicar_escalones = sel.value === "si";
+        f.quitar_escalones = sel.value === "quitar";
         recalcularFila(f);
         renderResumenPrecios(); renderTablaPrecios(); actualizarBotonAplicarPrecios();
       });
@@ -3569,6 +3620,7 @@
     var fuenteMay = filasResultadoPrecios || filasPreviewPrecios;
     var conMay = fuenteMay.filter(function (f) { return filasResultadoPrecios ? f.mayorista_verificado === true : (f.estado === "OK" && !!f.escalones_nuevos); }).length;
     var avisosMay = fuenteMay.filter(function (f) { return !!f.aviso_mayorista; }).length;
+    var nQuitar = fuenteMay.filter(FILTROS_ESPECIALES.QUITAR).length;
     function kpi(filtro, help, label, valor) {
       var activo = filtroEstadoPrecios === filtro ? " filtro-activo" : "";
       return '<div class="kpi clickable' + activo + '" data-filtro="' + filtro + '">' + kpiHelp(help) + ' ' + label + ' <b>' + valor + '</b></div>';
@@ -3582,6 +3634,10 @@
         ? "Publicaciones a las que se les cargaron los escalones mayoristas y ML los devolvió todos en su lista de precios (confirmado). Sale de la respuesta de ML al aplicar. Clic para filtrar."
         : "Publicaciones que van a recibir escalones mayoristas nuevos: cada escalón es el % del preset aplicado sobre la lista final de la publicación, redondeado a pesos. Clic para filtrar.",
         "Con escalones", conMay) +
+      (nQuitar ? kpi("QUITAR", filasResultadoPrecios
+        ? "Publicaciones a las que se les pidió quitar todos los escalones mayoristas (incluye las que dieron error). \"Confirmado\" = ML devolvió la lista de precios sin escalones; \"sin confirmar\" = hay una promo más barata y ML no los muestra. Clic para filtrar."
+        : "Publicaciones a las que se les van a quitar TODOS los escalones mayoristas (Mayorista = Quitar). Clic para filtrar.",
+        "Se quitan escalones", nQuitar) : "") +
       (avisosMay ? kpi("AVISO_MAY", "Publicaciones con un aviso de escalones: (1) tienen una promo vigente más barata que algún escalón (el comprador empresa paga el precio más bajo, así que ese escalón no sirve mientras dure la promo), o (2) les cambia la lista sin recalcular los escalones que ya tenían (quedan en monto fijo). Sale de leer los precios de cada publicación en ML al previsualizar. Clic para filtrar.", "Aviso escalones", avisosMay) : "");
     document.querySelectorAll("#resumenPrecios .kpi.clickable").forEach(function (k) {
       k.addEventListener("click", function (e) {
@@ -3600,14 +3656,16 @@
     var filas = esResultado ? filasResultadoPrecios : filasPreviewPrecios;
     if (!filas || filas.length === 0) { alert("No hay nada para exportar todavía."); return; }
     var cab = ["sku", "item_id", "titulo", "estado", "precio_antes", esResultado ? "precio_despues" : "precio_nuevo", "pct_dif",
-      esResultado ? "escalones_antes" : "escalones_actuales", esResultado ? "escalones_despues" : "escalones_nuevos", "promo_vigente", "escalones_confirmados", "aviso_escalones", "detalle"];
+      esResultado ? "escalones_antes" : "escalones_actuales", esResultado ? "escalones_despues" : "escalones_nuevos", "promo_vigente", "escalones_confirmados", "quitar_escalones", "aviso_escalones", "detalle"];
     var txtEsc = function (l) { return l == null ? "" : l.map(function (e) { return e.min_unidades + "u:" + e.monto; }).join(" | "); };
     var lineas = [cab.join(",")];
     filas.forEach(function (f) {
       var precioDespues = esResultado ? f.precio_despues : f.precio_nuevo;
       var fila = [f.sku, f.item_id, f.title, f.estado, f.precio_antes, precioDespues, f.pct,
         txtEsc(esResultado ? f.escalones_antes : f.escalones_actuales), txtEsc(esResultado ? f.escalones_despues : f.escalones_nuevos),
-        f.promo_vigente != null ? f.promo_vigente : "", esResultado ? (f.mayorista_verificado ? "si" : "") : "", f.aviso_mayorista || "",
+        f.promo_vigente != null ? f.promo_vigente : "", esResultado ? (f.mayorista_verificado ? "si" : "") : "",
+        esResultado ? (f.quitar_metodo ? (f.estado !== "APLICADO" ? "error" : f.quitar_verificado === true ? "quitados (confirmado)" : "quitados (sin confirmar)") : "") : (f.quitar_escalones ? "si" : ""),
+        f.aviso_mayorista || "",
         (f.detalle != null ? textoError(f.detalle) : "")];
       lineas.push(fila.map(function (v) {
         var s = v == null ? "" : String(v);
@@ -3629,9 +3687,11 @@
     if (ok.length === 0) return;
     var nLista = ok.filter(function (f) { return f.precio_nuevo != null; }).length;
     var nMay = ok.filter(function (f) { return !!f.escalones_nuevos; }).length;
+    var nQuitar = ok.filter(function (f) { return !!f.quitar_escalones; }).length;
     var partes = [];
     if (nLista) partes.push("precio de lista en " + nLista + " publicación(es)");
     if (nMay) partes.push("escalones mayoristas (" + escalonesUsadosPreview.map(function (e) { return "desde " + e.min_unidades + " u. " + fmtPctEsc(e.pct) + " menos"; }).join(", ") + "; reemplazan los que haya) en " + nMay + " publicación(es)");
+    if (nQuitar) partes.push("QUITAR todos los escalones mayoristas en " + nQuitar + " publicación(es)");
     document.getElementById("aplicarPreciosResumen").textContent = "Vas a aplicar " + partes.join(" y ") + " en Mercado Libre (activas y pausadas). " +
       (nLista ? "Ojo: si subís precios y después volvés a poner promos, ML puede tardar ~" + DIAS_REFERENCIA_ML + " días en considerar \"creíbles\" los descuentos chicos." : "");
     document.getElementById("inputConfirmarAplicarPrecios").value = "";
@@ -3652,7 +3712,8 @@
       .map(function (f) {
         // Se mandan los % (no los montos): el servidor los recalcula contra la lista real al momento de aplicar.
         return { item_id: f.item_id, sku: f.sku, precio: f.precio_nuevo,
-                 escalones: f.escalones_nuevos ? escalonesUsadosPreview : null, escalones_actuales: f.escalones_actuales };
+                 escalones: (f.escalones_nuevos && !f.quitar_escalones) ? escalonesUsadosPreview : null,
+                 quitar_escalones: !!f.quitar_escalones, escalones_actuales: f.escalones_actuales };
       });
     var est = document.getElementById("estadoAplicarPrecios");
     if (ok.length === 0) return;
@@ -3663,7 +3724,7 @@
     document.getElementById("btnAplicarPrecios").disabled = true;
     document.getElementById("btnPreviewPrecios").disabled = true;
     // ETA inicial: GET + PUT de lista (~0,7s) y/o POST de escalones (~0,5s) por publicación; después se recalcula con el ritmo real.
-    var estIni = ok.reduce(function (acc, it) { return acc + 0.3 + (it.precio != null ? 0.4 : 0) + (it.escalones != null ? 0.5 : 0); }, 0);
+    var estIni = ok.reduce(function (acc, it) { return acc + 0.3 + (it.precio != null ? 0.4 : 0) + (it.escalones != null || it.quitar_escalones ? 0.5 : 0); }, 0);
     est.textContent = "Aplicando 0/" + ok.length + " (estimado " + fmtSeg(estIni) + ")..."; est.className = "estado";
 
     function sig() {
