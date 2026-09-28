@@ -25,6 +25,7 @@
     --err: #D6473F;
     --err-soft: #FBE7E5;
     --info: #2E7980;
+    --info-soft: #E2F0F1;
     --teal: #004E55;
   }
   * { box-sizing: border-box; }
@@ -62,12 +63,12 @@
     border-radius: 12px; padding: 18px; margin-bottom: 16px;
   }
   label { display: block; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 6px; }
-  input, select {
+  input, select, textarea {
     padding: 9px 11px; border-radius: 6px;
     border: 1px solid var(--panel-border); background: #FFFFFF; color: var(--text);
     font-size: 0.88rem;
   }
-  input:focus, select:focus { outline: none; border-color: var(--amber-dim); }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--amber-dim); }
 
   button {
     background: var(--amber); color: #201200; border: none; border-radius: 6px;
@@ -126,11 +127,6 @@
     padding: 10px 12px; font-size: 0.8rem;
   }
   .instancia .nombre { font-weight: 600; color: var(--text); }
-  .btn-alias {
-    background: transparent; border: none; color: var(--text-dim); cursor: pointer;
-    font-size: 0.78rem; padding: 0 2px; vertical-align: middle;
-  }
-  .btn-alias:hover { color: var(--amber-dim); }
   .instancia .fechas { color: var(--text-dim); font-size: 0.72rem; margin-top: 2px; }
   .instancia .estado-badge {
     display: inline-block; font-size: 0.68rem; font-weight: 700; padding: 2px 7px;
@@ -139,6 +135,12 @@
   .instancia .estado-badge.started { background: var(--ok-soft); color: var(--ok); }
   .instancia .estado-badge.pending { background: var(--amber-soft); color: var(--amber); }
   a.estado-badge:hover { background: var(--amber-dim) !important; color: #FFFFFF !important; }
+  .btn-alias {
+    background: transparent; border: none; color: var(--text-dim); cursor: pointer;
+    font-size: 0.78rem; padding: 0 2px; vertical-align: middle;
+  }
+  .btn-alias:hover { background: transparent; color: var(--amber-dim); }
+  .nombre-interno { font-size: 0.7rem; color: var(--text-dim); margin-top: 2px; }
 
   .instancia-acciones { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
   .conteo-preview { font-size: 0.75rem; color: var(--text-dim); }
@@ -187,6 +189,9 @@
     background: var(--panel-2); border: 1px solid var(--panel-border); border-radius: 10px;
     padding: 12px 10px; text-align: center;
   }
+  .stat-box { position: relative; }
+  .stat-box .stat-help { position: absolute; top: 6px; right: 6px; }
+  .stat-box .stat-help .globo { left: auto; right: -6px; transform: none; }
   .stat-box .valor { font-size: 1.5rem; font-weight: 700; color: var(--amber); line-height: 1.1; }
   .stat-box .valor.dim { color: var(--text-dim); }
   .stat-box .etiqueta { font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; }
@@ -207,8 +212,8 @@
      ============================================================ -->
 <div id="gate">
   <div class="box panel">
-    <h1>🏷️ Gráfica Límite</h1>
-    <div class="sub">App Promociones MercadoLibre — Iniciá sesión para continuar</div>
+    <h1>🏷️ Gráfica Límite · Promociones ML</h1>
+    <div class="sub">Iniciá sesión para continuar</div>
     <label for="gateEmail">Email</label>
     <input type="email" id="gateEmail" style="width:100%; margin-bottom:12px;" autocomplete="username" inputmode="email">
     <label for="gatePass">Contraseña</label>
@@ -223,20 +228,25 @@
      ============================================================ -->
 <div id="app" class="oculto">
   <header class="top">
-    <h1>🏷️ Gráfica Límite — Promociones ML</h1>
+    <h1>🏷️ Promociones ML — Gráfica Límite</h1>
     <div class="acciones">
-      <button class="secondary chico" id="btnFuncionamiento">¿Cómo funciona?</button>
+      <button class="secondary chico" id="btnFuncionamiento">ℹ️ Funcionamiento de la app</button>
       <button class="secondary chico" id="btnLogout">Salir</button>
     </div>
   </header>
 
   <style>
-    .tabs-nav{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--panel-border);flex-wrap:wrap;}
-    .tab-btn{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-weight:600;padding:10px 14px;cursor:pointer;font-size:0.9rem;}
-    .tab-btn:hover{color:var(--amber);}
+    .tabs-nav{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--panel-border);flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+    .tabs-nav::-webkit-scrollbar{display:none;}
+    .tab-btn{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-weight:600;padding:10px 12px;cursor:pointer;font-size:0.9rem;white-space:nowrap;flex:0 0 auto;border-radius:0;}
+    .tab-btn:hover,.tab-btn:focus,.tab-btn:active{color:var(--amber);background:transparent;box-shadow:none;}
     .tab-btn.activa{color:var(--amber);border-bottom-color:var(--amber);}
     .precios-textarea{width:100%;min-height:150px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.85rem;resize:vertical;box-sizing:border-box;}
-    .grilla-entrada{width:100%;border-collapse:collapse;font-size:0.85rem;max-width:520px;}
+    .grilla-entrada{width:100%;border-collapse:collapse;font-size:0.85rem;max-width:640px;}
+    .grilla-entrada th.th-may{color:var(--amber);}
+    .grilla-entrada td.td-may{background:var(--amber-soft);}
+    .may-config{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px;font-size:0.8rem;color:var(--text-dim);}
+    .may-config input{width:64px;text-align:center;padding:5px 6px;font-variant-numeric:tabular-nums;}
     .grilla-entrada th{text-align:left;padding:4px 8px;color:var(--text-dim);font-size:0.72rem;font-weight:600;border-bottom:1px solid var(--panel-border);}
     .grilla-entrada td{padding:0;border:1px solid var(--panel-border);}
     .grilla-entrada td.acc{border:none;text-align:center;width:34px;}
@@ -247,8 +257,63 @@
     .resumen-precios .kpi.clickable{cursor:pointer;user-select:none;transition:border-color .12s;}
     .resumen-precios .kpi.clickable:hover{border-color:var(--amber);}
     .resumen-precios .kpi.filtro-activo{border-color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber);}
+    /* ---------- Módulo Tickets (.tk-*) — copiar tal cual al replicar en otra app ---------- */
+    .tk-titulo-panel{margin:0;color:var(--amber);font-weight:600;display:block;}
+    .tk-ayuda{font-size:0.78rem;color:var(--text-dim);margin:4px 0 10px;font-weight:400;}
+    .tk-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    @media (max-width:520px){.tk-form-grid{grid-template-columns:1fr;}}
+    #vistaTickets input[type=text],#vistaTickets textarea,#vistaTickets .tk-form-grid select,#modalTicket textarea,#modalTicket input[type=text],#modalTicket select{width:100%;box-sizing:border-box;}
+    #vistaTickets textarea,#modalTicket textarea{font-family:inherit;font-size:0.9rem;line-height:1.4;resize:vertical;}
+    .tk-check{display:flex;gap:8px;align-items:flex-start;font-size:0.8rem;margin:10px 0 4px;font-weight:400;cursor:pointer;}
+    .tk-check input{width:auto;margin-top:3px;}
+    .tk-acciones{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;}
+    .tk-embudo-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+    .tk-toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+    .tk-toolbar select,.tk-toolbar input{width:auto;min-width:120px;}
+    .tk-tabla tbody tr{cursor:pointer;transition:background .12s;}
+    .tk-tabla tbody tr:hover{background:var(--panel-2);}
+    .tk-badge{display:inline-block;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+    .tk-tipo-error{background:var(--err-soft);color:var(--err);}
+    .tk-tipo-mejora{background:var(--ok-soft);color:var(--ok);}
+    .tk-tipo-consulta{background:var(--info-soft);color:var(--info);}
+    .tk-prio-urgente{background:var(--err);color:#fff;}
+    .tk-prio-alta{background:var(--err-soft);color:var(--err);}
+    .tk-prio-media{background:var(--amber-soft);color:var(--amber);}
+    .tk-prio-baja{background:var(--panel-2);color:var(--text-dim);}
+    .tk-est-pendiente{background:var(--amber-soft);color:var(--amber);}
+    .tk-est-en-revision{background:var(--info-soft);color:var(--info);}
+    .tk-est-resuelto{background:var(--ok-soft);color:var(--ok);}
+    .tk-est-rechazado{background:var(--panel-2);color:var(--text-dim);}
+    .tk-app{font-size:0.7rem;color:var(--text-dim);white-space:nowrap;}
+    .tk-modal{max-width:680px;max-height:90vh;overflow-y:auto;}
+    .tk-meta{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 12px;font-size:0.75rem;color:var(--text-dim);align-items:center;}
+    .tk-detalle{white-space:pre-wrap;background:var(--panel-2);border:1px solid var(--panel-border);border-radius:8px;padding:10px 12px;font-size:0.85rem;}
+    .tk-contexto{margin:10px 0;font-size:0.78rem;color:var(--text-dim);}
+    .tk-contexto summary{cursor:pointer;}
+    .tk-contexto pre{white-space:pre-wrap;word-break:break-word;background:var(--bg);border:1px solid var(--panel-border);border-radius:6px;padding:8px;max-height:200px;overflow:auto;font-size:0.72rem;color:var(--text);}
+    .tk-h3{font-size:0.85rem;color:var(--amber);margin:16px 0 6px;}
+    .tk-timeline{border-left:2px solid var(--panel-border);margin-left:6px;padding-left:14px;}
+    .tk-ev{position:relative;margin-bottom:10px;font-size:0.8rem;}
+    .tk-ev::before{content:"";position:absolute;left:-19px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--amber-dim);}
+    .tk-ev-cuando{color:var(--text-dim);font-size:0.7rem;}
+    .tk-ev-txt{white-space:pre-wrap;}
+    .tk-resolucion{background:var(--ok-soft);border:1px solid var(--ok);border-radius:8px;padding:8px 12px;font-size:0.8rem;margin-top:10px;white-space:pre-wrap;}
+    .tk-capturas-input{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:0.8rem;}
+    .tk-capturas-input input[type=file]{width:auto;max-width:100%;font-size:0.8rem;}
+    .tk-thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+    .tk-thumb{position:relative;width:84px;height:84px;border:1px solid var(--panel-border);border-radius:8px;overflow:hidden;background:var(--panel-2);display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--text-dim);}
+    .tk-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+    .tk-thumb button{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.55);color:#FFFFFF;border:none;border-radius:50%;width:20px;height:20px;padding:0;font-size:0.7rem;line-height:20px;cursor:pointer;}
+    a.tk-thumb:hover{border-color:var(--amber);}
+    .tk-gestion{background:var(--panel-2);border:1px solid var(--panel-border);border-radius:8px;padding:4px 12px 12px;margin-top:6px;}
     .tabla-precios input.precio-edit{width:96px;border:1px solid var(--panel-border);background:var(--panel-2);color:inherit;padding:4px 6px;border-radius:4px;text-align:right;font-variant-numeric:tabular-nums;font-size:0.8rem;}
     .tabla-precios input.precio-edit:focus{outline:none;border-color:var(--amber);}
+    .tabla-precios input.precio-edit.may-edit{border-color:var(--amber-dim);}
+    .tabla-precios input.precio-edit::placeholder{color:var(--text-dim);opacity:.6;}
+    .tabla-precios th.th-may,.tabla-precios td.td-may{background:rgba(255,116,14,.05);}
+    .sin-cambio{color:var(--text-dim);font-size:0.72rem;}
+    .aviso-may{color:var(--amber);font-size:0.7rem;margin-top:2px;}
+    .may-ok{color:var(--ok);font-size:0.7rem;}
     .tabla-precios{width:100%;border-collapse:collapse;font-size:0.8rem;}
     .tabla-precios th,.tabla-precios td{padding:6px 8px;border-bottom:1px solid var(--panel-border);text-align:left;vertical-align:top;}
     .tabla-precios td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
@@ -258,37 +323,47 @@
     .resumen-precios{display:flex;gap:12px;flex-wrap:wrap;margin:4px 0 14px;}
     .resumen-precios .kpi{background:var(--panel-2);border:1px solid var(--panel-border);border-radius:8px;padding:8px 12px;font-size:0.78rem;color:var(--text-dim);}
     .resumen-precios .kpi b{font-size:1.15rem;display:block;color:inherit;}
-    textarea:focus{outline:none;border-color:var(--amber-dim);}
-    input[type="file"]{font-size:0.8rem;color:var(--text-dim);}
-    .fila-reporte{border:1px solid var(--panel-border);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--panel-2);}
-    .fila-reporte .cabecera{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;}
-    .fila-reporte .tag-tipo{font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:20px;}
-    .fila-reporte .tag-tipo.problema{background:var(--err-soft);color:var(--err);}
-    .fila-reporte .tag-tipo.mejora{background:var(--amber-soft);color:var(--amber-dim);}
-    .fila-reporte .tag-estado{font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--panel-border);color:var(--text-dim);}
-    .fila-reporte .tag-estado.en_proceso{background:var(--amber-soft);color:var(--amber-dim);}
-    .fila-reporte .tag-estado.terminado{background:var(--ok-soft);color:var(--ok);}
-    .fila-reporte select.selector-estado{font-size:0.75rem;padding:3px 6px;border-radius:20px;border:1px solid var(--panel-border);background:var(--panel);color:var(--text);}
-    .fila-reporte .meta{font-size:0.72rem;color:var(--text-dim);}
-    .fila-reporte .mensaje{font-size:0.85rem;margin:6px 0;}
-    .fila-reporte a.ver-captura{font-size:0.78rem;color:var(--amber-dim);}
-    .sin-reportes{font-size:0.82rem;color:var(--text-dim);font-style:italic;}
+    /* ---------- Corrida en segundo plano (barrita flotante) ---------- */
+    .pill-corrida{position:fixed;right:16px;bottom:16px;z-index:90;background:var(--panel);border:1px solid var(--amber);color:var(--text);border-radius:999px;padding:10px 16px;font-size:0.82rem;box-shadow:0 6px 20px rgba(0,0,0,.15);cursor:pointer;display:flex;gap:10px;align-items:center;max-width:calc(100vw - 32px);}
+    .pill-corrida:hover{border-color:var(--amber-dim);}
+    .pill-corrida.terminada{border-color:var(--ok);}
+    .pill-spinner{width:12px;height:12px;border-radius:50%;border:2px solid var(--amber-soft);border-top-color:var(--amber);animation:giro .8s linear infinite;flex-shrink:0;}
+    .pill-corrida.terminada .pill-spinner{animation:none;border-color:var(--ok);background:var(--ok);}
+    @keyframes giro{to{transform:rotate(360deg)}}
+    @media (max-width:520px){.pill-corrida{left:16px;right:16px;bottom:12px;justify-content:center;}}
+    /* ---------- % aplicados: aplicar a todas ---------- */
+    .pct-masivo{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--panel-2);border:1px solid var(--panel-border);border-radius:8px;padding:8px 10px;margin:8px 0;font-size:0.82rem;}
+    .pct-frescura{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:0.75rem;color:var(--text-dim);margin:-4px 0 6px;}
+    /* ---------- Seleccionar candidatas por % máximo (tipos donde ML fija el precio) ---------- */
+    .sel-ayuda{font-size:0.8rem;color:var(--text-dim);background:var(--panel-2);border:1px solid var(--panel-border);border-radius:8px;padding:10px 12px;margin:0 0 10px;}
+    .sel-barra{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px;font-size:0.8rem;}
+    .sel-barra label{margin:0;}
+    .sel-barra input[type=number]{width:80px;}
+    .sel-barra select{max-width:260px;}
+    #tablaSel tr.sel-fuera td.sel-pct-base{color:var(--err);font-weight:700;}
+    #tablaSel tr.sel-dentro td.sel-pct-base{color:var(--ok);font-weight:700;}
+    #tablaSel tr.sel-marcada{background:var(--amber-soft);}
+    #tablaSel td.num,#tablaSel th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+    #tablaSel th[data-sel-sort]{cursor:pointer;}
+    #tablaSel th[data-sel-sort]:hover{color:var(--amber);}
+    .aviso-7d{font-size:0.78rem;color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-dim);border-radius:8px;padding:10px 12px;margin:0 0 12px;}
   </style>
 
   <nav class="tabs-nav">
     <button class="tab-btn activa" id="tabPromos">🏷️ Promociones</button>
     <button class="tab-btn" id="tabPrecios">💲 Actualizar precios</button>
-    <button class="tab-btn" id="tabReportes">🛠️ Reportes</button>
+    <button class="tab-btn" id="tabTickets">🎫 Tickets</button>
   </nav>
 
   <div id="vistaPromos">
   <!-- Acciones globales: bajar/subir todo (para actualizaciones masivas de precio) -->
   <div class="panel" style="border-color:var(--amber-dim);">
-    <label style="margin:0; color:var(--amber-dim); font-weight:600;">⚠️ Acciones globales</label>
+    <label style="margin:0; color:var(--amber); font-weight:600;">⚠️ Acciones globales</label>
     <p style="font-size:0.8rem; color:var(--text-dim); margin:6px 0 12px;">Para cuando necesitás actualizar precios masivamente: bajás todas las promos activas (guarda el % de cada una), actualizás precios en ML, y después las volvés a subir con esos mismos %.</p>
     <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
       <button class="danger chico" id="btnBajarTodo">⬇️ Bajar TODAS las promociones</button>
       <button class="chico oculto" id="btnSubirTodoGuardado">⬆️ Subir TODAS (con los % guardados)</button>
+      <button class="chico secondary oculto" id="btnDescartarSnapshot" title="Borra la cola de % guardados sin tocar nada en Mercado Libre">🗑️ Descartar respaldo</button>
       <span id="estadoSnapshot" class="estado" style="margin:0;"></span>
     </div>
   </div>
@@ -319,15 +394,21 @@
        ============================================================ -->
   <div id="vistaPrecios" class="oculto">
     <div class="panel" style="border-color:var(--amber-dim);">
-      <label style="margin:0;color:var(--amber-dim);font-weight:600;">💲 Actualización masiva de precios de lista</label>
+      <label style="margin:0;color:var(--amber);font-weight:600;">💲 Actualización masiva de precios de lista y mayorista</label>
       <p style="font-size:0.8rem;color:var(--text-dim);margin:6px 0 10px;">
-        Cargá <b>SKU</b> y <b>precio</b> en la tabla (o copiá las dos columnas de Excel y pegalas en la primera celda: se completa sola).
-        El precio se aplica a <b>todas las publicaciones activas y pausadas</b> de ese SKU. Formato de precio AR: <code>12.500</code> o <code>12500</code> (decimales con coma, ej. <code>12500,50</code>).
+        Cargá <b>SKU</b>, <b>precio de lista</b> y/o <b>precio mayorista final</b> (o copiá las columnas de Excel y pegalas en la primera celda: se completa sola).
+        Podés llenar solo el precio, solo el mayorista, o los dos. Se aplica a <b>todas las publicaciones activas y pausadas</b> de ese SKU. Formato de precio AR: <code>12.500</code> o <code>12500</code> (decimales con coma, ej. <code>12500,50</code>).
         Primero previsualizás (no toca nada), revisás el antes → después, y recién ahí aplicás.
       </p>
+      <div class="may-config">
+        <span>📦 Precio mayorista válido comprando desde</span>
+        <input type="number" id="inputMinUnidades" min="2" max="1000" step="1" inputmode="numeric">
+        <span>unidades</span>
+        <span class="kpi-help" data-help="">?<span class="globo">El precio mayorista es el precio por unidad que paga un comprador EMPRESA (cuenta con factura A) cuando lleva esta cantidad o más. Lo ponés vos, como monto final en pesos, en la columna de la derecha. ML permite un solo escalón por publicación desde esta app: si cargás uno nuevo, reemplaza al anterior. No lo ven los compradores particulares.</span></span>
+      </div>
       <div style="overflow-x:auto;">
         <table class="grilla-entrada" id="grillaEntrada">
-          <thead><tr><th>SKU</th><th>Precio</th><th></th></tr></thead>
+          <thead><tr><th>SKU</th><th>Precio lista</th><th class="th-may">Precio mayorista (final)</th><th></th></tr></thead>
           <tbody id="grillaBody"></tbody>
         </table>
       </div>
@@ -353,36 +434,129 @@
   </div>
 
   <!-- ============================================================
-       VISTA: Reportes del usuario (premisa obligatoria del proyecto)
+       VISTA: Tickets — módulo transversal (mismo backend en todas las apps)
        ============================================================ -->
-  <div id="vistaReportes" class="oculto">
+  <div id="vistaTickets" class="oculto">
     <div class="panel">
-      <label style="margin:0;color:var(--amber-dim);font-weight:600;">🛠️ Reportar un problema o proponer una mejora</label>
-      <p style="font-size:0.8rem;color:var(--text-dim);margin:6px 0 12px;">
-        Si algo no anduvo bien o se te ocurre algo que la app debería hacer, contalo acá. Podés adjuntar una captura de pantalla. Gerencia ve todos los reportes en la lista de abajo.
-      </p>
-      <label for="reporteTipo">Tipo</label>
-      <select id="reporteTipo" style="margin-bottom:10px;">
-        <option value="problema">🐞 Problema / algo no funciona</option>
-        <option value="mejora">💡 Propuesta de mejora</option>
-      </select>
-      <label for="reporteMensaje">Contanos qué pasó</label>
-      <textarea id="reporteMensaje" rows="4" style="width:100%;box-sizing:border-box;padding:9px 11px;border-radius:6px;border:1px solid var(--panel-border);background:#FFFFFF;color:var(--text);font-size:0.88rem;font-family:inherit;margin-bottom:10px;" placeholder="Ej: al aplicar precios en la publicación X, la app tardó y no mostró el resultado."></textarea>
-      <label for="reporteImagen">Captura de pantalla (opcional)</label>
-      <input type="file" id="reporteImagen" accept="image/png,image/jpeg,image/webp" style="margin-bottom:12px;">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-        <button class="chico" id="btnEnviarReporte">Enviar reporte</button>
-        <span id="estadoReporte" class="estado" style="margin:0;"></span>
+      <span class="tk-titulo-panel">🎫 Nuevo ticket</span>
+      <p class="tk-ayuda">Reportá un error, proponé una mejora o dejá una consulta. Los tickets de todas las apps van al mismo lugar y quedan con historial completo.</p>
+      <div class="tk-form-grid">
+        <div>
+          <label for="tkTipo">Tipo</label>
+          <select id="tkTipo">
+            <option value="error">🔴 Error / algo no anda</option>
+            <option value="mejora">🟢 Mejora / idea</option>
+            <option value="consulta">🔵 Consulta / duda</option>
+          </select>
+        </div>
+        <div>
+          <label for="tkPrioridad">Prioridad</label>
+          <select id="tkPrioridad">
+            <option value="baja">Baja</option>
+            <option value="media" selected>Media</option>
+            <option value="alta">Alta</option>
+            <option value="urgente">Urgente (me bloquea)</option>
+          </select>
+        </div>
+      </div>
+      <label for="tkAsunto">Asunto (breve)</label>
+      <input type="text" id="tkAsunto" maxlength="200" placeholder="Ej: Al aplicar precios, el SKU 33 muestra un Δ% raro">
+      <label for="tkDetalle">Detalle</label>
+      <textarea id="tkDetalle" rows="4" maxlength="5000" placeholder="Qué hiciste, qué esperabas y qué pasó (o cómo te imaginás la mejora)"></textarea>
+      <div class="tk-capturas-input">
+        <label for="tkCapturas" style="margin:0;">📷 Capturas de pantalla (opcional, hasta 3 · 5 MB c/u)</label>
+        <input type="file" id="tkCapturas" accept="image/png,image/jpeg,image/webp,image/gif" multiple>
+        <span class="tk-ayuda" style="margin:0;">Tip: también podés pegar una captura con Ctrl+V dentro del detalle.</span>
+      </div>
+      <div id="tkThumbsNuevo" class="tk-thumbs"></div>
+      <label class="tk-check"><input type="checkbox" id="tkAdjuntarContexto" checked><span>Adjuntar contexto técnico automático <span class="tk-ayuda" id="tkContextoPreview"></span></span></label>
+      <div class="tk-acciones">
+        <button class="chico" id="btnEnviarTicket">Enviar ticket</button>
+        <span id="estadoNuevoTicket" class="estado" style="margin:0;"></span>
       </div>
     </div>
 
     <div class="panel">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <label style="margin:0;color:var(--amber-dim);font-weight:600;">📋 Reportes ya cargados</label>
-        <button class="secondary chico" id="btnActualizarReportes">Actualizar</button>
+      <div class="tk-embudo-head">
+        <span class="tk-titulo-panel">📥 Embudo de tickets</span>
+        <div class="tk-toolbar">
+          <select id="tkAlcance" title="Qué tickets ver">
+            <option value="app">Solo esta app</option>
+            <option value="todas">Todas las apps</option>
+          </select>
+          <select id="tkFiltroTipo" title="Filtrar por tipo">
+            <option value="">Todos los tipos</option>
+            <option value="error">Errores</option>
+            <option value="mejora">Mejoras</option>
+            <option value="consulta">Consultas</option>
+          </select>
+          <input type="search" id="tkBuscar" placeholder="Buscar asunto, #id…">
+          <button class="chico secondary" id="btnRefrescarTickets">🔄 Actualizar</button>
+          <button class="chico secondary" id="btnExportarTickets" title="Arma un resumen de los tickets filtrados para trabajarlos todos juntos con Claude">📋 Exportar lote para Claude</button>
+        </div>
       </div>
-      <div id="listaReportes" style="margin-top:12px;"></div>
+      <div class="resumen-precios" id="tkResumen"></div>
+      <div id="estadoTickets" class="estado"></div>
+      <div style="overflow-x:auto;"><table class="tabla-precios tk-tabla" id="tablaTickets"></table></div>
     </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: detalle de ticket (historial, gestión, comentarios)
+     ============================================================ -->
+<div id="modalTicket" class="modal-fondo oculto">
+  <div class="modal-caja tk-modal">
+    <h2 id="tkDetTitulo"></h2>
+    <div id="tkDetMeta" class="tk-meta"></div>
+    <div id="tkDetDetalle" class="tk-detalle"></div>
+    <div id="tkDetCapturas" class="tk-thumbs"></div>
+    <details class="tk-contexto"><summary>Contexto técnico adjunto</summary><pre id="tkDetContexto"></pre></details>
+    <div id="tkDetResolucion"></div>
+
+    <h3 class="tk-h3">Historial</h3>
+    <div id="tkDetTimeline" class="tk-timeline"></div>
+
+    <div id="tkDetGestion" class="oculto">
+      <h3 class="tk-h3">Gestionar</h3>
+      <div class="tk-gestion">
+        <div class="tk-form-grid">
+          <div>
+            <label for="tkDetEstado">Estado</label>
+            <select id="tkDetEstado">
+              <option value="pendiente">Pendiente</option>
+              <option value="en revision">En revisión</option>
+              <option value="resuelto">Resuelto</option>
+              <option value="rechazado">Rechazado</option>
+            </select>
+          </div>
+          <div>
+            <label for="tkDetPrioridad">Prioridad</label>
+            <select id="tkDetPrioridad">
+              <option value="baja">Baja</option>
+              <option value="media">Media</option>
+              <option value="alta">Alta</option>
+              <option value="urgente">Urgente</option>
+            </select>
+          </div>
+        </div>
+        <div id="tkDetCierre" class="oculto">
+          <label for="tkDetResolucionTxt">Resolución (qué se hizo, o por qué se rechaza)</label>
+          <textarea id="tkDetResolucionTxt" rows="2" maxlength="5000"></textarea>
+          <label for="tkDetVersion">Versión en que quedó resuelto (opcional)</label>
+          <input type="text" id="tkDetVersion" maxlength="60" placeholder="ej. 2026-09-23">
+        </div>
+        <div class="tk-acciones"><button class="chico" id="btnGuardarTicket">Guardar cambios</button></div>
+      </div>
+    </div>
+
+    <h3 class="tk-h3">Comentar</h3>
+    <textarea id="tkDetComentario" rows="2" maxlength="5000" placeholder="Sumá info, una prueba que hiciste, un dato del caso…"></textarea>
+    <div class="tk-acciones">
+      <button class="chico secondary" id="btnComentarTicket">Agregar comentario</button>
+      <span id="estadoDetTicket" class="estado" style="margin:0;"></span>
+    </div>
+    <div class="modal-cerrar"><button class="secondary" id="btnCerrarTicket">Cerrar</button></div>
   </div>
 </div>
 
@@ -407,30 +581,38 @@
      ============================================================ -->
 <div id="modalFuncionamiento" class="modal-fondo oculto">
   <div class="modal-caja">
-    <h2>¿Cómo funciona esta app?</h2>
+    <h2>Funcionamiento de la app</h2>
     <p>Gestiona las promociones de Mercado Libre de Gráfica Límite sin entrar publicación por publicación.</p>
     <h3>De dónde salen los datos</h3>
-    <p>Se consulta en vivo la API de Mercado Libre (recurso <code>seller-promotions</code>) con la app propia de Gráfica Límite en el DevCenter de ML. No hay copia local de las promociones — lo que ves es el estado real en ML en el momento de cargar la página.</p>
+    <p>Se consulta en vivo la API de Mercado Libre (recurso <code>seller-promotions</code>) usando el token de la app de Mercado Libre de Gráfica Límite (guardado en el backend, nunca en esta página). No hay copia local de las promociones — lo que ves es el estado real en ML en el momento de cargar la página.</p>
     <h3>Los 12 tipos de promoción</h3>
-    <p>Cada card muestra un tipo. Los que tienen borde ámbar y botones los controlás vos: podés subir todas las publicaciones candidatas de una campaña con un clic. "Bajar de todas" (por card) está disponible para Campaña propia, Campaña tradicional, Co-financiada, Descuento por volumen y Descuento pre-negociado. Los tipos automáticos (co-participación automática, ajuste a competencia, liquidación, cupón) no tienen botón de bajar por card: se sacan desde el botón global "Bajar TODAS". El resto son invitaciones de ML — se muestran para que sepas qué tenés corriendo. Las cards traen sus candidatos/activos <b>solas una única vez al abrir la app</b>; después no se recargan solas — cada una se actualiza a mano con su botón "🔄 Ver candidatos/activos" (o todas juntas con "Actualizar candidatos/activos de todas"). Así la app no dispara consultas a ML todo el tiempo.</p>
-    <h3>Subir a todas / Bajar de todas</h3>
-    <p>"Subir a todas" busca las publicaciones candidatas de esa campaña puntual y les aplica el precio calculado con el % que definas en el momento (ver siguiente punto). "Bajar de todas" saca las que están activas. Ambas acciones muestran un detalle publicación por publicación al terminar, con opción de reintentar si algo falló.</p>
+    <p>Cada card muestra un tipo. Los que tienen borde naranja y botones los controlás vos: podés subir todas las publicaciones candidatas de una campaña con un clic. "Bajar de todas" (por card) está disponible en <b>todos</b> los tipos de promoción: saca las publicaciones solo de ESA campaña, sin tocar las demás promos. En Oferta del día y Relámpago, ML suele rechazar la baja una vez activas: la app lo intenta igual y te muestra el rechazo publicación por publicación. El resto son invitaciones de ML — se muestran para que sepas qué tenés corriendo. Las cards traen sus candidatos/activos <b>solas una única vez al abrir la app</b>; después no se recargan solas — cada una se actualiza a mano con su botón "🔄 Ver candidatos/activos" (o todas juntas con "Actualizar candidatos/activos de todas"). Así la app no dispara consultas a ML todo el tiempo. Excepción: al terminar una tanda, se refresca sola la card que tocaste (o todas, si fue "Bajar TODAS" / "Subir TODAS"), para que veas los números ya actualizados.</p>
     <h3>¿Por qué el nombre de una campaña no coincide con lo que ves en Mercado Libre?</h3>
-    <p>Mercado Libre no expone en su API el nombre que ve el comprador — solo un nombre interno de marketing (ej. "MK T3 AO BELLEZA Q4 2026"). Es una limitación de ML, no de la app. Para esos casos, el lápiz ✏️ al lado del nombre te deja cargar el nombre público a mano, una sola vez — la app lo recuerda para la próxima vez que aparezca esa misma campaña, y sigue mostrando el nombre interno abajo para referencia.</p>
-    <h3>¿Por qué algunas campañas no tienen botón "Ver en ML"?</h3>
-    <p>Solo algunos tipos de campaña (Campaña propia y Campaña tradicional) tienen confirmado el link directo al panel web de Mercado Libre. Otros tipos —como las campañas co-fondeadas ("Potencia tus ventas") o las ofertas del día— todavía no tienen una vista propia en ese panel: se gestionan únicamente por API, que es justamente lo que hace esta app. En esos casos vas a ver la etiqueta "Solo por API" en vez de un link, para no mandarte a una pantalla que no corresponde.</p>
-    <h3>ML aporta X% · Nosotros aportamos Y%</h3>
-    <p>En las campañas co-fondeadas por Mercado Libre (donde ML pone parte de la plata del descuento), la app muestra cuánto pone cada uno. Ese dato lo informa la propia API de ML — no es algo que calculemos nosotros — y solo aparece cuando la campaña es de ese tipo.</p>
+    <p>La API de Mercado Libre no devuelve el nombre que ve el comprador, solo un nombre interno de marketing (ej. "MK T3 AO BELLEZA Q4 2026"). Es una limitación de ML, no de la app. Con el lápiz ✏️ al lado del nombre cargás el nombre público a mano <b>una sola vez</b> (ej. "Lo mejor de todos los días"): queda guardado en la base y se usa en toda la app; el interno sigue abajo en chiquito como referencia. Si lo dejás vacío, vuelve el nombre interno.</p>
+    <h3>"Ver en ML ↗" y "Solo por API"</h3>
+    <p>"Ver en ML" abre el panel de promociones de Mercado Libre ya filtrado en esa campaña. Solo aparece en los tipos cuyo filtro está confirmado (Campaña propia, Campaña tradicional, Con aporte de Mercado Libre y Relámpago). En los demás tipos, un link mandaría a cualquier campaña del listado general, así que se muestra la etiqueta <b>"Solo por API"</b>: esa campaña se gestiona desde esta app. Cuando se confirme el formato de otro tipo, se suma en la config del código (<code>FILTROS_ML_POR_TIPO</code>).</p>
+    <h3>Subir a todas / Bajar de todas</h3>
+    <p>"Subir a todas" busca las publicaciones candidatas de esa campaña puntual. En las campañas donde <b>vos definís el precio</b> (Deal, Campaña propia, Oferta del día) les aplica el precio calculado con el % que definas en el momento (ver siguiente punto). En las campañas donde <b>el precio lo fija Mercado Libre</b> ("Con aporte de Mercado Libre" como "Potencia tus ventas", co-financiada, volumen, etc.) se abre una lista con el % que ML va a aplicar en cada publicación (descuento total, cuánto pone ML y cuánto ponés vos): escribís tu <b>% máximo</b>, elegís si compararlo contra el descuento total o contra lo que ponés vos, tocás "Seleccionar hasta ese %" y se suben <b>solo las tildadas</b> (podés tildar o destildar a mano). "Bajar de todas" saca las que están activas. Ambas acciones muestran un detalle publicación por publicación al terminar, con opción de reintentar si algo falló.</p>
     <h3>Bajar TODAS / Subir TODAS (para actualizar precios masivo)</h3>
-    <p>El botón "⬇️ Bajar TODAS las promociones" es para el flujo de actualización masiva de precios: saca cada publicación de <b>todas</b> sus promociones de una sola llamada (usa el borrado en bloque por publicación de ML). Antes de bajar nada, guarda el % que tenían las campañas reaplicables (Deal y Campaña propia) para poder volver a subirlas igual. El modal de confirmación te separa en tres grupos qué va a pasar: las que <b>se reaplican con "Subir TODAS"</b> (Deal / Campaña propia), las que <b>se bajan pero volvés a sumar a mano</b> (co-financiada, volumen, etc. — ahí el precio lo fija ML), y las que <b>no se pueden bajar desde acá</b> (Oferta del día y Relámpago, que ML no deja sacar por API — se gestionan desde el panel de ML). El flujo típico es: Bajar TODAS → actualizar precios en ML → "⬆️ Subir TODAS (con los % guardados)". Para que junte bien lo activo, primero apretá "Actualizar métricas" (o "Ver candidatos/activos" en las cards).</p>
+    <p>El botón "⬇️ Bajar TODAS las promociones" es para el flujo de actualización masiva de precios: saca cada publicación de <b>todas</b> sus promociones de una sola llamada (usa el borrado en bloque por publicación de ML). Antes de bajar nada, guarda el % que tenían las campañas reaplicables (Deal y Campaña propia) para poder volver a subirlas igual. El modal de confirmación te separa en tres grupos qué va a pasar: las que <b>se reaplican con "Subir TODAS"</b> (Deal / Campaña propia), las que <b>se bajan pero volvés a sumar a mano</b> (co-financiada, volumen, etc. — ahí el precio lo fija ML), y las que <b>no se pueden bajar desde acá</b> (Oferta del día y Relámpago, que ML no deja sacar por API — se gestionan desde el panel de ML). El flujo típico es: Bajar TODAS → actualizar precios en ML → "⬆️ Subir TODAS (con los % guardados)". Mientras haya respaldo pendiente se muestra cuántas publicaciones son y de qué fecha es; si esa precarga ya no te sirve (por ejemplo, decidiste no volver a subirlas), el botón "🗑️ Descartar respaldo" la borra — no toca nada en Mercado Libre, solo limpia la cola. Para que junte bien lo activo, primero apretá "Actualizar métricas" (o "Ver candidatos/activos" en las cards).</p>
     <h3>Pestaña "Actualizar precios"</h3>
     <p>Sirve para actualizar el <b>precio de lista</b> (no el de promo) de muchas publicaciones de una. Cargás <b>SKU y precio</b> en una tabla de dos columnas (podés copiar las dos columnas de Excel y pegarlas en la primera celda: se completa sola). Como un mismo SKU suele estar en varias publicaciones, el precio se aplica a <b>todas las publicaciones activas y pausadas</b> de ese SKU (a la pausada le queda listo para cuando la reactivés; las cerradas se omiten). El flujo es en dos pasos: primero <b>Previsualizar</b> (no toca nada: trae de ML el precio actual de cada publicación y te muestra antes → después → Δ%, con un tiempo estimado mientras corre), y recién después <b>Aplicar en ML</b> (con confirmación escribiendo "APLICAR PRECIOS"). En el preview podés <b>editar el precio de cualquier fila</b> a mano antes de aplicar, y <b>clickear las tarjetas</b> de arriba (A actualizar / A revisar / Omitidas / Con problema) para filtrar la tabla por ese estado. Las publicaciones con variaciones quedan "a revisar" (el precio va por variación). Podés exportar todo a CSV. Encaja con el flujo masivo: bajás las promos, actualizás precios acá, y volvés a subir las promos.</p>
+    <h3>Precio mayorista (columna de la derecha)</h3>
+    <p>Al lado del precio de lista hay una columna <b>"Precio mayorista (final)"</b>: ahí ponés vos el <b>precio por unidad final</b> que querés cobrar cuando alguien compra <b>desde N unidades</b> (el N se elige arriba de la tabla; arranca en 5). En Mercado Libre esto es el "precio por cantidad" y <b>solo lo ven los compradores empresa</b> (cuentas con factura A), no los particulares. Podés cargar <b>solo el mayorista</b> (dejando vacío el precio de lista = no se toca), <b>solo el precio de lista</b>, o <b>los dos</b> (se aplica primero la lista y después el mayorista). Reglas: el mayorista tiene que ser <b>menor al precio de lista</b> final (si no, la fila queda "Mayorista inválido"); se maneja <b>un solo escalón</b> por publicación, así que cargar uno nuevo <b>reemplaza</b> al anterior; y como es un <b>monto fijo en pesos</b>, si después cambiás el precio de lista el mayorista no se ajusta solo. Por eso el preview te muestra el <b>mayorista actual</b> de cada publicación y te marca con ⚠️ "Aviso mayorista" las que cambian de lista sin mayorista nuevo y quedarían mal. En el preview podés editar el mayorista de cualquier fila (vaciarlo = no tocarlo) y la columna "vs lista" te muestra qué % de descuento representa. Al aplicar, la app confirma contra la respuesta de ML que el escalón quedó cargado ("✓ confirmado en ML"). Limitación: si una publicación tiene una promo <b>más barata</b> que su mayorista, ML muestra la promo y la app puede ver el mayorista actual como "no tiene".</p>
+    <h3>Pestaña "🎫 Tickets"</h3>
+    <p>Es el buzón para reportar <b>errores, mejoras o consultas</b> de esta app. Completás tipo, prioridad, asunto y detalle, y lo enviás. Si dejás tildado "Adjuntar contexto técnico", el ticket se guarda con la app, la versión, el navegador, la pestaña en la que estabas y los últimos errores que aparecieron en la consola, así se puede reproducir el problema sin preguntarte nada. Todos los tickets de <b>todas las apps del negocio</b> (promociones, stock, dashboard, etc.) se guardan en un <b>único lugar</b> del backend (tabla <code>tickets</code> de Supabase), cada uno marcado con la app de origen. Abajo está el <b>embudo</b>: por defecto ves los abiertos de esta app, ordenados por prioridad y después por antigüedad; con "Alcance" podés ver los de todas las apps, y las tarjetas de arriba filtran por estado. Al abrir un ticket ves su <b>historial completo</b> (quién lo creó, cada cambio de estado o prioridad, comentarios y cierre): ese historial lo escribe la base de datos sola y no se puede editar ni borrar. Solo los usuarios con permiso de gestión pueden cambiar estado, prioridad y cerrar tickets (al resolver o rechazar hay que escribir la resolución); el resto puede crear y comentar. "Exportar lote para Claude" arma un markdown con todos los abiertos para resolverlos en tanda en una conversación.</p>
+    <p><b>Capturas:</b> podés adjuntar hasta 3 capturas de pantalla por ticket (5 MB cada una), eligiendo el archivo o pegándola con Ctrl+V dentro del detalle. Se guardan en un espacio privado: solo las ven los usuarios habilitados de la app, al abrir el ticket (📎 en la lista indica que tiene capturas). En Gráfica Límite, la cuenta de <b>Gerencia</b> es la que gestiona (cambia estado, prioridad y escribe la resolución); Stock crea, comenta y sigue el estado y la respuesta de sus tickets.</p>
+    <h3>Seguir usando la app mientras corre una tanda</h3>
+    <p>Cuando lanzás "Subir a todas", "Bajar de todas", "Bajar TODAS" o "Subir TODAS", aparece la ventana de progreso. Con el botón <b>"➖ Seguir usando la app"</b> (o con Cerrar) la ventana se achica a una <b>barrita abajo a la derecha</b> que sigue mostrando el avance y el tiempo que resta; la corrida no se corta. Tocando la barrita volvés al detalle, y cuando termina se pone verde. Dos reglas: <b>no cierres ni recargues la pestaña</b> mientras corre (el navegador te avisa), y solo puede correr <b>una tanda a la vez</b>.</p>
+    <h3>% aplicados: el mismo % a todas</h3>
+    <p>En "Ver % aplicados" de una campaña con precio (Deal, Campaña propia) podés escribir un % en <b>"Aplicar X% a todas"</b> y apretar <b>Rellenar</b>: copia ese % en todas las filas sin guardar nada. Después ajustás a mano las que quieras y apretás <b>"Guardar todas las modificadas"</b>: se aplican solo las filas cuyo % cambió, por tandas y con tiempo estimado. La columna <b>Resultado</b> muestra, por publicación, si quedó aplicado o si el % quedó fuera del rango que acepta ML (con el rango válido).</p>
     <h3>% de descuento: se pregunta cada vez, por campaña</h3>
     <p>Cuando apretás "Subir a todas" en una campaña con precio (Deal, Campaña propia, Oferta del día), la app te pide un <b>% base</b> para esa tanda puntual, y te deja agregar <b>excepciones por SKU</b> (tantas como quieras) que usan su propio % en vez del base. No es una configuración fija guardada — la definís de nuevo cada vez, campaña por campaña.</p>
     <h3>¿Por qué a veces una publicación queda en "REVISAR"?</h3>
     <p>Mercado Libre calcula, para cada publicación, un rango de precio que considera un descuento "creíble" — ni tan chico que parezca falso, ni tan grande que no se sostenga. Ese rango tiene un piso (<code>min_discounted_price</code>, el descuento más profundo permitido) y un techo (<code>max_discounted_price</code>, el descuento más chico que todavía cuenta como oferta real). Si el % que pediste da un precio fuera de ese rango, la app <b>no aplica nada solo</b> — la deja en estado "REVISAR" y te muestra el % mínimo y máximo que sí entran, más el precio que ML sugiere como alternativa. Vos decidís: ajustás el % (general o solo para ese SKU) y reintentás, o usás el botón "Usar precio sugerido de ML" para resolverlas rápido.</p>
-    <h3>Pestaña "Reportes"</h3>
-    <p>Si algo no anduvo bien o se te ocurre una mejora, cargalo acá: elegís si es un <b>problema</b> o una <b>mejora</b>, escribís qué pasó y, si querés, adjuntás una captura de pantalla (hasta 5 MB). Todos los usuarios habilitados ven la lista completa de reportes, con quién lo mandó y cuándo. Cada reporte tiene un estado — <b>Abierto</b> (recién cargado), <b>En proceso</b> (gerencia lo está atendiendo) o <b>Terminado</b> — y solo la cuenta de <b>gerencia</b> puede cambiarlo; el resto lo ve de solo lectura. Las capturas se guardan en un espacio privado — para verlas, la app pide un enlace temporal que vence a los pocos minutos, así no quedan expuestas.</p>
+    <p><b>La regla de los ~7 días:</b> ML arma ese rango comparando contra el <b>precio más bajo de los últimos ~7 días</b> (lo confirmó un consultor de ML). Por eso, si subiste el precio de lista hace poco (algo habitual con inflación), un descuento chico no le parece "creíble" y muchas publicaciones caen en REVISAR hasta que pasa esa semana. Cuando actualizás precios desde la pestaña "Actualizar precios", la app lo recuerda (solo en este navegador) y te avisa al volver a subir promos durante esos días. Opciones: esperar, usar un % mayor o aceptar el precio sugerido de ML.</p>
+    <p><b>El % siempre se calcula contra el precio de lista ACTUAL:</b> cuando subís o editás un %, el servidor lee en ese momento el precio de lista de cada publicación en Mercado Libre y calcula el precio de promo sobre ese valor. Después de aplicarlo, <b>vuelve a leer de ML</b> el precio que quedó en la campaña y lo compara: si no coincide con lo pedido, la fila queda en <b>ERROR</b> explicando qué precio (y qué %) quedó realmente. "% aplicados" muestra de cuándo son los datos y los relee solo si tienen más de 3 minutos (o con "🔄 Actualizar desde ML"). Ojo: el precio de promo en ML es un monto fijo en pesos; si subís el precio de lista con promos activas, el precio de promo no sube y el descuento visible se agranda (por eso el flujo recomendado es Bajar TODAS → actualizar precios → Subir TODAS).</p>
+    <p><b>Una publicación en dos campañas:</b> ML deja que una publicación esté en varias campañas a la vez, pero al comprador le muestra <b>el precio más bajo</b>. Si la subís a una campaña con un descuento menor que el de otra en la que ya está, queda cargada pero "tapada", y en el panel de ML la vas a ver en la otra campaña. No es un error de la app.</p>
     <div class="modal-cerrar"><button id="btnCerrarFuncionamiento">Cerrar</button></div>
   </div>
 </div>
@@ -445,7 +627,9 @@
     <p>Definí el % para esta tanda. Podés agregar excepciones por SKU — esos usan su propio % en vez del base.</p>
     <p style="font-size:0.78rem; color:var(--text-dim); background:var(--panel-2); border:1px solid var(--panel-border); border-radius:8px; padding:10px 12px;">
       ⚠️ Mercado Libre le calcula a cada publicación un rango de descuento "creíble" (un % mínimo y un % máximo propio, que varía por item). Si el % que pongas queda afuera de ese rango para alguna publicación puntual, esa no se aplica sola — queda en <b>REVISAR</b> al final, mostrándote el rango real de esa publicación para que ajustes.
+      ML arma ese rango mirando el <b>precio más bajo de los últimos ~7 días</b>: si subiste el precio de lista hace poco, un % chico puede no alcanzar para que el descuento sea "creíble".
     </p>
+    <div id="avisoPreciosRecientes" class="aviso-7d oculto"></div>
 
     <label for="inputPctBase">% base (para todos los SKU sin excepción)</label>
     <input type="number" id="inputPctBase" min="1" max="99" step="1" style="width:100%; margin-bottom:14px;">
@@ -500,7 +684,15 @@
 <div id="modalPctAplicados" class="modal-fondo oculto">
   <div class="modal-caja" style="max-width:720px;">
     <h2>% aplicados — <span id="pctAplicadosNombreCampana"></span></h2>
+    <div class="pct-frescura"><span id="pctAplicadosFrescura"></span> <button class="chico secondary" id="btnRefrescarPctAplicados" type="button" title="Vuelve a leer de Mercado Libre los precios de lista y de promo de esta campaña">🔄 Actualizar desde ML</button></div>
     <div id="pctAplicadosEstado" class="estado"></div>
+    <div id="pctMasivoBar" class="pct-masivo oculto">
+      <label for="inputPctMasivo" style="margin:0;">Aplicar</label>
+      <input type="number" id="inputPctMasivo" min="1" max="99" step="0.1" style="width:80px;" placeholder="%">
+      <span>% a todas</span>
+      <button class="chico secondary" id="btnRellenarPct" type="button" title="Copia ese % en todas las filas (todavía no guarda)">Rellenar</button>
+      <button class="chico" id="btnGuardarTodosPct" type="button">💾 Guardar todas las modificadas</button>
+    </div>
     <div style="overflow-x:auto;">
       <table class="log" id="tablaPctAplicados">
         <thead>
@@ -510,6 +702,7 @@
             <th data-sort="pct" style="cursor:pointer;">% aplicado<span class="flecha-orden"></span></th>
             <th data-sort="price" style="cursor:pointer;">Precio actual<span class="flecha-orden"></span></th>
             <th>Editar %</th>
+            <th>Resultado</th>
           </tr>
         </thead>
         <tbody id="tablaPctAplicadosBody"></tbody>
@@ -553,9 +746,63 @@
         <button class="secondary oculto" id="btnReintentarFallidos">Reintentar fallidos</button>
         <button class="secondary oculto" id="btnUsarSugerido">Usar precio sugerido de ML</button>
       </div>
-      <button id="btnCerrarResultado">Cerrar</button>
+      <div style="display:flex; gap:8px;">
+        <button class="secondary oculto" id="btnMinimizarResultado" title="La corrida sigue sola; podés seguir usando la app">➖ Seguir usando la app</button>
+        <button id="btnCerrarResultado">Cerrar</button>
+      </div>
     </div>
   </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Subir a todas — elegir candidatas por % máximo
+     (tipos donde ML fija el precio: con aporte de Mercado Libre, co-financiada, volumen, etc.)
+     ============================================================ -->
+<div id="modalSeleccionSubir" class="modal-fondo oculto">
+  <div class="modal-caja" style="max-width:860px;">
+    <h2>Sumar publicaciones a "<span id="selNombreCampana"></span>"</h2>
+    <p class="sel-ayuda">En este tipo de promo <b>el precio lo fija Mercado Libre</b>: no se puede elegir el %. Lo que sí podés es <b>elegir qué publicaciones sumar</b>. Poné tu % máximo, tocá "Seleccionar hasta ese %" y se van a subir <b>solo las tildadas</b>. Podés tildar o destildar a mano.</p>
+    <div class="sel-barra">
+      <label for="selPctMax">Mi % máximo</label>
+      <input type="number" id="selPctMax" min="0" max="99" step="0.1" inputmode="decimal" placeholder="ej. 8">
+      <label for="selBase">comparado contra</label>
+      <select id="selBase">
+        <option value="total">Descuento total (el que ve el comprador)</option>
+        <option value="vendedor">Lo que ponés vos</option>
+      </select>
+      <button class="chico" id="btnSelHasta" type="button">Seleccionar hasta ese %</button>
+      <button class="chico secondary" id="btnSelTodas" type="button">Todas</button>
+      <button class="chico secondary" id="btnSelNinguna" type="button">Ninguna</button>
+    </div>
+    <div class="resumen-precios" id="selResumen"></div>
+    <div id="selEstado" class="estado"></div>
+    <div style="overflow:auto;max-height:52vh;">
+      <table class="log" id="tablaSel">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="selCheckTodas" title="Tildar / destildar todas las visibles"></th>
+            <th data-sel-sort="id">MLA</th>
+            <th data-sel-sort="sku">SKU</th>
+            <th class="num" data-sel-sort="original_price">Precio lista</th>
+            <th class="num" data-sel-sort="price">Precio final</th>
+            <th class="num" data-sel-sort="total">Desc. total</th>
+            <th class="num" data-sel-sort="ml">Pone ML</th>
+            <th class="num" data-sel-sort="vendedor">Ponés vos</th>
+          </tr>
+        </thead>
+        <tbody id="tablaSelBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-cerrar" style="justify-content:space-between;">
+      <button class="secondary" id="btnSelCancelar" type="button">Cancelar</button>
+      <button id="btnSelConfirmar" type="button" disabled>Subir seleccionadas (0)</button>
+    </div>
+  </div>
+</div>
+
+<!-- Barrita flotante: corrida en segundo plano (clic = volver al detalle) -->
+<div id="pillCorrida" class="pill-corrida oculto" role="button" tabindex="0" title="Tocá para ver el detalle">
+  <span class="pill-spinner"></span><span id="pillCorridaTexto"></span>
 </div>
 
 <script>
@@ -565,47 +812,80 @@
   /* ============================================================
      CONFIG
      ============================================================ */
-  var SUPABASE_URL = "https://mdupatknzanlxuwbcost.supabase.co";
-  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kdXBhdGtuemFubHh1d2Jjb3N0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2Njc0MjUsImV4cCI6MjEwNTI0MzQyNX0.AhakIOXd7pQCZVLlPGOElmpMc_uTCL8bGzR5YB6j-5E";
+  var SUPABASE_URL = "https://mdupatknzanlxuwbcost.supabase.co"; // proyecto Supabase de Gráfica Límite
+  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kdXBhdGtuemFubHh1d2Jjb3N0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2Njc0MjUsImV4cCI6MjEwNTI0MzQyNX0.AhakIOXd7pQCZVLlPGOElmpMc_uTCL8bGzR5YB6j-5E"; // anon key: pública por diseño (RLS protege). NUNCA la service_role
   var FN_BASE = SUPABASE_URL + "/functions/v1";
   var URL_DIAG = FN_BASE + "/ml-promos-diag";
   var URL_BULK = FN_BASE + "/ml-promos-bulk";
+  var URL_ALIAS = FN_BASE + "/ml-promos-nombre-publico-crud"; // alias editables: nombre público (el que ve el comprador) por campaña
   var URL_SNAPSHOT = FN_BASE + "/ml-promos-snapshot-crud";
-  var URL_REPORTES = FN_BASE + "/app-reportes-crud";
-  var URL_ALIAS = FN_BASE + "/ml-promos-nombre-publico-crud";
   var TIMEOUT_MS = 20000;
+
+  // --- Tickets (módulo transversal: mismo backend para todas las apps) ---
+  var TICKETS_APP_ID = "grafica-promociones"; // identifica a ESTA app en el embudo común (cambiar al clonar/replicar)
+  var APP_VERSION = "2026-09-28.1";           // se adjunta a cada ticket; actualizar al deployar una versión nueva
+
+  // Captura de errores recientes (se adjuntan como contexto técnico a los tickets). Buffer de 5.
+  var ERRORES_RECIENTES = [];
+  function registrarErrorReciente(msg) {
+    ERRORES_RECIENTES.push({ cuando: new Date().toISOString(), msg: String(msg).slice(0, 300) });
+    if (ERRORES_RECIENTES.length > 5) ERRORES_RECIENTES.shift();
+  }
+  window.addEventListener("error", function (e) { registrarErrorReciente((e.message || "error") + (e.filename ? " @" + e.lineno : "")); });
+  window.addEventListener("unhandledrejection", function (e) { registrarErrorReciente("promesa rechazada: " + (e.reason && e.reason.message ? e.reason.message : e.reason)); });
 
   // Los 12 tipos de /seller-promotions. subir/bajar controlan si el tipo tiene
   // botones de bulk funcionales (confirmado contra doc oficial, 2026-09-01).
   var TIPOS = [
     { codigo: "SELLER_CAMPAIGN", nombre: "Campaña propia", explicacion: "La armás y controlás vos (ej: tu promo fija mensual). Descuento fijo o flexible que vos definís.", subir: true, bajar: true },
     { codigo: "DEAL", nombre: "Campaña tradicional (Deal)", explicacion: "ML te invita, vos elegís el precio final dentro del rango permitido.", subir: true, bajar: true },
-    { codigo: "DOD", nombre: "Oferta del día", explicacion: "ML sugiere el precio, vos definís el tuyo dentro del rango. Una vez activada no se puede sacar, solo pausar la publicación.", subir: true, bajar: false },
+    { codigo: "DOD", nombre: "Oferta del día", explicacion: "ML sugiere el precio, vos definís el tuyo dentro del rango. Ojo: una vez activa, ML suele no dejar sacarla (si la rechaza, lo ves en el detalle).", subir: true, bajar: true },
     { codigo: "MARKETPLACE_CAMPAIGN", nombre: "Campaña co-financiada", explicacion: "ML te invita y paga parte del descuento — el precio lo calcula ML solo, vos solo te sumás.", subir: true, bajar: true },
-    { codigo: "SMART", nombre: "Co-participación automática", explicacion: "Parecida a la co-financiada, pero ML elige los candidatos solo. Vos igual tenés que sumarte a cada item.", subir: true, bajar: false },
+    { codigo: "SMART", nombre: "Con aporte de Mercado Libre", explicacion: "Así la llama el panel de ML (en la API es \"SMART\"). ML elige los candidatos y pone parte del descuento; vos elegís cuáles sumar. Ej.: \"Potencia tus ventas\".", subir: true, bajar: true },
     { codigo: "VOLUME", nombre: "Descuento por volumen", explicacion: "Tipo 3x2. ML te invita y calcula el descuento, vos adherís los items candidatos.", subir: true, bajar: true },
     { codigo: "PRE_NEGOTIATED", nombre: "Descuento pre-negociado", explicacion: "Acuerdo puntual por item entre vos y ML. Solo hace falta aceptar la invitación.", subir: true, bajar: true },
-    { codigo: "UNHEALTHY_STOCK", nombre: "Liquidación de stock parado", explicacion: "ML te invita sobre publicaciones con baja rotación y calcula el descuento.", subir: true, bajar: false },
-    { codigo: "SELLER_COUPON_CAMPAIGN", nombre: "Cupón propio", explicacion: "Cupón que armás vos, se aplica en el checkout — no cambia el precio de lista.", subir: true, bajar: false },
-    { codigo: "PRICE_MATCHING", nombre: "Ajuste a la competencia", explicacion: "ML ajusta el precio automáticamente para igualar a la competencia.", subir: true, bajar: false },
-    { codigo: "LIGHTNING", nombre: "Oferta relámpago", explicacion: "Oferta corta con stock reservado. Mecanismo de alta todavía no confirmado del todo — por ahora solo informativo.", subir: false, bajar: false },
+    { codigo: "UNHEALTHY_STOCK", nombre: "Liquidación de stock parado", explicacion: "ML te invita sobre publicaciones con baja rotación y calcula el descuento.", subir: true, bajar: true },
+    { codigo: "SELLER_COUPON_CAMPAIGN", nombre: "Cupón propio", explicacion: "Cupón que armás vos, se aplica en el checkout — no cambia el precio de lista.", subir: true, bajar: true },
+    { codigo: "PRICE_MATCHING", nombre: "Ajuste a la competencia", explicacion: "ML ajusta el precio automáticamente para igualar a la competencia.", subir: true, bajar: true },
+    { codigo: "LIGHTNING", nombre: "Oferta relámpago", explicacion: "Oferta corta con stock reservado. Desde acá se puede ver y bajar (el alta todavía no está soportada). Ojo: ML suele no dejar sacar una relámpago activa.", subir: false, bajar: true },
     { codigo: "PRICE_DISCOUNT", nombre: "Descuento simple", explicacion: "Descuento puntual sobre una publicación, no es una campaña con candidatos — necesita otra pantalla, no bulk por tipo.", subir: false, bajar: false },
   ];
 
+  // Regla de ML (confirmada por consultor de ML, 2026-09): el rango de descuento "creíble" se calcula
+  // contra el precio más bajo de los últimos ~7 días. Si el precio de lista subió hace poco, un % chico queda en REVISAR.
+  var DIAS_REFERENCIA_ML = 7;
+  // --- Precio mayorista (precio por cantidad de ML, visible para compradores empresa) ---
+  var MAYORISTA_MIN_UNIDADES_DEFAULT = 5;     // valor inicial del campo "desde N unidades"
+  var MAYORISTA_MIN_UNIDADES_MIN = 2;
+  var MAYORISTA_MIN_UNIDADES_MAX = 1000;
+  var TEXTO_REGLA_7D = "Si subiste precios en los últimos ~" + DIAS_REFERENCIA_ML + " días es esperable: ML mide el descuento contra el precio más bajo de esa semana.";
+  var LS_PRECIOS_RECIENTES = TICKETS_APP_ID + ":ultima_actualizacion_precios"; // solo este navegador (aviso de conveniencia)
+
   // Tipos donde el vendedor define el precio (los otros: ML lo calcula solo, no hace falta preguntar %).
   var TIPOS_NECESITAN_PRECIO = ["DEAL", "SELLER_CAMPAIGN", "DOD"];
+  // Tipos donde ML suele rechazar el "bajar" una vez activos: se permite intentar, con aviso previo.
+  var TIPOS_BAJA_RESTRINGIDA_ML = ["DOD", "LIGHTNING"];
 
   if (typeof window.supabase === "undefined") {
     document.getElementById("cdnFail").classList.add("show");
     return;
   }
+  // Guard de clonado: si quedaron los placeholders de config, avisar en vez de romper.
+  if (SUPABASE_URL.indexOf("<") !== -1 || SUPABASE_ANON_KEY.indexOf("<") !== -1) {
+    var aviso = document.getElementById("cdnFail");
+    aviso.textContent = "Falta configurar SUPABASE_URL y SUPABASE_ANON_KEY al principio del <script> (ver ACTUALIZACION-MAYORISTA.md, paso 4).";
+    aviso.classList.add("show");
+    return;
+  }
 
   var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   var AUTH = null;
+  var USUARIO_EMAIL = null; // email de la sesión (autor de tickets/comentarios)
   var promoItemsState = {}; // promotion_id -> { candidatos: [...], activos: [...] }, lo llena "Ver candidatos/activos"
-  var aliasNombresPublicos = {}; // promotion_id -> nombre público cargado a mano (ver ml-promos-nombre-publico-crud)
   var BATCH_SIZE = 12; // por debajo de MAX_ITEMS_POR_TANDA (15) del servidor, con margen
-  var TIMEOUT_TANDA_MS = 40000; // las tandas de bulk tardan más que una consulta simple
+  var MAX_EDAD_DATOS_CAMPANA_MS = 3 * 60 * 1000; // % aplicados: si los datos de la campaña tienen más de 3 min, se recargan de ML
+  var SEG_POR_ITEM_SUBIR_EST = 1.2; // subir con precio: POST + verificación contra ML por publicación
+  var TIMEOUT_TANDA_MS = 60000; // las tandas de bulk tardan más (el server verifica cada precio contra ML)
 
   var els = {
     gate: document.getElementById("gate"),
@@ -737,13 +1017,22 @@
   els.gatePass.addEventListener("keydown", function (e) { if (e.key === "Enter") hacerLogin(); });
   els.btnLogout.addEventListener("click", function () { sb.auth.signOut(); });
 
+  // Supabase vuelve a emitir eventos de sesión (SIGNED_IN / TOKEN_REFRESHED) cada vez que la pestaña
+  // recupera el foco o renueva el token. Antes cada evento llamaba a arrancarApp() y recargaba todas las
+  // promociones al volver a la pestaña. Ahora: la app arranca UNA sola vez por login; los eventos
+  // siguientes solo actualizan el token (AUTH) en memoria, sin tocar lo que estás viendo.
+  var appArrancada = false;
   sb.auth.onAuthStateChange(function (_event, session) {
     if (session) {
       AUTH = "Bearer " + session.access_token;
+      USUARIO_EMAIL = (session.user && session.user.email) || null;
+      if (appArrancada) return; // volver a la pestaña / renovar token: no se recarga nada
+      appArrancada = true;
       els.gate.classList.add("oculto");
       els.app.classList.remove("oculto");
       arrancarApp();
     } else {
+      appArrancada = false;
       AUTH = null;
       els.app.classList.add("oculto");
       els.gate.classList.remove("oculto");
@@ -770,18 +1059,19 @@
     cargarEstadoSnapshot();
 
     var pDiag = fetchConTimeout(URL_DIAG, { headers: { Authorization: AUTH } });
+    // Alias de nombres públicos: si falla, seguimos con los nombres internos (no bloquea el arranque).
     var pAlias = fetchConTimeout(URL_ALIAS, { headers: { Authorization: AUTH } })
-      .then(function (res) { return (res.data && res.data.ok) ? (res.data.alias || {}) : {}; })
-      .catch(function () { return {}; }); // si falla, seguimos con nombres internos -- no bloquea el arranque
+      .then(function (r) { return (r.data && r.data.ok) ? (r.data.alias || {}) : {}; })
+      .catch(function () { return {}; });
 
     Promise.all([pDiag, pAlias])
-      .then(function (resultados) {
-        var res = resultados[0];
-        aliasNombresPublicos = resultados[1];
+      .then(function (par) {
+        var res = par[0];
+        aliasNombresPublicos = par[1];
         if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "no se pudo leer");
-        var promos = (res.data.data && res.data.data.results) || [];
+        var resultados = (res.data.data && res.data.data.results) || [];
         els.estadoCarga.textContent = "";
-        renderGrid(promos);
+        renderGrid(resultados);
       })
       .catch(function (err) {
         els.estadoCarga.textContent = "No se pudieron cargar las promociones: " + err.message;
@@ -791,6 +1081,8 @@
   }
 
   var gridYaAutoActualizado = false; // el PRIMER render auto-actualiza todas las cards una vez; después, manual
+  // Tras una corrida, el próximo render refresca SOLO lo que se tocó: "todas" (acciones globales) o [promotion_id].
+  var refrescarTrasRender = null;
   function renderGrid(promosActivas) {
     ultimasPromosActivas = promosActivas;
     var porTipo = {};
@@ -814,6 +1106,8 @@
         var nombre = btn.getAttribute("data-nombre");
         if (accion === "subir" && TIPOS_NECESITAN_PRECIO.indexOf(promotionType) !== -1) {
           abrirModalPorcentaje(promotionId, promotionType, nombre);
+        } else if (accion === "subir") {
+          abrirModalSeleccionSubir(promotionId, promotionType, nombre); // ML fija el precio: elegís cuáles
         } else {
           abrirConfirmacion(promotionId, promotionType, accion, nombre);
         }
@@ -826,13 +1120,7 @@
     });
 
     els.gridTipos.querySelectorAll("[data-editar-alias]").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        editarAliasPromocion(
-          btn.getAttribute("data-editar-alias"),
-          btn.getAttribute("data-nombre-interno"),
-          btn.getAttribute("data-nombre-actual")
-        );
-      });
+      btn.addEventListener("click", function () { editarAliasPromocion(btn); });
     });
     // Auto-actualización SOLO en el primer render de la sesión: trae candidatos/activos de
     // todas las cards una vez. Después, cada card se refresca a mano con su propio botón (o con
@@ -840,6 +1128,12 @@
     if (!gridYaAutoActualizado) {
       gridYaAutoActualizado = true;
       botonesConteo.forEach(function (btn) { cargarConteo(btn); });
+    } else if (refrescarTrasRender) {
+      var objetivo = refrescarTrasRender;
+      refrescarTrasRender = null;
+      botonesConteo.forEach(function (btn) {
+        if (objetivo === "todas" || objetivo.indexOf(btn.getAttribute("data-promotion-id")) !== -1) cargarConteo(btn);
+      });
     }
 
     els.gridTipos.querySelectorAll("[data-ver-pct]").forEach(function (btn) {
@@ -850,9 +1144,7 @@
   }
 
   function renderHero(tipo, instancias) {
-    var esControlable = tipo.subir || tipo.bajar;
-    var badgeClase = esControlable ? "hero-badge controlable" : "hero-badge";
-    var badgeTexto = esControlable ? "Control disponible" : "Solo informativo";
+    var esControlable = tipo.subir || tipo.bajar; // define el borde ámbar de la card
 
     var instanciasHtml;
     if (instancias.length === 0) {
@@ -870,50 +1162,52 @@
     return '<div class="hero ' + (esControlable ? "controlable" : "") + '">' +
       '<div class="hero-top">' +
         '<div class="hero-nombre">' + escapeHtml(tipo.nombre) + '</div>' +
-        '<div class="' + badgeClase + '">' + badgeTexto + '</div>' +
       '</div>' +
       '<div class="hero-explicacion">' + escapeHtml(tipo.explicacion) + '</div>' +
       instanciasHtml +
     '</div>';
   }
 
-  // Filtros del listado de promos del panel de ML por tipo de campaña.
-  // Confirmado por Lauti:
-  //   SELLER_CAMPAIGN -> filtro por id: "seller_campaign_offer-{id en minúscula}"
-  //   DEAL             -> filtro por id: "meli_campaign_offer-{id en minúscula}"
-  //                       (el link real de ML suma tambien "official_event-..." y "qf_card-...",
-  //                       pero esos valores son internos de ML y no salen de nuestra API -- se omiten,
-  //                       el filtro por id solo debería alcanzar para llegar a esa campaña puntual)
-  //   LIGHTNING        -> filtro estático, no hay filtro por campaña individual
-  // Los demás tipos: sin filtro confirmado todavía, va al listado general.
+  // Link "Ver en ML" al listado de promos del panel de vendedores, filtrado por campaña.
+  // Formatos copiados de URLs reales del panel (Lauti, 2026-09-27). El filtro es una lista separada por "|":
+  //   [prefijo-{id en minúscula}] + sufijo fijo del tipo (la "tarjeta" del panel donde vive esa campaña).
+  //   SELLER_CAMPAIGN -> seller_campaign_offer-{id}
+  //   DEAL            -> meli_campaign_offer-{id} | qf_active | qf_card-events_t1 | lightning | dod | event | ml | seller
+  //                      (el panel suma además "official_event-<hash>", que la API de ML no devuelve: se omite)
+  //   SMART           -> meli_campaign_offer-{id} | qf_active | qf_card-always_on_meli | ml | seller  ("con aporte de Mercado Libre")
+  //   LIGHTNING       -> filtro fijo (no hay filtro por campaña individual)
+  // Tipo sin formato confirmado -> listado general. Para sumar uno: copiar la URL del panel y agregar la entrada acá.
+  var URL_PANEL_ML_PROMOS = "https://vendedores.mercadolibre.com.ar/publicaciones/listado/promos"; // cambiar si el clon es de otro país
   var FILTROS_ML_POR_TIPO = {
-    SELLER_CAMPAIGN: { modo: "id", prefijo: "seller_campaign_offer" },
-    DEAL: { modo: "id", prefijo: "meli_campaign_offer" },
-    LIGHTNING: { modo: "estatico", valor: "flash_deal|qf_active|qf_card-flash_deals|ml|seller" },
+    SELLER_CAMPAIGN: { prefijo: "seller_campaign_offer", sufijo: [] },
+    DEAL:            { prefijo: "meli_campaign_offer",   sufijo: ["qf_active", "qf_card-events_t1", "lightning", "dod", "event", "ml", "seller"] },
+    SMART:           { prefijo: "meli_campaign_offer",   sufijo: ["qf_active", "qf_card-always_on_meli", "ml", "seller"] },
+    LIGHTNING:       { fijo: ["flash_deal", "qf_active", "qf_card-flash_deals", "ml", "seller"] },
   };
 
   function urlVerEnML(promotionType, promotionId) {
-    var base = "https://vendedores.mercadolibre.com.ar/publicaciones/listado/promos?tab=promotions&page=1";
+    var armar = function (partes) {
+      // Mismo formato que el panel: filters primero y los "|" sin codificar.
+      return URL_PANEL_ML_PROMOS + "?filters=" + partes.map(encodeURIComponent).join("|") + "&page=1&tab=promotions";
+    };
     var cfg = FILTROS_ML_POR_TIPO[promotionType];
-    if (!cfg) return base;
-    if (cfg.modo === "id" && promotionId) {
-      return base + "&filters=" + encodeURIComponent(cfg.prefijo + "-" + promotionId.toLowerCase());
-    }
-    if (cfg.modo === "estatico") {
-      return base + "&filters=" + encodeURIComponent(cfg.valor);
-    }
-    return base;
+    if (!cfg) return URL_PANEL_ML_PROMOS + "?page=1&tab=promotions";
+    if (cfg.fijo) return armar(cfg.fijo);
+    if (!promotionId) return URL_PANEL_ML_PROMOS + "?page=1&tab=promotions";
+    return armar([cfg.prefijo + "-" + String(promotionId).toLowerCase()].concat(cfg.sufijo));
   }
 
   function renderInstancia(tipo, inst) {
     var idSeguro = escapeHtml(inst.id || "");
+    // ML no expone por API el nombre que ve el comprador (solo uno interno de marketing):
+    // si Gerencia/Stock cargó un alias, se usa ese en toda la UI y el interno queda abajo como referencia.
     var nombreInterno = inst.name || inst.id || "(sin nombre)";
     var alias = inst.id ? aliasNombresPublicos[inst.id] : null;
-    var nombre = alias || nombreInterno; // el que se usa en toda la UI (títulos de modales incluidos)
-    var subNombreInterno = alias ? '<div class="fechas">ML interno: ' + escapeHtml(nombreInterno) + '</div>' : '';
+    var nombre = alias || nombreInterno;
     var botonAlias = inst.id
       ? '<button type="button" class="btn-alias" data-editar-alias="' + idSeguro + '" data-nombre-interno="' + escapeHtml(nombreInterno) + '" data-nombre-actual="' + escapeHtml(alias || "") + '" title="' + (alias ? "Editar" : "Cargar") + ' el nombre público (el que ve el comprador en Mercado Libre)">✏️</button>'
-      : '';
+      : "";
+    var subNombreInterno = '<div class="nombre-interno' + (alias ? "" : " oculto") + '">ML interno: ' + escapeHtml(nombreInterno) + '</div>';
     var badgeEstado = inst.status === "started" ? "started" : "pending";
     var badgeTexto = inst.status === "started" ? "Corriendo" : (inst.status || "—");
 
@@ -922,25 +1216,13 @@
       fechas = fechaCorta(inst.start_date) + (inst.finish_date ? " → " + fechaCorta(inst.finish_date) : "");
     }
 
-    // Campañas co-fondeadas (MARKETPLACE_CAMPAIGN, y a veces VOLUME) traen benefits.meli_percent
-    // y benefits.seller_percent -- quién pone qué parte del descuento. Pedido por Stock (18/09).
-    var desgloseBenef = "";
-    if (inst.benefits && (typeof inst.benefits.meli_percent === "number" || typeof inst.benefits.seller_percent === "number")) {
-      var partesBenef = [];
-      if (typeof inst.benefits.meli_percent === "number") partesBenef.push("🅼🅻 aporta " + inst.benefits.meli_percent + "%");
-      if (typeof inst.benefits.seller_percent === "number") partesBenef.push("Nosotros aportamos " + inst.benefits.seller_percent + "%");
-      desgloseBenef = '<div class="fechas">' + partesBenef.join(" · ") + '</div>';
-    }
-
-    // "Ver en ML" solo para tipos con filtro CONFIRMADO (ver FILTROS_ML_POR_TIPO). Para el
-    // resto -- confirmado por Albano el 18/09: MARKETPLACE_CAMPAIGN y DOD todavía ni figuran
-    // en el panel web de ML, se gestionan solo por API -- no tiene sentido mandar a un link
-    // que cae en cualquier lado. Se avisa en vez de mostrar un link engañoso.
+    // "Ver en ML" solo para tipos con filtro CONFIRMADO (FILTROS_ML_POR_TIPO). Para el resto, un link
+    // al listado general cae en cualquier campaña (reporte de Stock, 17/09): se muestra "Solo por API".
     var linkML = "";
     if (inst.id && FILTROS_ML_POR_TIPO[tipo.codigo]) {
       linkML = '<a href="' + escapeHtml(urlVerEnML(tipo.codigo, inst.id)) + '" target="_blank" rel="noopener" class="estado-badge" style="background:var(--panel-border); color:var(--text-dim); text-decoration:none;">Ver en ML ↗</a>';
     } else if (inst.id) {
-      linkML = '<span class="estado-badge" style="background:var(--panel-border); color:var(--text-dim); cursor:help;" title="Esta campaña todavía no tiene una vista propia en el panel web de Mercado Libre -- se gestiona solo desde acá.">Solo por API</span>';
+      linkML = '<span class="estado-badge" style="background:var(--panel-border); color:var(--text-dim); cursor:help;" title="Este tipo de campaña no tiene todavía un link confirmado al panel web de Mercado Libre: se gestiona desde acá.">Solo por API</span>';
     }
 
     var acciones = "";
@@ -958,35 +1240,50 @@
         '</div>';
     }
 
-    return '<div class="instancia">' +
+    return '<div class="instancia" data-instancia="' + idSeguro + '">' +
       '<span class="nombre">' + escapeHtml(nombre) + '</span>' + botonAlias +
       '<span class="estado-badge ' + badgeEstado + '">' + escapeHtml(badgeTexto) + '</span>' +
       linkML +
       (fechas ? '<div class="fechas">' + escapeHtml(fechas) + '</div>' : "") +
-      desgloseBenef +
       subNombreInterno +
       acciones +
     '</div>';
   }
 
-  function editarAliasPromocion(promotionId, nombreInterno, nombreActual) {
+  // Carga/edita el nombre público de una campaña. Actualiza la card en el lugar (sin re-render),
+  // así no se pierden los conteos de candidatos/activos ya cargados. Vacío = volver al nombre interno.
+  function editarAliasPromocion(btn) {
+    var promotionId = btn.getAttribute("data-editar-alias");
+    var nombreInterno = btn.getAttribute("data-nombre-interno");
     var propuesto = window.prompt(
-      "Nombre público de esta campaña (el que ve el comprador en Mercado Libre).\n\nNombre interno de ML: " + nombreInterno,
-      nombreActual || ""
+      "Nombre público de esta campaña (el que ve el comprador en Mercado Libre).\n" +
+      "Dejalo vacío para volver al nombre interno.\n\nNombre interno de ML: " + nombreInterno,
+      btn.getAttribute("data-nombre-actual") || ""
     );
     if (propuesto === null) return; // canceló
-    var limpio = propuesto.trim();
-    if (!limpio) return;
+    var limpio = propuesto.trim().slice(0, 150);
+    var opciones = limpio
+      ? { method: "POST", headers: { Authorization: AUTH, "Content-Type": "application/json" }, body: JSON.stringify({ promotion_id: promotionId, nombre_publico: limpio }) }
+      : { method: "DELETE", headers: { Authorization: AUTH } };
+    var url = limpio ? URL_ALIAS : URL_ALIAS + "?promotion_id=" + encodeURIComponent(promotionId);
 
-    fetchConTimeout(URL_ALIAS, { method: "POST", headers: { Authorization: AUTH, "Content-Type": "application/json" }, body: JSON.stringify({ promotion_id: promotionId, nombre_publico: limpio }) })
+    btn.disabled = true;
+    fetchConTimeout(url, opciones)
       .then(function (res) {
         if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error");
-        aliasNombresPublicos[promotionId] = limpio;
-        renderGrid(ultimasPromosActivas);
+        if (limpio) aliasNombresPublicos[promotionId] = limpio; else delete aliasNombresPublicos[promotionId];
+        var nombreVisible = limpio || nombreInterno;
+        var cont = els.gridTipos.querySelector('[data-instancia="' + cssEscape(promotionId) + '"]');
+        if (cont) {
+          cont.querySelector(".nombre").textContent = nombreVisible;
+          cont.querySelector(".nombre-interno").classList.toggle("oculto", !limpio);
+          cont.querySelectorAll("[data-nombre]").forEach(function (b) { b.setAttribute("data-nombre", nombreVisible); });
+        }
+        btn.setAttribute("data-nombre-actual", limpio);
+        btn.title = (limpio ? "Editar" : "Cargar") + " el nombre público (el que ve el comprador en Mercado Libre)";
       })
-      .catch(function (err) {
-        alert("No se pudo guardar el nombre público: " + err.message);
-      });
+      .catch(function (err) { window.alert("No se pudo guardar el nombre público: " + err.message); })
+      .finally(function () { btn.disabled = false; });
   }
 
   function cargarConteo(btnVerConteo) {
@@ -1005,6 +1302,7 @@
         promoItemsState[promotionId] = {
           candidatos: res.data.items_candidatos || [],
           activos: res.data.items_activos || [],
+          cargadoAt: Date.now(), // para saber si los precios en memoria están viejos
         };
         contenedor.innerHTML = kpiHelp("Candidatas: publicaciones invitadas a esta campaña que todavía no están aplicadas. Activas: ya están corriendo con el descuento puesto. Se calcula consultando en vivo /seller-promotions/promotions/{id}/items en ML.") +
           ' Candidatas: <b>' + res.data.candidatos + '</b> · Activas: <b>' + res.data.activos + '</b> ' +
@@ -1035,7 +1333,36 @@
      ============================================================ */
   var pctPendiente = null; // { promotionId, promotionType, nombre }
 
+  // ---------- Aviso "subiste precios hace poco" (registro local, por navegador) ----------
+  function guardarRegistroPrecios(reg) {
+    try { localStorage.setItem(LS_PRECIOS_RECIENTES, JSON.stringify(reg)); } catch (e) { /* sin storage: el aviso no se muestra, nada más */ }
+  }
+  function leerRegistroPrecios() {
+    try { var r = JSON.parse(localStorage.getItem(LS_PRECIOS_RECIENTES) || "null"); return r && r.fecha ? r : null; } catch (e) { return null; }
+  }
+  // Devuelve el aviso (texto plano) si hubo subas de precio de lista desde esta app en los últimos ~7 días; si no, "".
+  function avisoPreciosRecientes() {
+    var r = leerRegistroPrecios();
+    if (!r || !r.subieron) return "";
+    var f = new Date(r.fecha);
+    if (isNaN(f.getTime()) || (Date.now() - f.getTime()) / 86400000 >= DIAS_REFERENCIA_ML) return "";
+    var hasta = new Date(f.getTime() + DIAS_REFERENCIA_ML * 86400000);
+    return "⏳ El " + f.toLocaleDateString("es-AR") + " subiste el precio de lista de " + r.subieron + " publicación(es) desde esta app. " +
+      "ML mide el descuento contra el precio más bajo de los últimos ~" + DIAS_REFERENCIA_ML + " días, así que hasta el " + hasta.toLocaleDateString("es-AR") +
+      " es probable que muchas queden en REVISAR con un % chico. Opciones: esperar, usar un % mayor o el precio sugerido de ML.";
+  }
+  // Se llama al terminar "Aplicar en ML" (pestaña precios): guarda cuántas publicaciones SUBIERON de precio.
+  function registrarPreciosAplicados(log) {
+    var subieron = (log || []).filter(function (l) { return l.estado === "APLICADO" && Number(l.pct) > 0; }).length;
+    if (subieron > 0) guardarRegistroPrecios({ fecha: new Date().toISOString(), subieron: subieron });
+  }
+
   function abrirModalPorcentaje(promotionId, promotionType, nombre) {
+    if (hayCorridaEnCurso()) return;
+    var aviso = avisoPreciosRecientes();
+    var elAviso = document.getElementById("avisoPreciosRecientes");
+    elAviso.textContent = aviso;
+    elAviso.classList.toggle("oculto", !aviso);
     pctPendiente = { promotionId: promotionId, promotionType: promotionType, nombre: nombre };
     els.porcentajeNombreCampana.textContent = nombre;
     els.inputPctBase.value = "";
@@ -1093,6 +1420,7 @@
   var accionPendiente = null;
 
   function abrirConfirmacion(promotionId, promotionType, accion, nombre, pctConfig) {
+    if (hayCorridaEnCurso()) return;
     accionPendiente = { promotionId: promotionId, promotionType: promotionType, accion: accion, pctConfig: pctConfig || null };
     els.confirmarTitulo.textContent = accion === "subir" ? "¿Subir todas las candidatas?" : "¿Bajar todas las activas?";
 
@@ -1109,6 +1437,9 @@
       texto += ". Esto cambia precios reales visibles en ML.";
     } else {
       texto = 'Va a sacar de "' + nombre + '" a cada publicación que esté activa ahí. No se puede deshacer con un botón — habría que volver a aplicarlas a mano.';
+      if (TIPOS_BAJA_RESTRINGIDA_ML.indexOf(promotionType) !== -1) {
+        texto += " Aviso: Mercado Libre suele no permitir sacar este tipo de oferta una vez activa; si la rechaza, lo vas a ver publicación por publicación en el detalle (no se toca ninguna otra promo).";
+      }
     }
     els.confirmarTexto.textContent = texto;
     els.modalConfirmar.classList.remove("oculto");
@@ -1140,6 +1471,7 @@
 
   var ultimoContextoTanda = null; // { a, itemsTotal, logAcumulado } -- para poder armar "Reintentar fallidos"
   var ultimasPromosActivas = []; // cache de la última carga de arrancarApp(), la usan las métricas
+  var aliasNombresPublicos = {}; // promotion_id -> nombre público cargado a mano (tabla ml_promos_nombre_publico)
 
   els.toggleMetricas.addEventListener("click", function () {
     var abierto = !els.metricasBody.classList.contains("oculto");
@@ -1158,10 +1490,14 @@
     var totales = sumarPromoItemsState();
 
     els.metricasGrid.innerHTML =
-      statBox(promosActivas.length, "Campañas activas + pendientes") +
-      statBox(corriendo, "Corriendo ahora") +
-      statBox(totales.activos, "Publicaciones con oferta activa" + (totales.consultadas < promosActivas.length ? " *" : ""), totales.consultadas === 0) +
-      statBox(totales.candidatos, "Candidatas sin aplicar" + (totales.consultadas < promosActivas.length ? " *" : ""), totales.consultadas === 0);
+      statBox(promosActivas.length, "Campañas activas + pendientes", false,
+        "Cantidad de campañas de Mercado Libre en estado \"corriendo\" o \"pendiente\" para la cuenta de Gráfica, sumando los 12 tipos. Sale en vivo de la API de ML (seller-promotions) al abrir la app.") +
+      statBox(corriendo, "Corriendo ahora", false,
+        "De las campañas anteriores, cuántas ya arrancaron (estado \"started\" en ML). Las pendientes todavía no empezaron.") +
+      statBox(totales.activos, "Publicaciones con oferta activa" + (totales.consultadas < promosActivas.length ? " *" : ""), totales.consultadas === 0,
+        "Suma de publicaciones que ya están adentro de alguna campaña, contando solo las cards que consultaste con \"Ver candidatos/activos\". El * indica que faltan cards por consultar.") +
+      statBox(totales.candidatos, "Candidatas sin aplicar" + (totales.consultadas < promosActivas.length ? " *" : ""), totales.consultadas === 0,
+        "Publicaciones que ML habilita para sumar a una campaña pero todavía no están adentro. Mismo origen y misma aclaración del * que el indicador anterior.");
 
     var filasTipo = Object.keys(porTipo).sort(function (a, b) { return porTipo[b].length - porTipo[a].length; }).map(function (codigo) {
       return '<div class="tipo-fila"><span>' + escapeHtml(NOMBRES_TIPO[codigo] || codigo) + '</span><span class="cant">' + porTipo[codigo].length + '</span></div>';
@@ -1182,8 +1518,9 @@
     return { activos: activos, candidatos: candidatos, consultadas: consultadas };
   }
 
-  function statBox(valor, etiqueta, esDim) {
-    return '<div class="stat-box"><div class="valor' + (esDim ? " dim" : "") + '">' + valor + '</div><div class="etiqueta">' + escapeHtml(etiqueta) + '</div></div>';
+  function statBox(valor, etiqueta, esDim, ayuda) {
+    return '<div class="stat-box">' + (ayuda ? '<span class="stat-help">' + kpiHelp(ayuda) + '</span>' : "") +
+      '<div class="valor' + (esDim ? " dim" : "") + '">' + valor + '</div><div class="etiqueta">' + escapeHtml(etiqueta) + '</div></div>';
   }
 
   els.btnActualizarMetricas.addEventListener("click", function () {
@@ -1239,9 +1576,10 @@
     var logAcumulado = [];
     var exitosos = 0, errores = 0, revisar = 0, indice = 0;
     var t0Tanda = Date.now();
+    iniciarCorrida();
 
     els.resultadoTitulo.textContent = a.accion === "subir" ? "Subiendo a todas..." : "Bajando de todas...";
-    els.resultadoResumen.textContent = "Procesando 0/" + itemsTotal.length + " (estimado " + fmtSeg(itemsTotal.length * 0.5) + ")...";
+    els.resultadoResumen.textContent = "Procesando 0/" + itemsTotal.length + " (estimado " + fmtSeg(itemsTotal.length * (a.accion === "subir" ? SEG_POR_ITEM_SUBIR_EST : 0.5)) + ")...";
     els.resultadoTablaWrap.innerHTML = "";
     els.btnReintentarFallidos.classList.add("oculto");
     els.btnUsarSugerido.classList.add("oculto");
@@ -1254,7 +1592,7 @@
         els.resultadoTitulo.textContent = a.accion === "subir" ? "Resultado — Subir a todas" : "Resultado — Bajar de todas";
         var resumen = itemsTotal.length + " publicaciones procesadas — " + exitosos + " OK, " + errores + " con error";
         if (revisar > 0) resumen += ", " + revisar + " necesitan revisión (el % pedido queda fuera del rango que ML considera creíble)";
-        els.resultadoResumen.textContent = resumen + ".";
+        els.resultadoResumen.textContent = resumen + "." + (revisar > 0 ? " " + TEXTO_REGLA_7D : "");
         renderTablaLog(logAcumulado, a.accion);
 
         ultimoContextoTanda = { a: a, itemsTotal: itemsTotal, logAcumulado: logAcumulado };
@@ -1264,6 +1602,8 @@
 
         els.btnConfirmarAccion.disabled = false;
         accionPendiente = null;
+        finCorrida();
+        refrescarTrasRender = [a.promotionId];
         arrancarApp();
         return;
       }
@@ -1299,6 +1639,7 @@
           renderTablaLog(logAcumulado, a.accion);
           els.btnConfirmarAccion.disabled = false;
           accionPendiente = null;
+          finCorrida();
         });
     }
 
@@ -1306,7 +1647,7 @@
   }
 
   els.btnReintentarFallidos.addEventListener("click", function () {
-    if (!ultimoContextoTanda) return;
+    if (!ultimoContextoTanda || hayCorridaEnCurso()) return;
     var ctx = ultimoContextoTanda;
     var idsFallidos = {};
     ctx.logAcumulado.forEach(function (l) { if (l.estado === "ERROR") idsFallidos[l.item_id] = true; });
@@ -1322,7 +1663,7 @@
   }
 
   els.btnUsarSugerido.addEventListener("click", function () {
-    if (!ultimoContextoTanda) return;
+    if (!ultimoContextoTanda || hayCorridaEnCurso()) return;
     var ctx = ultimoContextoTanda;
     var idsConSugerido = {};
     ctx.logAcumulado.forEach(function (l) { if (l.estado === "REVISAR" && l.sugerido != null) idsConSugerido[l.item_id] = true; });
@@ -1332,7 +1673,7 @@
   });
 
   els.btnAplicarPctRevisar.addEventListener("click", function () {
-    if (!ultimoContextoTanda) return;
+    if (!ultimoContextoTanda || hayCorridaEnCurso()) return;
     var pct = Number(els.inputPctRevisar.value);
     if (!pct || pct <= 0 || pct >= 100) {
       els.inputPctRevisar.style.borderColor = "var(--err)";
@@ -1388,18 +1729,309 @@
     els.modalResultado.classList.remove("oculto");
   }
 
-  els.btnCerrarResultado.addEventListener("click", function () { els.modalResultado.classList.add("oculto"); });
+  /* ---------- Corrida en segundo plano: minimizar el modal de resultado ----------
+     Los motores (subir/bajar por card, Bajar TODAS, Subir TODAS) escriben su avance en
+     #resultadoResumen. Mientras corren, el modal se puede minimizar a una barrita flotante
+     que espeja ese avance, y se puede seguir usando el resto de la app. Solo puede haber
+     UNA corrida viva a la vez (comparten el mismo modal). La pestaña tiene que quedar abierta. */
+  var corridaEnCurso = false;
+  var corridaMinimizada = false;
+  var elPill = document.getElementById("pillCorrida");
+  var elPillTexto = document.getElementById("pillCorridaTexto");
+  var btnMinimizarResultado = document.getElementById("btnMinimizarResultado");
+
+  function refrescarPill() {
+    if (!corridaMinimizada) return;
+    elPillTexto.textContent = corridaEnCurso
+      ? els.resultadoTitulo.textContent + " " + els.resultadoResumen.textContent
+      : "✅ Terminó — tocá para ver el detalle";
+    elPill.classList.toggle("terminada", !corridaEnCurso);
+  }
+  new MutationObserver(refrescarPill).observe(els.resultadoResumen, { childList: true, characterData: true, subtree: true });
+
+  function iniciarCorrida() {
+    corridaEnCurso = true;
+    btnMinimizarResultado.classList.remove("oculto");
+  }
+  function finCorrida() {
+    corridaEnCurso = false;
+    btnMinimizarResultado.classList.add("oculto");
+    refrescarPill();
+  }
+  function minimizarResultado() {
+    corridaMinimizada = true;
+    els.modalResultado.classList.add("oculto");
+    elPill.classList.remove("oculto");
+    refrescarPill();
+  }
+  function restaurarResultado() {
+    corridaMinimizada = false;
+    elPill.classList.add("oculto");
+    els.modalResultado.classList.remove("oculto");
+  }
+  // Devuelve true (y avisa) si ya hay una corrida viva: no se puede lanzar otra en paralelo.
+  function hayCorridaEnCurso() {
+    if (!corridaEnCurso) return false;
+    alert("Hay una corrida en curso (" + els.resultadoResumen.textContent + ").\nEsperá a que termine para lanzar otra.");
+    return true;
+  }
+  btnMinimizarResultado.addEventListener("click", minimizarResultado);
+  elPill.addEventListener("click", restaurarResultado);
+  elPill.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); restaurarResultado(); } });
+  els.btnCerrarResultado.addEventListener("click", function () {
+    if (corridaEnCurso) { minimizarResultado(); return; } // cerrar a mitad de corrida = minimizar: la corrida NO se corta
+    els.modalResultado.classList.add("oculto");
+  });
+  window.addEventListener("beforeunload", function (e) {
+    if (!corridaEnCurso) return;
+    e.preventDefault(); e.returnValue = ""; // el navegador pregunta antes de cerrar/recargar la pestaña
+  });
+
+  /* ============================================================
+     MODAL: Subir a todas — elegir candidatas por % máximo
+     Para los tipos donde ML fija el precio (no están en TIPOS_NECESITAN_PRECIO). El % no se elige:
+     se muestra el que ML va a aplicar y se tildan solo las publicaciones que no superan tu máximo.
+     Datos: items_candidatos de ml-promos-bulk (v17+: price, meli_percentage, seller_percentage, sku).
+     ============================================================ */
+  var LS_SEL_PCT_MAX = TICKETS_APP_ID + ":sel_pct_max"; // último % máximo usado (solo este navegador)
+  var selContexto = null;        // { promotionId, promotionType, nombre }
+  var selFilas = [];             // candidatas con los % calculados
+  var selMarcadas = {};          // item_id -> true
+  var selOrden = { campo: "total", asc: true };
+
+  function redondear1(n) { return Math.round(n * 10) / 10; }
+  // Arma la fila con los tres % (total, ML, vendedor). Si falta alguno se deduce de los otros cuando se puede.
+  function filaSeleccion(it) {
+    var orig = Number(it.original_price) || 0;
+    var price = it.price != null ? Number(it.price) : null;
+    var ml = it.meli_percentage != null ? Number(it.meli_percentage) : null;
+    var vend = it.seller_percentage != null ? Number(it.seller_percentage) : null;
+    var total = (price != null && orig > 0) ? (1 - price / orig) * 100 : (ml != null && vend != null ? ml + vend : null);
+    if (vend == null && total != null && ml != null) vend = total - ml;
+    return {
+      id: it.id, sku: it.sku || "", original_price: orig, price: price,
+      total: total != null ? redondear1(total) : null,
+      ml: ml != null ? redondear1(ml) : null,
+      vendedor: vend != null ? redondear1(vend) : null,
+      item: it,
+    };
+  }
+  function selValorBase(f) { return document.getElementById("selBase").value === "vendedor" ? f.vendedor : f.total; }
+  function selPctMax() {
+    var v = parseFloat(String(document.getElementById("selPctMax").value).replace(",", "."));
+    return isFinite(v) && v >= 0 && v < 100 ? v : null;
+  }
+  function fmtPct(v) { return v == null ? "—" : v + "%"; }
+
+  function abrirModalSeleccionSubir(promotionId, promotionType, nombre, yaRefrescado) {
+    if (hayCorridaEnCurso()) return;
+    selContexto = { promotionId: promotionId, promotionType: promotionType, nombre: nombre };
+    document.getElementById("selNombreCampana").textContent = nombre;
+    var estadoEl = document.getElementById("selEstado");
+    var previo = promoItemsState[promotionId];
+    document.getElementById("modalSeleccionSubir").classList.remove("oculto");
+    // Datos viejos (o sin los % de v17) => se releen de ML antes de mostrar.
+    var sinPct = previo && previo.candidatos && previo.candidatos.length && previo.candidatos[0].price === undefined;
+    if (!yaRefrescado && (!previo || !previo.cargadoAt || sinPct || Date.now() - previo.cargadoAt > MAX_EDAD_DATOS_CAMPANA_MS)) {
+      selFilas = []; selMarcadas = {}; renderSeleccion();
+      estadoEl.textContent = "Leyendo de Mercado Libre las candidatas y el % de cada una…"; estadoEl.className = "estado";
+      refrescarEstadoCampana(promotionId, promotionType)
+        .then(function () { abrirModalSeleccionSubir(promotionId, promotionType, nombre, true); })
+        .catch(function (err) { estadoEl.textContent = "No se pudo leer la campaña de ML: " + err.message + ". Cerrá y reintentá."; estadoEl.className = "estado err"; });
+      return;
+    }
+    var estado = promoItemsState[promotionId];
+    selFilas = ((estado && estado.candidatos) || []).map(filaSeleccion);
+    selMarcadas = {};
+    selOrden = { campo: "total", asc: true };
+    try { var guardado = localStorage.getItem(LS_SEL_PCT_MAX); if (guardado) document.getElementById("selPctMax").value = guardado; } catch (e) { /* sin storage */ }
+    estadoEl.textContent = selFilas.length === 0 ? "No hay publicaciones candidatas en esta campaña." :
+      "Poné tu % máximo y tocá \"Seleccionar hasta ese %\". Nada se sube hasta que confirmes.";
+    estadoEl.className = "estado";
+    renderSeleccion();
+  }
+
+  function renderSeleccion() {
+    var max = selPctMax();
+    var campo = selOrden.campo, asc = selOrden.asc;
+    var filas = selFilas.slice().sort(function (a, b) {
+      var va = a[campo], vb = b[campo];
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1; if (vb == null) return -1; // sin dato, siempre al final
+      if (typeof va === "string") { va = va.toLowerCase(); vb = String(vb).toLowerCase(); }
+      return va < vb ? (asc ? -1 : 1) : va > vb ? (asc ? 1 : -1) : 0;
+    });
+    var baseEsVendedor = document.getElementById("selBase").value === "vendedor";
+    document.getElementById("tablaSelBody").innerHTML = filas.map(function (f) {
+      var base = selValorBase(f);
+      var cls = [];
+      if (selMarcadas[f.id]) cls.push("sel-marcada");
+      if (max != null && base != null) cls.push(base <= max ? "sel-dentro" : "sel-fuera");
+      return "<tr class='" + cls.join(" ") + "' data-sel-id='" + escapeHtml(f.id) + "'>" +
+        "<td><input type='checkbox' class='sel-check' " + (selMarcadas[f.id] ? "checked" : "") + "></td>" +
+        "<td>" + escapeHtml(f.id) + "</td><td>" + escapeHtml(f.sku || "—") + "</td>" +
+        "<td class='num'>" + fmtPrecio(f.original_price) + "</td>" +
+        "<td class='num'>" + fmtPrecio(f.price) + "</td>" +
+        "<td class='num" + (!baseEsVendedor ? " sel-pct-base" : "") + "'>" + fmtPct(f.total) + "</td>" +
+        "<td class='num'>" + fmtPct(f.ml) + "</td>" +
+        "<td class='num" + (baseEsVendedor ? " sel-pct-base" : "") + "'>" + fmtPct(f.vendedor) + "</td></tr>";
+    }).join("");
+    document.querySelectorAll("#tablaSel th[data-sel-sort]").forEach(function (th) {
+      var activo = th.getAttribute("data-sel-sort") === campo;
+      th.style.color = activo ? "var(--amber)" : "";
+      th.setAttribute("title", "Ordenar" + (activo ? (asc ? " (ascendente)" : " (descendente)") : ""));
+    });
+    renderResumenSeleccion();
+  }
+
+  function renderResumenSeleccion() {
+    var marcadas = selFilas.filter(function (f) { return selMarcadas[f.id]; });
+    var prom = function (arr, k) { var v = arr.filter(function (f) { return f[k] != null; }); return v.length ? redondear1(v.reduce(function (s, f) { return s + f[k]; }, 0) / v.length) : null; };
+    var sinDato = selFilas.filter(function (f) { return selValorBase(f) == null; }).length;
+    var max = selPctMax();
+    var sobre = max == null ? null : selFilas.filter(function (f) { var b = selValorBase(f); return b != null && b > max; }).length;
+    function kpi(help, label, valor) { return '<div class="kpi">' + kpiHelp(help) + " " + label + " <b>" + valor + "</b></div>"; }
+    document.getElementById("selResumen").innerHTML =
+      kpi("Publicaciones tildadas que se van a sumar a la campaña, sobre el total de candidatas que ML te ofrece. Solo se suben las tildadas.", "Seleccionadas", marcadas.length + " de " + selFilas.length) +
+      kpi("Promedio del descuento total (precio final vs. precio de lista) de las publicaciones tildadas. Es el % que ve el comprador. Sale del precio que informa ML para cada candidata.", "Desc. total prom.", fmtPct(prom(marcadas, "total"))) +
+      kpi("Promedio de la parte del descuento que ponés vos (seller_percentage que informa ML) en las tildadas. El resto lo pone Mercado Libre.", "Ponés vos prom.", fmtPct(prom(marcadas, "vendedor"))) +
+      (sobre != null ? kpi("Candidatas cuyo % (según lo que elegiste comparar) supera tu % máximo. Quedan sin tildar al usar \"Seleccionar hasta ese %\".", "Sobre tu máximo", sobre) : "") +
+      (sinDato ? kpi("Candidatas para las que ML no informó el %. No se tildan solas con el filtro; si querés sumarlas, tildalas a mano.", "Sin dato de %", sinDato) : "");
+    var btn = document.getElementById("btnSelConfirmar");
+    btn.textContent = "Subir seleccionadas (" + marcadas.length + ")";
+    btn.disabled = marcadas.length === 0;
+    var visibles = document.querySelectorAll("#tablaSelBody .sel-check");
+    var todas = document.getElementById("selCheckTodas");
+    todas.checked = visibles.length > 0 && marcadas.length === selFilas.length;
+    todas.indeterminate = marcadas.length > 0 && marcadas.length < selFilas.length;
+  }
+
+  document.getElementById("tablaSelBody").addEventListener("change", function (e) {
+    if (!e.target.classList.contains("sel-check")) return;
+    var id = e.target.closest("tr").getAttribute("data-sel-id");
+    if (e.target.checked) selMarcadas[id] = true; else delete selMarcadas[id];
+    e.target.closest("tr").classList.toggle("sel-marcada", e.target.checked);
+    renderResumenSeleccion();
+  });
+  document.getElementById("selCheckTodas").addEventListener("change", function () {
+    var marcar = this.checked;
+    selMarcadas = {};
+    if (marcar) selFilas.forEach(function (f) { selMarcadas[f.id] = true; });
+    renderSeleccion();
+  });
+  document.querySelectorAll("#tablaSel th[data-sel-sort]").forEach(function (th) {
+    th.addEventListener("click", function () {
+      var c = th.getAttribute("data-sel-sort");
+      selOrden = selOrden.campo === c ? { campo: c, asc: !selOrden.asc } : { campo: c, asc: true };
+      renderSeleccion();
+    });
+  });
+  function seleccionarHastaMax() {
+    var max = selPctMax();
+    var estadoEl = document.getElementById("selEstado");
+    if (max == null) { estadoEl.textContent = "Poné un % máximo válido (entre 0 y 99)."; estadoEl.className = "estado err"; return; }
+    try { localStorage.setItem(LS_SEL_PCT_MAX, String(max)); } catch (e) { /* sin storage */ }
+    selMarcadas = {};
+    selFilas.forEach(function (f) { var b = selValorBase(f); if (b != null && b <= max) selMarcadas[f.id] = true; });
+    var n = Object.keys(selMarcadas).length;
+    estadoEl.textContent = n + " publicación(es) quedan en " + max + "% o menos (" + (document.getElementById("selBase").value === "vendedor" ? "lo que ponés vos" : "descuento total") + "). Revisalas y confirmá.";
+    estadoEl.className = "estado ok";
+    renderSeleccion();
+  }
+  document.getElementById("btnSelHasta").addEventListener("click", seleccionarHastaMax);
+  document.getElementById("selPctMax").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); seleccionarHastaMax(); } });
+  document.getElementById("selPctMax").addEventListener("input", renderSeleccion); // recolorea sin tildar
+  document.getElementById("selBase").addEventListener("change", renderSeleccion);
+  document.getElementById("btnSelTodas").addEventListener("click", function () { selMarcadas = {}; selFilas.forEach(function (f) { selMarcadas[f.id] = true; }); renderSeleccion(); });
+  document.getElementById("btnSelNinguna").addEventListener("click", function () { selMarcadas = {}; renderSeleccion(); });
+  document.getElementById("btnSelCancelar").addEventListener("click", function () { selContexto = null; document.getElementById("modalSeleccionSubir").classList.add("oculto"); });
+  document.getElementById("btnSelConfirmar").addEventListener("click", function () {
+    if (!selContexto || hayCorridaEnCurso()) return;
+    var items = selFilas.filter(function (f) { return selMarcadas[f.id]; }).map(function (f) { return f.item; });
+    if (items.length === 0) return;
+    var max = selPctMax();
+    if (!confirm("Vas a sumar " + items.length + " publicación(es) a \"" + selContexto.nombre + "\" con el precio que fija Mercado Libre" +
+      (max != null ? " (tu máximo: " + max + "%)" : "") + ". Esto cambia precios reales visibles en ML.\n\n¿Continuar?")) return;
+    var a = { promotionId: selContexto.promotionId, promotionType: selContexto.promotionType, accion: "subir", pctConfig: null };
+    document.getElementById("modalSeleccionSubir").classList.add("oculto");
+    selContexto = null;
+    ejecutarEnTandas(a, items, {});
+  });
 
   /* ============================================================
      MODAL: % aplicados por campaña (editable, ordenable)
      ============================================================ */
   var pctAplicadosContexto = null; // { promotionId, promotionType }
   var pctAplicadosOrden = { campo: "id", asc: true };
+  var pctEditados = {};           // item_id -> % tipeado y todavía no guardado (sobrevive a reordenar)
+  var pctResultadoPorItem = {};   // item_id -> { tipo: ok|warn|err, txt } del último guardado
+  var pctMasivoEnCurso = false;
+  var elPctMasivoBar = document.getElementById("pctMasivoBar");
+  var elInputPctMasivo = document.getElementById("inputPctMasivo");
+  var btnRellenarPct = document.getElementById("btnRellenarPct");
+  var btnGuardarTodosPct = document.getElementById("btnGuardarTodosPct");
 
-  function abrirModalPctAplicados(promotionId, promotionType, nombre) {
-    pctAplicadosContexto = { promotionId: promotionId, promotionType: promotionType };
+  function pctActualDe(it) {
+    return it.original_price > 0 ? Math.round((1 - it.price / it.original_price) * 1000) / 10 : 0;
+  }
+  function celdaResultadoPct(id) {
+    var r = pctResultadoPorItem[id];
+    if (!r) return "";
+    var col = r.tipo === "ok" ? "var(--ok)" : (r.tipo === "warn" ? "var(--amber)" : "var(--err)");
+    return "<span style='color:" + col + "; font-size:0.72rem;'>" + escapeHtml(r.txt) + "</span>";
+  }
+  // Traduce una línea del log de ml-promos-bulk al resultado que se muestra por fila.
+  function resultadoDesdeLog(l) {
+    if (l.estado === "APLICADO") return { tipo: "ok", txt: "✓ " + l.porcentaje + "% ($" + l.precio_aplicado + ")" + (l.verificado === false ? " · sin confirmar en ML todavía" : " · verificado en ML") };
+    if (l.estado === "REVISAR") {
+      return { tipo: "warn", txt: "Fuera de rango: válido " + (l.porcentaje_minimo != null ? l.porcentaje_minimo + "%" : "?") + " a " +
+        (l.porcentaje_maximo != null ? l.porcentaje_maximo + "%" : "?") + (l.sugerido ? " · sugerido $" + l.sugerido : "") };
+    }
+    return { tipo: "err", txt: "Error: " + textoError(l.detalle) };
+  }
+
+  // Relee de ML los ítems de la campaña (precio de lista y de promo actuales) y actualiza la memoria.
+  function refrescarEstadoCampana(promotionId, promotionType) {
+    var url = URL_BULK + "?promotion_id=" + encodeURIComponent(promotionId) + "&promotion_type=" + encodeURIComponent(promotionType);
+    return fetchConTimeout(url, { headers: { Authorization: AUTH } }, TIMEOUT_TANDA_MS).then(function (res) {
+      if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error");
+      promoItemsState[promotionId] = { candidatos: res.data.items_candidatos || [], activos: res.data.items_activos || [], cargadoAt: Date.now() };
+      return promoItemsState[promotionId];
+    });
+  }
+  function textoFrescura(estado) {
+    if (!estado || !estado.cargadoAt) return "";
+    var min = Math.round((Date.now() - estado.cargadoAt) / 60000);
+    return "Precios leídos de ML " + (min < 1 ? "recién" : "hace " + min + " min") + ".";
+  }
+
+  function abrirModalPctAplicados(promotionId, promotionType, nombre, yaRefrescado) {
+    var previo = promoItemsState[promotionId];
+    // Datos viejos => se recargan de ML antes de mostrar: el % se calcula contra el precio de lista ACTUAL.
+    if (!yaRefrescado && (!previo || !previo.cargadoAt || Date.now() - previo.cargadoAt > MAX_EDAD_DATOS_CAMPANA_MS)) {
+      pctAplicadosContexto = { promotionId: promotionId, promotionType: promotionType };
+      els.pctAplicadosNombreCampana.textContent = nombre;
+      elPctMasivoBar.classList.add("oculto");
+      document.getElementById("pctAplicadosFrescura").textContent = "";
+      els.tablaPctAplicadosBody.innerHTML = "";
+      els.pctAplicadosEstado.textContent = "Leyendo de Mercado Libre los precios actuales de esta campaña…";
+      els.pctAplicadosEstado.className = "estado";
+      els.modalPctAplicados.classList.remove("oculto");
+      refrescarEstadoCampana(promotionId, promotionType)
+        .then(function () { abrirModalPctAplicados(promotionId, promotionType, nombre, true); })
+        .catch(function (err) {
+          if (previo && previo.activos) { abrirModalPctAplicados(promotionId, promotionType, nombre, true); els.pctAplicadosEstado.textContent = "⚠️ No se pudo releer de ML (" + err.message + "): los precios pueden estar viejos."; els.pctAplicadosEstado.className = "estado err"; }
+          else { els.pctAplicadosEstado.textContent = "No se pudo leer la campaña de ML: " + err.message; els.pctAplicadosEstado.className = "estado err"; }
+        });
+      return;
+    }
+    pctAplicadosContexto = { promotionId: promotionId, promotionType: promotionType, nombre: nombre };
     els.pctAplicadosNombreCampana.textContent = nombre;
     pctAplicadosOrden = { campo: "id", asc: true };
+    pctEditados = {};
+    pctResultadoPorItem = {};
+    elInputPctMasivo.value = "";
+    elPctMasivoBar.classList.add("oculto");
     actualizarFlechasOrden();
 
     var estado = promoItemsState[promotionId];
@@ -1414,6 +2046,8 @@
     els.pctAplicadosEstado.textContent = estado.activos.length === 0 ? "No hay publicaciones activas en esta campaña."
       : (TIPOS_NECESITAN_PRECIO.indexOf(promotionType) === -1 ? "Este tipo lo gestiona ML automáticamente — el % es solo informativo, no editable." : "");
     els.pctAplicadosEstado.className = "estado";
+    document.getElementById("pctAplicadosFrescura").textContent = textoFrescura(estado);
+    elPctMasivoBar.classList.toggle("oculto", !(estado.activos.length > 0 && TIPOS_NECESITAN_PRECIO.indexOf(promotionType) !== -1));
     renderTablaPctAplicados(estado.activos);
     els.modalPctAplicados.classList.remove("oculto");
   }
@@ -1423,7 +2057,7 @@
     var asc = pctAplicadosOrden.asc;
 
     var filas = activos.map(function (it) {
-      var pct = it.original_price > 0 ? Math.round((1 - it.price / it.original_price) * 1000) / 10 : 0;
+      var pct = pctActualDe(it);
       return { id: it.id, original_price: it.original_price, price: it.price, min_discounted_price: it.min_discounted_price, max_discounted_price: it.max_discounted_price, pct: pct };
     });
 
@@ -1445,14 +2079,22 @@
         "<td class='celda-precio'>$" + f.price + "</td>" +
         "<td style='display:flex; gap:6px; align-items:center;'>" +
           (editable
-            ? "<input type='number' class='input-editar-pct' value='" + f.pct + "' min='1' max='99' step='0.1' style='width:70px;'>" +
+            ? "<input type='number' class='input-editar-pct' value='" + (pctEditados[f.id] != null ? pctEditados[f.id] : f.pct) + "' min='1' max='99' step='0.1' style='width:70px;'>" +
               "<button class='chico secondary btn-guardar-pct'>Guardar</button>"
             : "<span style='color:var(--text-dim); font-size:0.75rem;'>gestiona ML</span>") +
         "</td>" +
+        "<td class='celda-res'>" + celdaResultadoPct(f.id) + "</td>" +
       "</tr>";
     }).join("");
 
     if (!editable) return;
+
+    // Lo tipeado queda en memoria para que no se pierda al reordenar la tabla.
+    els.tablaPctAplicadosBody.querySelectorAll(".input-editar-pct").forEach(function (inp) {
+      inp.addEventListener("input", function () {
+        pctEditados[inp.closest("tr").getAttribute("data-fila-item")] = inp.value;
+      });
+    });
 
     els.tablaPctAplicadosBody.querySelectorAll(".btn-guardar-pct").forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -1520,11 +2162,14 @@
           var estado = promoItemsState[pctAplicadosContexto.promotionId];
           if (estado) {
             estado.activos = estado.activos.map(function (it) {
-              return it.id === itemId ? Object.assign({}, it, { price: log0.precio_aplicado }) : it;
+              return it.id === itemId ? Object.assign({}, it, { price: log0.precio_aplicado, original_price: log0.precio_original || it.original_price }) : it;
             });
           }
           tr.querySelector(".celda-pct").textContent = log0.porcentaje + "%";
           tr.querySelector(".celda-precio").textContent = "$" + log0.precio_aplicado;
+          delete pctEditados[itemId];
+          pctResultadoPorItem[itemId] = resultadoDesdeLog(log0);
+          tr.querySelector(".celda-res").innerHTML = celdaResultadoPct(itemId);
           btn.textContent = "Guardado ✓";
           setTimeout(function () { btn.textContent = "Guardar"; btn.disabled = false; }, 1500);
         } else if (log0.estado === "REVISAR") {
@@ -1544,7 +2189,96 @@
       });
   }
 
-  els.btnCerrarPctAplicados.addEventListener("click", function () { els.modalPctAplicados.classList.add("oculto"); });
+  document.getElementById("btnRefrescarPctAplicados").addEventListener("click", function () {
+    if (!pctAplicadosContexto || pctMasivoEnCurso) return;
+    var c = pctAplicadosContexto;
+    promoItemsState[c.promotionId] && (promoItemsState[c.promotionId].cargadoAt = 0); // fuerza relectura
+    abrirModalPctAplicados(c.promotionId, c.promotionType, c.nombre || els.pctAplicadosNombreCampana.textContent);
+  });
+
+  // ---------- % aplicados: aplicar el mismo % a todas y guardar en bloque ----------
+  btnRellenarPct.addEventListener("click", function () {
+    var pct = Number(elInputPctMasivo.value);
+    if (!pct || pct <= 0 || pct >= 100) { elInputPctMasivo.style.borderColor = "var(--err)"; return; }
+    elInputPctMasivo.style.borderColor = "";
+    var estado = pctAplicadosContexto ? promoItemsState[pctAplicadosContexto.promotionId] : null;
+    if (!estado || !estado.activos) return;
+    estado.activos.forEach(function (it) { pctEditados[it.id] = String(pct); });
+    renderTablaPctAplicados(estado.activos);
+    els.pctAplicadosEstado.textContent = "Rellenado con " + pct + "% en " + estado.activos.length + " publicaciones. Todavía no se guardó nada: apretá \"Guardar todas las modificadas\".";
+    els.pctAplicadosEstado.className = "estado";
+  });
+
+  btnGuardarTodosPct.addEventListener("click", function () {
+    if (pctMasivoEnCurso || !pctAplicadosContexto) return;
+    var ctx = pctAplicadosContexto;
+    var estado = promoItemsState[ctx.promotionId];
+    if (!estado || !estado.activos) return;
+
+    // Solo las filas cuyo % tipeado difiere del actual.
+    var invalidas = 0;
+    var items = [];
+    estado.activos.forEach(function (it) {
+      if (pctEditados[it.id] == null) return;
+      var nuevo = Number(pctEditados[it.id]);
+      if (!nuevo || nuevo <= 0 || nuevo >= 100) { invalidas++; return; }
+      if (Math.abs(nuevo - pctActualDe(it)) < 0.05) return;
+      items.push({ id: it.id, original_price: it.original_price, min_discounted_price: it.min_discounted_price, max_discounted_price: it.max_discounted_price, porcentaje_item: nuevo });
+    });
+    if (invalidas > 0) { els.pctAplicadosEstado.textContent = invalidas + " fila(s) con % inválido (tiene que ser entre 1 y 99). Corregilas antes de guardar."; els.pctAplicadosEstado.className = "estado err"; return; }
+    if (items.length === 0) { els.pctAplicadosEstado.textContent = "No hay cambios para guardar (ningún % distinto al actual)."; els.pctAplicadosEstado.className = "estado"; return; }
+    var aviso7d = avisoPreciosRecientes();
+    if (!confirm("Se va a cambiar el % de " + items.length + " publicación(es) en esta campaña. Esto cambia precios reales en ML." + (aviso7d ? "\n\n" + aviso7d : "") + "\n\n¿Continuar?")) return;
+
+    pctMasivoEnCurso = true;
+    btnGuardarTodosPct.disabled = true; btnRellenarPct.disabled = true;
+    var tandas = chunk(items, BATCH_SIZE), ti = 0, proc = 0, ok = 0, rev = 0, err = 0, t0 = Date.now();
+    els.pctAplicadosEstado.className = "estado";
+    els.pctAplicadosEstado.textContent = "Guardando 0/" + items.length + " (estimado " + fmtSeg(items.length * SEG_POR_ITEM_SUBIR_EST) + ")...";
+
+    function terminar(msgExtra, esError) {
+      pctMasivoEnCurso = false;
+      btnGuardarTodosPct.disabled = false; btnRellenarPct.disabled = false;
+      renderTablaPctAplicados(estado.activos);
+      els.pctAplicadosEstado.textContent = proc + "/" + items.length + " procesadas — " + ok + " OK, " + rev + " fuera de rango, " + err + " con error." +
+        (rev > 0 ? " Mirá la columna Resultado para el rango válido de cada una. " + TEXTO_REGLA_7D : "") + (msgExtra ? " " + msgExtra : "");
+      els.pctAplicadosEstado.className = (esError || err > 0) ? "estado err" : (rev > 0 ? "estado" : "estado ok");
+    }
+    function sig() {
+      if (ti >= tandas.length) { terminar(); return; }
+      var tanda = tandas[ti];
+      fetchConTimeout(URL_BULK, {
+        method: "POST",
+        headers: { Authorization: AUTH, "Content-Type": "application/json" },
+        body: JSON.stringify({ promotion_id: ctx.promotionId, promotion_type: ctx.promotionType, accion: "subir", items: tanda, porcentaje_base: tanda[0].porcentaje_item, excepciones: [] }),
+      }, TIMEOUT_TANDA_MS)
+        .then(function (res) {
+          if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error en tanda");
+          (res.data.log || []).forEach(function (l) {
+            pctResultadoPorItem[l.item_id] = resultadoDesdeLog(l);
+            if (l.estado === "APLICADO") {
+              ok++;
+              delete pctEditados[l.item_id];
+              estado.activos = estado.activos.map(function (it) { return it.id === l.item_id ? Object.assign({}, it, { price: l.precio_aplicado, original_price: l.precio_original || it.original_price }) : it; });
+            } else if (l.estado === "REVISAR") { rev++; } else {
+              err++;
+              if (l.precio_ml != null) estado.activos = estado.activos.map(function (it) { return it.id === l.item_id ? Object.assign({}, it, { price: l.precio_ml, original_price: l.precio_original || it.original_price }) : it; });
+            }
+          });
+          proc += tanda.length; ti++;
+          var resta = (Date.now() - t0) / 1000 / ti * (tandas.length - ti);
+          els.pctAplicadosEstado.textContent = "Guardando " + proc + "/" + items.length + " (resta " + fmtSeg(resta) + ")...";
+          sig();
+        })
+        .catch(function (e) { terminar("Se cortó: " + e.message + ". Lo aplicado ya quedó; volvé a apretar \"Guardar\" para las que faltan.", true); });
+    }
+    sig();
+  });
+
+  els.btnCerrarPctAplicados.addEventListener("click", function () {
+    if (pctMasivoEnCurso && !confirm("Se está guardando en bloque. Si cerrás, sigue en segundo plano pero no vas a ver el resultado. ¿Cerrar igual?")) return;
+    els.modalPctAplicados.classList.add("oculto");
+  });
 
   /* ============================================================
      ACCIONES GLOBALES: Bajar TODAS / Subir TODAS (con % guardados)
@@ -1615,6 +2349,7 @@
   }
 
   els.btnBajarTodo.addEventListener("click", function () {
+    if (hayCorridaEnCurso()) return;
     var plan = recolectarPlanBajarTodo();
     var hayNoBajables = Object.keys(plan.noBajables).length > 0;
 
@@ -1696,6 +2431,7 @@
     var tandas = chunk(items, BATCH_SIZE);
     var ti = 0;
     var t0Bajar = Date.now();
+    iniciarCorrida();
 
     els.resultadoTitulo.textContent = "Bajando TODAS las promociones...";
     els.resultadoResumen.textContent = "Procesando 0/" + totalItems + " (estimado " + fmtSeg(totalItems * 0.5) + ")...";
@@ -1713,7 +2449,9 @@
         if (sinOfertas > 0) resumen += ", " + sinOfertas + " sin promos activas";
         els.resultadoResumen.textContent = resumen + ".";
         renderTablaLog(logGlobal, "bajar");
+        finCorrida();
         cargarEstadoSnapshot();
+        refrescarTrasRender = "todas";
         arrancarApp();
         return;
       }
@@ -1740,6 +2478,7 @@
           els.resultadoTitulo.textContent = "Se cortó a mitad de camino";
           els.resultadoResumen.textContent = procesados + "/" + totalItems + " procesadas antes del error (" + err.message + "). El respaldo de % (si había) ya está guardado — podés usar \"Subir TODAS (con los % guardados)\" cuando quieras para terminar.";
           renderTablaLog(logGlobal, "bajar");
+          finCorrida();
           cargarEstadoSnapshot();
         });
     }
@@ -1752,19 +2491,71 @@
       .then(function (res) {
         if (!res.data || !res.data.ok) return;
         var filas = res.data.filas || [];
+        var btnDescartar = document.getElementById("btnDescartarSnapshot");
         if (filas.length > 0) {
           els.btnSubirTodoGuardado.classList.remove("oculto");
-          els.estadoSnapshot.textContent = filas.length + " publicaciones esperando volver a subirse.";
+          btnDescartar.classList.remove("oculto");
+          // Fecha del respaldo más viejo: para saber de cuándo es la precarga.
+          var masVieja = filas[0].creado_at ? new Date(filas[0].creado_at) : null;
+          var desde = masVieja ? " (guardado el " + masVieja.toLocaleDateString("es-AR") + " " + masVieja.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }) + ")" : "";
+          els.estadoSnapshot.textContent = filas.length + " publicaciones esperando volver a subirse" + desde + ".";
           els.estadoSnapshot.className = "estado";
         } else {
           els.btnSubirTodoGuardado.classList.add("oculto");
+          btnDescartar.classList.add("oculto");
           els.estadoSnapshot.textContent = "";
         }
       })
       .catch(function () { /* no crítico */ });
   }
 
+  // Descartar la cola de % guardados (ml_promos_snapshot). NO toca Mercado Libre:
+  // solo borra el respaldo. Útil cuando quedó una precarga vieja que ya no se va a reaplicar.
+  var TANDA_BORRADO_SNAPSHOT = 100;
+  document.getElementById("btnDescartarSnapshot").addEventListener("click", function () {
+    var btn = this;
+    btn.disabled = true;
+    fetchConTimeout(URL_SNAPSHOT, { headers: { Authorization: AUTH } })
+      .then(function (res) {
+        if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error leyendo el respaldo");
+        var filas = res.data.filas || [];
+        if (filas.length === 0) { cargarEstadoSnapshot(); return; }
+        var fecha = filas[0].creado_at ? new Date(filas[0].creado_at).toLocaleDateString("es-AR") : "?";
+        if (!confirm("Vas a descartar el respaldo de " + filas.length + " publicaciones (guardado el " + fecha + ").\n\nNo se toca nada en Mercado Libre, pero después ya NO vas a poder usar \"Subir TODAS (con los % guardados)\" para esas publicaciones. ¿Continuar?")) return;
+
+        var ids = filas.map(function (f) { return f.id; });
+        var tandas = chunk(ids, TANDA_BORRADO_SNAPSHOT), ti = 0, t0 = Date.now();
+        els.estadoSnapshot.className = "estado";
+        return new Promise(function (resolve, reject) {
+          function sig() {
+            if (ti >= tandas.length) { resolve(ids.length); return; }
+            var hechos = Math.min(ti * TANDA_BORRADO_SNAPSHOT, ids.length);
+            var resta = ti > 0 ? " (resta " + fmtSeg((Date.now() - t0) / 1000 / ti * (tandas.length - ti)) + ")" : "";
+            els.estadoSnapshot.textContent = "Descartando " + hechos + "/" + ids.length + resta + "...";
+            fetchConTimeout(URL_SNAPSHOT + "?ids=" + tandas[ti].join(","), { method: "DELETE", headers: { Authorization: AUTH } })
+              .then(function (r) {
+                if (!r.data || !r.data.ok) throw new Error((r.data && r.data.error) || "error borrando");
+                ti++; sig();
+              })
+              .catch(reject);
+          }
+          sig();
+        }).then(function (total) {
+          els.estadoSnapshot.textContent = "Respaldo descartado (" + total + " filas). Queda limpio.";
+          els.estadoSnapshot.className = "estado ok";
+          setTimeout(cargarEstadoSnapshot, 2500);
+        });
+      })
+      .catch(function (err) {
+        els.estadoSnapshot.textContent = "No se pudo descartar: " + err.message + ". Lo que ya se borró queda borrado; reintentá para terminar.";
+        els.estadoSnapshot.className = "estado err";
+        setTimeout(cargarEstadoSnapshot, 5000); // dejo leer el error antes de refrescar el contador
+      })
+      .finally(function () { btn.disabled = false; });
+  });
+
   els.btnSubirTodoGuardado.addEventListener("click", function () {
+    if (hayCorridaEnCurso()) return;
     els.btnSubirTodoGuardado.disabled = true;
     fetchConTimeout(URL_SNAPSHOT, { headers: { Authorization: AUTH } })
       .then(function (res) {
@@ -1780,7 +2571,8 @@
         });
 
         var listaGrupos = Object.keys(grupos).map(function (k) { return grupos[k]; });
-        if (!confirm("Se van a reaplicar " + filas.length + " publicaciones con el % que tenían guardado, en " + listaGrupos.length + " campaña(s). ¿Continuar?")) return;
+        var aviso7d = avisoPreciosRecientes();
+        if (!confirm("Se van a reaplicar " + filas.length + " publicaciones con el % que tenían guardado, en " + listaGrupos.length + " campaña(s)." + (aviso7d ? "\n\n" + aviso7d : "") + "\n\n¿Continuar?")) return;
 
         prepararYEjecutarRestore(listaGrupos);
       })
@@ -1810,6 +2602,8 @@
 
     Promise.all(promesas).then(function (preparados) {
       ejecutarSubidaGlobal(preparados.filter(function (p) { return p.items.length > 0; }));
+    }).catch(function (err) {
+      alert("No se pudieron consultar las campañas para reaplicar (" + err.message + "). No se tocó nada; reintentá.");
     });
   }
 
@@ -1826,9 +2620,10 @@
     var procesados = 0;
     var gi = 0;
     var t0Subir = Date.now();
+    iniciarCorrida();
 
     els.resultadoTitulo.textContent = "Subiendo TODAS (con % guardados)...";
-    els.resultadoResumen.textContent = "Procesando 0/" + totalItems + " (estimado " + fmtSeg(totalItems * 0.5) + ")...";
+    els.resultadoResumen.textContent = "Procesando 0/" + totalItems + " (estimado " + fmtSeg(totalItems * SEG_POR_ITEM_SUBIR_EST) + ")...";
     els.resultadoTablaWrap.innerHTML = "";
     els.btnReintentarFallidos.classList.add("oculto");
     els.btnUsarSugerido.classList.add("oculto");
@@ -1838,15 +2633,17 @@
     function siguienteGrupo() {
       if (gi >= grupos.length) {
         els.resultadoTitulo.textContent = "Resultado — Subir TODAS (con % guardados)";
-        els.resultadoResumen.textContent = totalItems + " publicaciones procesadas — " + exitosos + " OK, " + errores + " con error, " + revisar + " en revisión.";
+        els.resultadoResumen.textContent = totalItems + " publicaciones procesadas — " + exitosos + " OK, " + errores + " con error, " + revisar + " en revisión." + (revisar > 0 ? " " + TEXTO_REGLA_7D : "");
         renderTablaLog(logGlobal, "subir");
+        finCorrida();
 
         if (idsSnapshotExitosos.length > 0) {
           fetchConTimeout(URL_SNAPSHOT + "?ids=" + idsSnapshotExitosos.join(","), { method: "DELETE", headers: { Authorization: AUTH } })
             .catch(function () { /* si falla el borrado del respaldo no es grave, quedan filas viejas */ })
-            .finally(function () { cargarEstadoSnapshot(); arrancarApp(); });
+            .finally(function () { cargarEstadoSnapshot(); refrescarTrasRender = "todas"; arrancarApp(); });
         } else {
           cargarEstadoSnapshot();
+          refrescarTrasRender = "todas";
           arrancarApp();
         }
         return;
@@ -1884,6 +2681,7 @@
             els.resultadoTitulo.textContent = "Se cortó a mitad de camino";
             els.resultadoResumen.textContent = procesados + "/" + totalItems + " procesadas antes del error (" + err.message + ").";
             renderTablaLog(logGlobal, "subir");
+            finCorrida();
           });
       }
       siguienteTandaGrupo();
@@ -1902,160 +2700,25 @@
   var filasResultadoPrecios = null;           // último aplicar (si ya se aplicó)
 
   // --- pestañas ---
-  var reportesCargadosUnaVez = false;
+  // Registro de vistas: para sumar una pestaña nueva, agregala acá (id de la vista + id del botón).
+  var VISTAS = {
+    promos:  { vista: "vistaPromos",  tab: "tabPromos" },
+    precios: { vista: "vistaPrecios", tab: "tabPrecios" },
+    tickets: { vista: "vistaTickets", tab: "tabTickets" },
+  };
+  var vistaActual = "promos";
   function mostrarVista(cual) {
-    document.getElementById("vistaPromos").classList.toggle("oculto", cual !== "promos");
-    document.getElementById("vistaPrecios").classList.toggle("oculto", cual !== "precios");
-    document.getElementById("vistaReportes").classList.toggle("oculto", cual !== "reportes");
-    document.getElementById("tabPromos").classList.toggle("activa", cual === "promos");
-    document.getElementById("tabPrecios").classList.toggle("activa", cual === "precios");
-    document.getElementById("tabReportes").classList.toggle("activa", cual === "reportes");
-    if (cual === "reportes" && !reportesCargadosUnaVez) {
-      reportesCargadosUnaVez = true;
-      cargarReportes();
-    }
-  }
-  document.getElementById("tabPromos").addEventListener("click", function () { mostrarVista("promos"); });
-  document.getElementById("tabPrecios").addEventListener("click", function () { mostrarVista("precios"); });
-  document.getElementById("tabReportes").addEventListener("click", function () { mostrarVista("reportes"); });
-
-  /* ============================================================
-     REPORTES DEL USUARIO (premisa obligatoria del proyecto)
-     ============================================================ */
-  function fechaHoraCorta(iso) {
-    if (!iso) return "";
-    try {
-      var d = new Date(iso);
-      return d.toLocaleString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
-    } catch (e) { return iso; }
-  }
-
-  function archivoABase64(file) {
-    return new Promise(function (resolve, reject) {
-      var reader = new FileReader();
-      reader.onload = function () { resolve(reader.result); };
-      reader.onerror = function () { reject(new Error("No se pudo leer la imagen.")); };
-      reader.readAsDataURL(file);
+    if (!VISTAS[cual]) return;
+    vistaActual = cual;
+    Object.keys(VISTAS).forEach(function (k) {
+      document.getElementById(VISTAS[k].vista).classList.toggle("oculto", k !== cual);
+      document.getElementById(VISTAS[k].tab).classList.toggle("activa", k === cual);
     });
+    if (cual === "tickets") ticketsAlEntrar();
   }
-
-  document.getElementById("btnEnviarReporte").addEventListener("click", function () {
-    var btn = document.getElementById("btnEnviarReporte");
-    var estado = document.getElementById("estadoReporte");
-    var tipo = document.getElementById("reporteTipo").value;
-    var mensaje = document.getElementById("reporteMensaje").value.trim();
-    var archivoInput = document.getElementById("reporteImagen");
-    var archivo = archivoInput.files && archivoInput.files[0] ? archivoInput.files[0] : null;
-
-    estado.className = "estado";
-    if (!mensaje) { estado.textContent = "Contanos qué pasó antes de enviar."; estado.className = "estado err"; return; }
-    if (archivo && archivo.size > 5 * 1024 * 1024) { estado.textContent = "La imagen no puede pesar más de 5 MB."; estado.className = "estado err"; return; }
-
-    btn.disabled = true;
-    estado.textContent = "Enviando...";
-
-    var pImagen = archivo ? archivoABase64(archivo) : Promise.resolve(null);
-    pImagen
-      .then(function (imagenBase64) {
-        var body = { tipo: tipo, mensaje: mensaje };
-        if (imagenBase64) body.imagen_base64 = imagenBase64;
-        return fetchConTimeout(URL_REPORTES, { method: "POST", headers: { Authorization: AUTH, "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      })
-      .then(function (res) {
-        if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error desconocido");
-        estado.textContent = "¡Reporte enviado! Gracias.";
-        estado.className = "estado ok";
-        document.getElementById("reporteMensaje").value = "";
-        archivoInput.value = "";
-        cargarReportes();
-      })
-      .catch(function (err) {
-        estado.textContent = "No se pudo enviar: " + err.message;
-        estado.className = "estado err";
-      })
-      .finally(function () { btn.disabled = false; });
+  Object.keys(VISTAS).forEach(function (k) {
+    document.getElementById(VISTAS[k].tab).addEventListener("click", function () { mostrarVista(k); });
   });
-
-  var puedeGestionarEstadoReportes = false;
-
-  function cargarReportes() {
-    var cont = document.getElementById("listaReportes");
-    cont.innerHTML = '<div class="sin-reportes">Cargando reportes...</div>';
-    fetchConTimeout(URL_REPORTES, { headers: { Authorization: AUTH } })
-      .then(function (res) {
-        if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error");
-        puedeGestionarEstadoReportes = !!res.data.puede_gestionar_estado;
-        renderListaReportes(res.data.reportes || []);
-      })
-      .catch(function (err) {
-        cont.innerHTML = '<div class="sin-reportes">No se pudieron cargar los reportes: ' + escapeHtml(err.message) + '</div>';
-      });
-  }
-  document.getElementById("btnActualizarReportes").addEventListener("click", cargarReportes);
-
-  var ETIQUETA_ESTADO_REPORTE = { abierto: "Abierto", en_proceso: "En proceso", terminado: "Terminado" };
-
-  function renderListaReportes(reportes) {
-    var cont = document.getElementById("listaReportes");
-    if (reportes.length === 0) {
-      cont.innerHTML = '<div class="sin-reportes">Todavía no hay reportes cargados.</div>';
-      return;
-    }
-    cont.innerHTML = reportes.map(function (r) {
-      var tagTipo = r.tipo === "mejora" ? '<span class="tag-tipo mejora">💡 Mejora</span>' : '<span class="tag-tipo problema">🐞 Problema</span>';
-      var estadoActual = r.estado || "abierto";
-      var controlEstado;
-      if (puedeGestionarEstadoReportes) {
-        controlEstado = '<select class="selector-estado" data-cambiar-estado="' + r.id + '">' +
-          ["abierto", "en_proceso", "terminado"].map(function (e) {
-            return '<option value="' + e + '"' + (e === estadoActual ? " selected" : "") + '>' + ETIQUETA_ESTADO_REPORTE[e] + '</option>';
-          }).join("") +
-          '</select>';
-      } else {
-        controlEstado = '<span class="tag-estado' + (estadoActual !== "abierto" ? " " + estadoActual : "") + '">' + ETIQUETA_ESTADO_REPORTE[estadoActual] + '</span>';
-      }
-      var captura = r.captura_path ? ' · <a href="#" class="ver-captura" data-captura="' + escapeHtml(r.captura_path) + '">Ver captura</a>' : '';
-      return '<div class="fila-reporte">' +
-        '<div class="cabecera">' + tagTipo + controlEstado + '<span class="meta">' + escapeHtml(r.email || "") + ' — ' + fechaHoraCorta(r.creado_at) + '</span></div>' +
-        '<div class="mensaje">' + escapeHtml(r.mensaje) + captura + '</div>' +
-        '</div>';
-    }).join("");
-
-    cont.querySelectorAll("[data-captura]").forEach(function (a) {
-      a.addEventListener("click", function (e) {
-        e.preventDefault();
-        var path = a.getAttribute("data-captura");
-        a.textContent = "Abriendo...";
-        fetchConTimeout(URL_REPORTES, { method: "POST", headers: { Authorization: AUTH, "Content-Type": "application/json" }, body: JSON.stringify({ accion: "firmar_url", captura_path: path }) })
-          .then(function (res) {
-            if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error");
-            window.open(res.data.url, "_blank", "noopener");
-            a.textContent = "Ver captura";
-          })
-          .catch(function (err) {
-            a.textContent = "Error: " + err.message;
-          });
-      });
-    });
-
-    cont.querySelectorAll("[data-cambiar-estado]").forEach(function (sel) {
-      sel.addEventListener("change", function () {
-        var id = Number(sel.getAttribute("data-cambiar-estado"));
-        var nuevoEstado = sel.value;
-        sel.disabled = true;
-        fetchConTimeout(URL_REPORTES, { method: "PATCH", headers: { Authorization: AUTH, "Content-Type": "application/json" }, body: JSON.stringify({ id: id, estado: nuevoEstado }) })
-          .then(function (res) {
-            if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error");
-            sel.disabled = false;
-          })
-          .catch(function (err) {
-            alert("No se pudo actualizar el estado: " + err.message);
-            sel.disabled = false;
-            cargarReportes();
-          });
-      });
-    });
-  }
 
   // --- parsing de entrada ---
   // Precio AR: "12.500"/"12500" -> 12500 ; "12.500,50"/"12500,50" -> 12500.5
@@ -2085,23 +2748,26 @@
     return isFinite(n) ? n : NaN;
   }
 
-  // ---------- Grilla de entrada tipo Excel (2 columnas: SKU | Precio) ----------
+  // ---------- Grilla de entrada tipo Excel (3 columnas: SKU | Precio lista | Precio mayorista) ----------
+  // Para sumar una columna: agregala a COLS_GRILLA (clase del input) y leela en leerGrillaEntrada().
   var FILAS_INICIALES = 6;
+  var COLS_GRILLA = ["cel-sku", "cel-precio", "cel-may"];
 
-  function crearFilaEntrada(sku, precio) {
+  function crearFilaEntrada(sku, precio, mayorista) {
     var tr = document.createElement("tr");
     tr.innerHTML =
       '<td><input type="text" class="cel-sku" autocomplete="off" spellcheck="false"></td>' +
-      '<td><input type="text" class="cel-precio" inputmode="decimal" autocomplete="off"></td>' +
+      '<td><input type="text" class="cel-precio" inputmode="decimal" autocomplete="off" placeholder="sin cambio"></td>' +
+      '<td class="td-may"><input type="text" class="cel-may" inputmode="decimal" autocomplete="off" placeholder="—"></td>' +
       '<td class="acc"><button type="button" class="btn-x" title="Quitar fila">✕</button></td>';
-    var inpSku = tr.querySelector(".cel-sku"), inpPrecio = tr.querySelector(".cel-precio");
-    inpSku.value = sku || ""; inpPrecio.value = precio || "";
+    var inpSku = tr.querySelector(".cel-sku"), inpPrecio = tr.querySelector(".cel-precio"), inpMay = tr.querySelector(".cel-may");
+    inpSku.value = sku || ""; inpPrecio.value = precio || ""; inpMay.value = mayorista || "";
     tr.querySelector(".btn-x").addEventListener("click", function () {
       var body = document.getElementById("grillaBody");
       if (body.rows.length > 1) tr.remove();
-      else { inpSku.value = ""; inpPrecio.value = ""; }
+      else { inpSku.value = ""; inpPrecio.value = ""; inpMay.value = ""; }
     });
-    [inpSku, inpPrecio].forEach(function (inp, col) {
+    [inpSku, inpPrecio, inpMay].forEach(function (inp, col) {
       inp.addEventListener("keydown", function (e) {
         if (e.key === "Enter") {
           e.preventDefault();
@@ -2114,8 +2780,8 @@
     });
     return tr;
   }
-  function agregarFilaEntrada(sku, precio) {
-    var tr = crearFilaEntrada(sku, precio);
+  function agregarFilaEntrada(sku, precio, mayorista) {
+    var tr = crearFilaEntrada(sku, precio, mayorista);
     document.getElementById("grillaBody").appendChild(tr);
     return tr;
   }
@@ -2130,12 +2796,13 @@
     var idx = Array.prototype.indexOf.call(body.rows, trInicio);
     lineas.forEach(function (linea, i) {
       var cols = linea.split("\t");
-      var sku, precio;
-      if (colInicio === 0) { sku = (cols[0] || "").trim(); precio = (cols[1] || "").trim(); }
-      else { precio = (cols[0] || "").trim(); sku = (cols[1] || "").trim(); }
       var fila = body.rows[idx + i] || agregarFilaEntrada();
-      if (sku !== "") fila.querySelector(".cel-sku").value = sku;
-      if (precio !== "") fila.querySelector(".cel-precio").value = precio;
+      // Cada columna pegada cae en la celda siguiente a partir de donde pegaste (SKU → Precio → Mayorista).
+      cols.forEach(function (valor, j) {
+        var clase = COLS_GRILLA[colInicio + j];
+        var v = (valor || "").trim();
+        if (clase && v !== "") fila.querySelector("." + clase).value = v;
+      });
     });
   }
   function leerGrillaEntrada() {
@@ -2143,14 +2810,33 @@
     Array.prototype.forEach.call(document.getElementById("grillaBody").rows, function (tr) {
       var sku = tr.querySelector(".cel-sku").value.trim();
       var precioRaw = tr.querySelector(".cel-precio").value.trim();
-      if (sku === "" && precioRaw === "") return;
-      var precio = parsearPrecioAR(precioRaw);
-      out.push({ sku: sku, precio: precio, error: sku === "" ? "falta SKU" : ((isFinite(precio) && precio > 0) ? null : "precio inválido") });
+      var mayRaw = tr.querySelector(".cel-may").value.trim();
+      if (sku === "" && precioRaw === "" && mayRaw === "") return;
+      // Vacío = "no cambiar" (null). Al menos uno de los dos tiene que venir.
+      var precio = precioRaw === "" ? null : parsearPrecioAR(precioRaw);
+      var may = mayRaw === "" ? null : parsearPrecioAR(mayRaw);
+      var error = null;
+      if (sku === "") error = "falta SKU";
+      else if (precio === null && may === null) error = "falta precio o precio mayorista";
+      else if (precio !== null && !(isFinite(precio) && precio > 0)) error = "precio inválido";
+      else if (may !== null && !(isFinite(may) && may > 0)) error = "precio mayorista inválido";
+      else if (precio !== null && may !== null && !(may < precio)) error = "el precio mayorista tiene que ser menor al precio de lista";
+      out.push({ sku: sku, precio: precio, mayorista: may, error: error });
     });
     return out;
   }
   (function initGrilla() {
     for (var i = 0; i < FILAS_INICIALES; i++) agregarFilaEntrada();
+    var inpMin = document.getElementById("inputMinUnidades");
+    inpMin.value = MAYORISTA_MIN_UNIDADES_DEFAULT;
+    // Si cambiás las unidades después de previsualizar, el preview queda viejo: hay que rehacerlo.
+    inpMin.addEventListener("input", function () {
+      if (filasPreviewPrecios.length && !filasResultadoPrecios) {
+        document.getElementById("btnAplicarPrecios").disabled = true;
+        var est = document.getElementById("estadoPrecios");
+        est.textContent = "Cambiaste las unidades mínimas: volvé a previsualizar antes de aplicar."; est.className = "estado err";
+      }
+    });
     document.getElementById("btnAgregarFilaPrecio").addEventListener("click", function () {
       agregarFilaEntrada().querySelector(".cel-sku").focus();
     });
@@ -2160,6 +2846,7 @@
     var body = document.getElementById("grillaBody");
     body.innerHTML = "";
     for (var i = 0; i < FILAS_INICIALES; i++) agregarFilaEntrada();
+    document.getElementById("inputMinUnidades").value = MAYORISTA_MIN_UNIDADES_DEFAULT;
     document.getElementById("estadoPrecios").textContent = "";
     document.getElementById("panelResultadoPrecios").classList.add("oculto");
     filasPreviewPrecios = []; filasResultadoPrecios = null; filtroEstadoPrecios = null;
@@ -2182,15 +2869,19 @@
     var parsed = leerGrillaEntrada();
     if (parsed.length === 0) { est.textContent = "Cargá al menos un SKU y su precio."; est.className = "estado err"; return; }
 
+    var minUnidades = leerMinUnidades();
+    if (minUnidades === null) {
+      est.textContent = "Unidades mínimas del mayorista inválidas: poné un entero entre " + MAYORISTA_MIN_UNIDADES_MIN + " y " + MAYORISTA_MIN_UNIDADES_MAX + "."; est.className = "estado err"; return;
+    }
     var conError = parsed.filter(function (p) { return p.error; });
-    var precioPorSku = {}, orden = [];
+    var pedidoPorSku = {}, orden = [];
     parsed.forEach(function (p) {
       if (p.error) return;
-      if (precioPorSku[p.sku] === undefined) orden.push(p.sku);
-      precioPorSku[p.sku] = p.precio; // si se repite el SKU, gana el último
+      if (pedidoPorSku[p.sku] === undefined) orden.push(p.sku);
+      pedidoPorSku[p.sku] = { precio: p.precio, mayorista: p.mayorista }; // si se repite el SKU, gana el último
     });
-    var skus = orden.map(function (s) { return { sku: s, precio: precioPorSku[s] }; });
-    if (skus.length === 0) { est.textContent = "No hay filas válidas. Revisá que cada fila tenga SKU y un precio > 0."; est.className = "estado err"; return; }
+    var skus = orden.map(function (s) { return { sku: s, precio: pedidoPorSku[s].precio, mayorista: pedidoPorSku[s].mayorista }; });
+    if (skus.length === 0) { est.textContent = "No hay filas válidas. Revisá que cada fila tenga SKU y un precio y/o precio mayorista > 0."; est.className = "estado err"; return; }
 
     filasPreviewPrecios = []; filasResultadoPrecios = null; filtroEstadoPrecios = null;
     var tandas = chunk(skus, BATCH_SKUS_PREVIEW), ti = 0, proc = 0;
@@ -2204,25 +2895,30 @@
     function sig() {
       if (ti >= tandas.length) {
         conError.forEach(function (p) {
-          filasPreviewPrecios.push({ sku: p.sku || "(vacío)", item_id: null, title: null, estado: (p.error === "falta SKU" ? "SKU_NO_ENCONTRADO" : "PRECIO_INVALIDO"), detalle: p.error });
+          var estErr = p.error === "falta SKU" ? "SKU_NO_ENCONTRADO" : (/mayorista/.test(p.error) ? "MAYORISTA_INVALIDO" : "PRECIO_INVALIDO");
+          filasPreviewPrecios.push({ sku: p.sku || "(vacío)", item_id: null, title: null, estado: estErr, detalle: p.error });
         });
         document.getElementById("btnPreviewPrecios").disabled = false;
         est.textContent = "Preview listo en " + fmtSeg((Date.now() - t0) / 1000) + ". Revisá y editá lo que haga falta antes de aplicar."; est.className = "estado ok";
         renderResumenPrecios();
         renderTablaPrecios();
-        var hayOk = filasPreviewPrecios.some(function (f) { return f.estado === "OK"; });
-        document.getElementById("btnAplicarPrecios").disabled = !hayOk;
+        actualizarBotonAplicarPrecios();
         return;
       }
       var tanda = tandas[ti];
       fetchConTimeout(URL_PRECIOS, {
         method: "POST",
         headers: { Authorization: AUTH, "Content-Type": "application/json" },
-        body: JSON.stringify({ accion: "preview", skus: tanda }),
+        body: JSON.stringify({ accion: "preview", skus: tanda, min_unidades: minUnidades }),
       }, TIMEOUT_TANDA_MS)
         .then(function (res) {
           if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error en el preview");
-          filasPreviewPrecios = filasPreviewPrecios.concat(res.data.filas || []);
+          (res.data.filas || []).forEach(function (f) {
+            // Editables en ML: se puede corregir precio/mayorista a mano antes de aplicar.
+            f._editable = !!f.item_id && (f.estado === "OK" || f.estado === "MAYORISTA_INVALIDO");
+            if (f.min_unidades == null) f.min_unidades = minUnidades;
+            filasPreviewPrecios.push(f);
+          });
           proc += tanda.length; ti++;
           var transc = (Date.now() - t0) / 1000;
           var restante = ti > 0 ? (transc / ti) * (tandas.length - ti) : estTotal;
@@ -2240,15 +2936,39 @@
     sig();
   }
 
+  // Unidades mínimas del mayorista (entero en rango) o null si es inválido.
+  function leerMinUnidades() {
+    var raw = String(document.getElementById("inputMinUnidades").value || "").trim();
+    if (!/^\d+$/.test(raw)) return null;
+    var n = Number(raw);
+    return (n >= MAYORISTA_MIN_UNIDADES_MIN && n <= MAYORISTA_MIN_UNIDADES_MAX) ? n : null;
+  }
+  function pctContra(base, valor) {
+    return (base > 0 && valor != null) ? Math.round(((valor - base) / base) * 1000) / 10 : null;
+  }
+  // Recalcula %, avisos y estado de una fila editable del preview (tras editar precio o mayorista).
+  function recalcularFila(f) {
+    var lista = f.precio_nuevo != null ? f.precio_nuevo : f.precio_antes;
+    f.pct = f.precio_nuevo != null ? pctContra(f.precio_antes, f.precio_nuevo) : null;
+    f.warning_grande = f.pct != null && Math.abs(f.pct) >= 40;
+    f.mayorista_pct = f.mayorista_nuevo != null ? pctContra(lista, f.mayorista_nuevo) : null;
+    f.aviso_mayorista = (f.precio_nuevo != null && f.mayorista_nuevo == null && f.mayorista_actual != null && f.mayorista_actual >= f.precio_nuevo)
+      ? "el mayorista vigente ($" + f.mayorista_actual + ") queda igual o por encima del precio de lista nuevo; cargá un mayorista nuevo en esta fila" : null;
+    if (f.precio_nuevo == null && f.mayorista_nuevo == null) { f.estado = "SIN_CAMBIOS"; f.detalle = "no hay precio ni mayorista para aplicar"; }
+    else if (f.mayorista_nuevo != null && !(f.mayorista_nuevo < lista)) { f.estado = "MAYORISTA_INVALIDO"; f.detalle = "el precio mayorista ($" + f.mayorista_nuevo + ") tiene que ser menor al precio de lista ($" + lista + ")"; }
+    else { f.estado = "OK"; f.detalle = undefined; }
+  }
+
   var ETIQUETA_ESTADO_PRECIO = {
     OK: "Se actualiza", APLICADO: "Aplicado",
+    MAYORISTA_INVALIDO: "Mayorista inválido", SIN_CAMBIOS: "Sin cambios",
     REVISAR_VARIACIONES: "Revisar (variaciones)",
     OMITIDA_STATUS: "Omitida (cerrada)", OMITIDA_TOPE: "Omitida (tope)",
     SKU_NO_ENCONTRADO: "SKU no encontrado", PRECIO_INVALIDO: "Precio inválido", ERROR: "Error",
   };
   function claseEstadoPrecio(estado) {
     if (estado === "OK" || estado === "APLICADO") return "APLICADO";
-    if (estado === "REVISAR_VARIACIONES" || estado === "OMITIDA_STATUS" || estado === "OMITIDA_TOPE") return "REVISAR";
+    if (estado === "REVISAR_VARIACIONES" || estado === "OMITIDA_STATUS" || estado === "OMITIDA_TOPE" || estado === "SIN_CAMBIOS") return "REVISAR";
     return "ERROR";
   }
   function fmtPrecio(n) {
@@ -2267,60 +2987,112 @@
   var GRUPOS_FILTRO = {
     OK: ["OK", "APLICADO"],
     REVISAR: ["REVISAR_VARIACIONES"],
-    OMITIDAS: ["OMITIDA_STATUS", "OMITIDA_TOPE"],
-    PROBLEMA: ["SKU_NO_ENCONTRADO", "PRECIO_INVALIDO", "ERROR"],
+    OMITIDAS: ["OMITIDA_STATUS", "OMITIDA_TOPE", "SIN_CAMBIOS"],
+    PROBLEMA: ["SKU_NO_ENCONTRADO", "PRECIO_INVALIDO", "MAYORISTA_INVALIDO", "ERROR"],
   };
-  function filaEditablePrecio(f) { return f.estado === "OK" && !filasResultadoPrecios; }
+  // Filtros que no son por estado (predicado propio). Para sumar uno: agregalo acá y su KPI en renderResumenPrecios.
+  var FILTROS_ESPECIALES = {
+    MAYORISTA: function (f) { return f.mayorista_nuevo != null || f.mayorista_verificado === true; },
+    AVISO_MAY: function (f) { return !!f.aviso_mayorista; },
+  };
+  function pasaFiltroPrecios(f) {
+    if (!filtroEstadoPrecios) return true;
+    if (FILTROS_ESPECIALES[filtroEstadoPrecios]) return FILTROS_ESPECIALES[filtroEstadoPrecios](f);
+    return GRUPOS_FILTRO[filtroEstadoPrecios].indexOf(f.estado) !== -1;
+  }
+  function filaEditablePrecio(f) { return !!f._editable && !filasResultadoPrecios; }
 
   function renderTablaPrecios() {
     var esResultado = !!filasResultadoPrecios;
     var fuente = esResultado ? filasResultadoPrecios : filasPreviewPrecios;
     var colPrecio = esResultado ? "Después" : "Nuevo (editable)";
-    var estadosVisibles = filtroEstadoPrecios ? GRUPOS_FILTRO[filtroEstadoPrecios] : null;
-    var thead = "<thead><tr><th>SKU</th><th>Publicación</th><th>Estado</th><th class='num'>Antes</th><th class='num'>" + colPrecio + "</th><th class='num'>Δ%</th></tr></thead>";
+    var minU = (fuente.find ? (fuente.find(function (f) { return f.min_unidades; }) || {}).min_unidades : null) || leerMinUnidades() || MAYORISTA_MIN_UNIDADES_DEFAULT;
+    var thead = "<thead><tr><th>SKU</th><th>Publicación</th><th>Estado</th><th class='num'>Antes</th><th class='num'>" + colPrecio + "</th><th class='num'>Δ%</th>" +
+      "<th class='num th-may'>" + (esResultado ? "Mayorista antes" : "Mayorista actual") + "</th>" +
+      "<th class='num th-may'>" + (esResultado ? "Mayorista después" : "Mayorista nuevo (editable)") + "<div style='font-weight:400;font-size:0.68rem;'>desde " + minU + " u.</div></th>" +
+      "<th class='num th-may'>vs lista</th></tr></thead>";
     var body = "";
     fuente.forEach(function (f, idx) {
-      if (estadosVisibles && estadosVisibles.indexOf(f.estado) === -1) return;
+      if (!pasaFiltroPrecios(f)) return;
       var precioDespues = esResultado ? f.precio_despues : f.precio_nuevo;
       var pub = f.item_id
         ? '<a href="https://articulo.mercadolibre.com.ar/' + escapeHtml(String(f.item_id).replace("MLA", "MLA-")) + '" target="_blank" rel="noopener" style="color:var(--amber);text-decoration:none;">' + escapeHtml(f.item_id) + "</a>" + (f.title ? '<div style="color:var(--text-dim);font-size:0.72rem;">' + escapeHtml(String(f.title).slice(0, 60)) + "</div>" : "")
         : (f.title ? '<span style="color:var(--text-dim);">' + escapeHtml(String(f.title).slice(0, 60)) + "</span>" : "—");
       var detalle = f.detalle ? '<div style="color:var(--text-dim);font-size:0.7rem;">' + escapeHtml(textoError(f.detalle)) + "</div>" : "";
-      var filaCls = f.warning_grande ? ' class="fila-warning"' : "";
-      var celdaNuevo = filaEditablePrecio(f)
-        ? '<input type="text" class="precio-edit" inputmode="decimal" data-idx="' + idx + '" value="' + (f.precio_nuevo != null ? f.precio_nuevo : "") + '">'
-        : fmtPrecio(precioDespues);
+      var aviso = f.aviso_mayorista ? '<div class="aviso-may">⚠️ ' + escapeHtml(f.aviso_mayorista) + "</div>" : "";
+      var filaCls = (f.warning_grande || f.aviso_mayorista) ? ' class="fila-warning"' : "";
+      var editable = filaEditablePrecio(f);
+      var sinCambio = '<span class="sin-cambio">sin cambio</span>';
+
+      // --- precio de lista ---
+      var celdaNuevo = editable
+        ? '<input type="text" class="precio-edit" inputmode="decimal" data-campo="precio" data-idx="' + idx + '" placeholder="sin cambio" value="' + (f.precio_nuevo != null ? f.precio_nuevo : "") + '">'
+        : (precioDespues != null ? fmtPrecio(precioDespues) : (f.item_id ? sinCambio : "—"));
+
+      // --- mayorista ---
+      var mayAntes = esResultado ? f.mayorista_antes : f.mayorista_actual;
+      var mayDespues = esResultado ? f.mayorista_despues : f.mayorista_nuevo;
+      var celdaMayAntes = mayAntes != null ? fmtPrecio(mayAntes) : (f.item_id ? '<span class="sin-cambio">no tiene</span>' : "—");
+      var celdaMayNuevo;
+      if (editable) {
+        celdaMayNuevo = '<input type="text" class="precio-edit may-edit" inputmode="decimal" data-campo="mayorista" data-idx="' + idx + '" placeholder="sin cambio" value="' + (f.mayorista_nuevo != null ? f.mayorista_nuevo : "") + '">';
+      } else if (mayDespues != null) {
+        celdaMayNuevo = fmtPrecio(mayDespues) + (esResultado && f.mayorista_verificado ? '<div class="may-ok">✓ confirmado en ML</div>' : "");
+      } else {
+        celdaMayNuevo = f.item_id ? sinCambio : "—";
+      }
+      // % del mayorista contra la lista final: negativo = descuento (verde); >= 0 = mal cargado (rojo)
+      var mayPct = f.mayorista_pct != null
+        ? '<span class="' + (f.mayorista_pct < 0 ? "delta-baja" : "delta-sube") + '">' + (f.mayorista_pct > 0 ? "+" : "") + f.mayorista_pct + "%</span>" : "—";
+
       body += "<tr" + filaCls + "><td>" + escapeHtml(f.sku || "—") + "</td><td>" + pub + "</td>" +
         "<td><span class='tag-log " + claseEstadoPrecio(f.estado) + "'>" + escapeHtml(ETIQUETA_ESTADO_PRECIO[f.estado] || f.estado) + "</span>" +
-        (f.warning_grande ? ' ⚠️' : "") + detalle + "</td>" +
+        (f.warning_grande ? ' ⚠️' : "") + detalle + aviso + "</td>" +
         "<td class='num'>" + fmtPrecio(f.precio_antes) + "</td>" +
         "<td class='num'>" + celdaNuevo + "</td>" +
-        "<td class='num'>" + celdaDelta(f.pct) + "</td></tr>";
+        "<td class='num'>" + celdaDelta(f.pct) + "</td>" +
+        "<td class='num td-may'>" + celdaMayAntes + "</td>" +
+        "<td class='num td-may'>" + celdaMayNuevo + "</td>" +
+        "<td class='num td-may'>" + mayPct + "</td></tr>";
     });
+    if (!body) body = "<tr><td colspan='9' style='color:var(--text-dim);text-align:center;padding:14px;'>No hay filas para este filtro.</td></tr>";
     var tabla = document.getElementById("tablaPrecios");
     tabla.innerHTML = thead + "<tbody>" + body + "</tbody>";
-    // edición de precio por fila
+    // edición por fila (precio de lista o mayorista). Vacío = "no cambiar" ese precio.
     tabla.querySelectorAll("input.precio-edit").forEach(function (inp) {
       inp.addEventListener("change", function () {
         var idx = Number(inp.getAttribute("data-idx"));
+        var campo = inp.getAttribute("data-campo");
         var f = filasPreviewPrecios[idx];
         if (!f) return;
-        var nuevo = parsearPrecioAR(inp.value);
-        if (isFinite(nuevo) && nuevo > 0) {
-          f.precio_nuevo = nuevo;
-          f.pct = (f.precio_antes > 0) ? Math.round(((nuevo - f.precio_antes) / f.precio_antes) * 1000) / 10 : null;
-          f.warning_grande = f.pct != null && Math.abs(f.pct) >= 40;
+        var raw = inp.value.trim();
+        var clave = campo === "mayorista" ? "mayorista_nuevo" : "precio_nuevo";
+        if (raw === "") f[clave] = null;
+        else {
+          var nuevo = parsearPrecioAR(raw);
+          if (isFinite(nuevo) && nuevo > 0) f[clave] = nuevo; // inválido: se ignora y se re-dibuja el valor anterior
         }
+        recalcularFila(f);
+        renderResumenPrecios();
         renderTablaPrecios();
+        actualizarBotonAplicarPrecios();
       });
     });
   }
+  function actualizarBotonAplicarPrecios() {
+    if (filasResultadoPrecios) return;
+    var hayOk = filasPreviewPrecios.some(function (f) { return f.estado === "OK"; });
+    document.getElementById("btnAplicarPrecios").disabled = !hayOk;
+  }
 
   function renderResumenPrecios() {
-    var c = { OK: 0, REVISAR_VARIACIONES: 0, OMITIDA_STATUS: 0, OMITIDA_TOPE: 0, SKU_NO_ENCONTRADO: 0, PRECIO_INVALIDO: 0, ERROR: 0 };
+    var c = { OK: 0, REVISAR_VARIACIONES: 0, OMITIDA_STATUS: 0, OMITIDA_TOPE: 0, SIN_CAMBIOS: 0, SKU_NO_ENCONTRADO: 0, PRECIO_INVALIDO: 0, MAYORISTA_INVALIDO: 0, ERROR: 0 };
     filasPreviewPrecios.forEach(function (f) { if (c[f.estado] != null) c[f.estado]++; });
-    var omit = c.OMITIDA_STATUS + c.OMITIDA_TOPE;
-    var probl = c.SKU_NO_ENCONTRADO + c.PRECIO_INVALIDO + c.ERROR;
+    var omit = c.OMITIDA_STATUS + c.OMITIDA_TOPE + c.SIN_CAMBIOS;
+    var probl = c.SKU_NO_ENCONTRADO + c.PRECIO_INVALIDO + c.MAYORISTA_INVALIDO + c.ERROR;
+    var fuenteMay = filasResultadoPrecios || filasPreviewPrecios;
+    var conMay = fuenteMay.filter(function (f) { return filasResultadoPrecios ? f.mayorista_verificado === true : (f.estado === "OK" && f.mayorista_nuevo != null); }).length;
+    var avisosMay = fuenteMay.filter(function (f) { return !!f.aviso_mayorista; }).length;
     function kpi(filtro, help, label, valor) {
       var activo = filtroEstadoPrecios === filtro ? " filtro-activo" : "";
       return '<div class="kpi clickable' + activo + '" data-filtro="' + filtro + '">' + kpiHelp(help) + ' ' + label + ' <b>' + valor + '</b></div>';
@@ -2329,7 +3101,12 @@
       kpi("OK", "Publicaciones activas/pausadas que se van a actualizar. Solo estas se aplican. Clic para filtrar la tabla.", "A actualizar", c.OK) +
       kpi("REVISAR", "Publicaciones con variaciones: el precio va por variación, no se toca desde acá. Clic para filtrar.", "A revisar", c.REVISAR_VARIACIONES) +
       kpi("OMITIDAS", "Publicaciones cerradas/finalizadas que ML no deja editar, o que superaron el tope por tanda. Clic para filtrar.", "Omitidas", omit) +
-      kpi("PROBLEMA", "SKU sin publicación en el mapeo, precio inválido, o error consultando ML. Clic para filtrar.", "Con problema", probl);
+      kpi("PROBLEMA", "SKU sin publicación en el mapeo, precio o mayorista inválido (el mayorista tiene que ser menor al precio de lista), o error consultando ML. Clic para filtrar.", "Con problema", probl) +
+      kpi("MAYORISTA", filasResultadoPrecios
+        ? "Publicaciones a las que se les cargó el precio mayorista y ML lo devolvió en su lista de precios (confirmado). Sale de la respuesta de ML al aplicar. Clic para filtrar."
+        : "Publicaciones que van a recibir precio mayorista nuevo (el monto final que cargaste en la columna de la derecha), válido desde las unidades mínimas elegidas. Clic para filtrar.",
+        "Con mayorista", conMay) +
+      (avisosMay ? kpi("AVISO_MAY", "Publicaciones que hoy tienen precio mayorista y a las que les cambia el precio de lista sin cargar un mayorista nuevo: como el mayorista es un monto fijo en pesos, puede quedar igual o por encima de la lista nueva (o ML lo puede borrar). Revisalas y cargá un mayorista nuevo si hace falta. Clic para filtrar.", "Aviso mayorista", avisosMay) : "");
     document.querySelectorAll("#resumenPrecios .kpi.clickable").forEach(function (k) {
       k.addEventListener("click", function (e) {
         if (e.target.closest && e.target.closest(".kpi-help")) return; // el "?" abre su globo, no filtra
@@ -2346,21 +3123,25 @@
     var esResultado = !!filasResultadoPrecios;
     var filas = esResultado ? filasResultadoPrecios : filasPreviewPrecios;
     if (!filas || filas.length === 0) { alert("No hay nada para exportar todavía."); return; }
-    var cab = ["sku", "item_id", "titulo", "estado", "precio_antes", esResultado ? "precio_despues" : "precio_nuevo", "pct_dif", "detalle"];
+    var cab = ["sku", "item_id", "titulo", "estado", "precio_antes", esResultado ? "precio_despues" : "precio_nuevo", "pct_dif",
+      esResultado ? "mayorista_antes" : "mayorista_actual", esResultado ? "mayorista_despues" : "mayorista_nuevo", "mayorista_desde_unidades", "mayorista_pct_vs_lista", "mayorista_confirmado", "aviso_mayorista", "detalle"];
     var lineas = [cab.join(",")];
     filas.forEach(function (f) {
       var precioDespues = esResultado ? f.precio_despues : f.precio_nuevo;
-      var fila = [f.sku, f.item_id, f.title, f.estado, f.precio_antes, precioDespues, f.pct, (f.detalle != null ? textoError(f.detalle) : "")];
+      var fila = [f.sku, f.item_id, f.title, f.estado, f.precio_antes, precioDespues, f.pct,
+        esResultado ? f.mayorista_antes : f.mayorista_actual, esResultado ? f.mayorista_despues : f.mayorista_nuevo, f.min_unidades,
+        f.mayorista_pct, esResultado ? (f.mayorista_verificado ? "si" : "") : "", f.aviso_mayorista || "",
+        (f.detalle != null ? textoError(f.detalle) : "")];
       lineas.push(fila.map(function (v) {
         var s = v == null ? "" : String(v);
         return '"' + s.replace(/"/g, '""') + '"';
       }).join(","));
     });
-    var blob = new Blob(["﻿" + lineas.join("\n")], { type: "text/csv;charset=utf-8;" });
+    var blob = new Blob(["\uFEFF" + lineas.join("\n")], { type: "text/csv;charset=utf-8;" });
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
     a.href = url;
-    a.download = "precios_grafica_limite_" + new Date().toISOString().slice(0, 10) + ".csv";
+    a.download = "precios_grafica_" + new Date().toISOString().slice(0, 10) + ".csv";
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   });
@@ -2369,7 +3150,14 @@
   document.getElementById("btnAplicarPrecios").addEventListener("click", function () {
     var ok = filasPreviewPrecios.filter(function (f) { return f.estado === "OK"; });
     if (ok.length === 0) return;
-    document.getElementById("aplicarPreciosResumen").textContent = "Vas a aplicar el precio nuevo a " + ok.length + " publicación(es) activa(s) en Mercado Libre.";
+    var nLista = ok.filter(function (f) { return f.precio_nuevo != null; }).length;
+    var nMay = ok.filter(function (f) { return f.mayorista_nuevo != null; }).length;
+    var minU = (ok[0] && ok[0].min_unidades) || MAYORISTA_MIN_UNIDADES_DEFAULT;
+    var partes = [];
+    if (nLista) partes.push("precio de lista en " + nLista + " publicación(es)");
+    if (nMay) partes.push("precio mayorista (desde " + minU + " unidades, reemplaza al que haya) en " + nMay + " publicación(es)");
+    document.getElementById("aplicarPreciosResumen").textContent = "Vas a aplicar " + partes.join(" y ") + " en Mercado Libre (activas y pausadas). " +
+      (nLista ? "Ojo: si subís precios y después volvés a poner promos, ML puede tardar ~" + DIAS_REFERENCIA_ML + " días en considerar \"creíbles\" los descuentos chicos." : "");
     document.getElementById("inputConfirmarAplicarPrecios").value = "";
     document.getElementById("btnConfirmarAplicarPrecios").disabled = true;
     document.getElementById("modalAplicarPrecios").classList.remove("oculto");
@@ -2385,7 +3173,10 @@
   function ejecutarAplicarPrecios() {
     document.getElementById("modalAplicarPrecios").classList.add("oculto");
     var ok = filasPreviewPrecios.filter(function (f) { return f.estado === "OK"; })
-      .map(function (f) { return { item_id: f.item_id, sku: f.sku, precio: f.precio_nuevo }; });
+      .map(function (f) {
+        return { item_id: f.item_id, sku: f.sku, precio: f.precio_nuevo, mayorista: f.mayorista_nuevo,
+                 mayorista_actual: f.mayorista_actual, min_unidades: f.min_unidades };
+      });
     var est = document.getElementById("estadoAplicarPrecios");
     if (ok.length === 0) return;
 
@@ -2394,12 +3185,15 @@
     var t0Aplicar = Date.now();
     document.getElementById("btnAplicarPrecios").disabled = true;
     document.getElementById("btnPreviewPrecios").disabled = true;
-    est.textContent = "Aplicando 0/" + ok.length + " (estimado " + fmtSeg(ok.length * 0.7) + ")..."; est.className = "estado";
+    // ETA inicial: GET + PUT de lista (~0,7s) y/o POST de mayorista (~0,4s) por publicación; después se recalcula con el ritmo real.
+    var estIni = ok.reduce(function (acc, it) { return acc + 0.3 + (it.precio != null ? 0.4 : 0) + (it.mayorista != null ? 0.4 : 0); }, 0);
+    est.textContent = "Aplicando 0/" + ok.length + " (estimado " + fmtSeg(estIni) + ")..."; est.className = "estado";
 
     function sig() {
       if (ti >= tandas.length) {
         filasResultadoPrecios = logAcum;
         filtroEstadoPrecios = null;
+        registrarPreciosAplicados(logAcum);
         est.textContent = "Listo — " + aplicados + " aplicados, " + errores + " con error. (Para volver a operar, previsualizá de nuevo.)";
         est.className = errores ? "estado err" : "estado ok";
         document.getElementById("btnPreviewPrecios").disabled = false;
@@ -2426,6 +3220,7 @@
         })
         .catch(function (err) {
           filasResultadoPrecios = logAcum;
+          registrarPreciosAplicados(logAcum);
           est.textContent = "Se cortó: " + err.message + " (" + proc + "/" + ok.length + " hechos). Podés previsualizar de nuevo para ver el estado real."; est.className = "estado err";
           document.getElementById("btnPreviewPrecios").disabled = false;
           renderResumenPrecios(); renderTablaPrecios();
@@ -2433,6 +3228,495 @@
     }
     sig();
   }
+
+  /* ============================================================
+     MÓDULO: Tickets (transversal a todas las apps)
+     Backend: tablas public.tickets + public.tickets_eventos del Supabase compartido.
+     Acceso directo con la sesión del usuario; las reglas RLS de la base controlan:
+       - ver / crear / comentar  → usuarios activos en app_usuarios
+       - cambiar estado, prioridad y resolución → permiso "gestionar_tickets"
+     El historial (tickets_eventos) lo escribe un trigger en la base: no depende de la app.
+     PARA REPLICAR EN OTRA APP: copiar el HTML de #vistaTickets y #modalTicket, los estilos .tk-*,
+     este bloque, la captura de errores de la config, y ajustar TICKETS_APP_ID / APP_VERSION.
+     ============================================================ */
+  var TK_TIMEOUT_MS = 15000;
+  var TK_ORDEN_PRIORIDAD = { urgente: 0, alta: 1, media: 2, baja: 3 };
+  var TK_ESTADO_LABEL = { "pendiente": "Pendiente", "en revision": "En revisión", "resuelto": "Resuelto", "rechazado": "Rechazado" };
+  var TK_TIPO_LABEL = { error: "🔴 Error", mejora: "🟢 Mejora", consulta: "🔵 Consulta" };
+  var TK_PRIO_LABEL = { urgente: "Urgente", alta: "Alta", media: "Media", baja: "Baja" };
+
+  var tkTickets = [];              // última carga (según alcance)
+  var tkFiltroEstado = "abiertos"; // abiertos | pendiente | en revision | resuelto | rechazado | todos
+  var tkPuedeGestionar = false;
+  var tkPermisoConsultado = false;
+  var tkCargadoUnaVez = false;     // se carga sola la primera vez que entrás; después, con 🔄
+  var tkTicketAbierto = null;      // id del ticket abierto en el modal
+
+  // Capturas: se suben a Storage (bucket privado) ANTES de crear el ticket, en una carpeta
+  // con el id del usuario (así lo exige la regla de Storage). En el ticket se guarda solo la ruta.
+  var TK_BUCKET_CAPTURAS = "tickets-capturas";
+  var TK_MAX_CAPTURAS = 3;
+  var TK_MAX_BYTES_CAPTURA = 5 * 1024 * 1024;
+  var TK_TIPOS_IMAGEN = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+  var tkCapturasPendientes = [];   // File[] elegidas para el ticket nuevo
+
+  function tkConTimeout(promesa, ms) {
+    return Promise.race([promesa, new Promise(function (_, rej) {
+      setTimeout(function () { rej(new Error("tiempo de espera agotado, revisá la conexión")); }, ms || TK_TIMEOUT_MS);
+    })]);
+  }
+  function tkChequear(res) {
+    if (res && res.error) throw new Error(res.error.message || String(res.error));
+    return res;
+  }
+  function tkEsAbierto(t) { return !t.estado || t.estado === "pendiente" || t.estado === "en revision"; }
+  function tkHace(fecha) {
+    var s = (Date.now() - new Date(fecha).getTime()) / 1000;
+    if (s < 3600) return Math.max(1, Math.round(s / 60)) + " min";
+    if (s < 86400) return Math.round(s / 3600) + " h";
+    return Math.round(s / 86400) + " d";
+  }
+  function tkFecha(f) { return f ? new Date(f).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" }) : "—"; }
+  function tkBadge(clase, texto) { return '<span class="tk-badge ' + clase + '">' + escapeHtml(texto) + "</span>"; }
+  function tkBadgeEstado(e) { e = e || "pendiente"; return tkBadge("tk-est-" + e.replace(" ", "-"), TK_ESTADO_LABEL[e] || e); }
+  function tkBadgeTipo(t) { return tkBadge("tk-tipo-" + t, TK_TIPO_LABEL[t] || t); }
+  function tkBadgePrio(p) { p = p || "media"; return tkBadge("tk-prio-" + p, TK_PRIO_LABEL[p] || p); }
+
+  // Contexto técnico automático. NUNCA incluye tokens: la URL va sin query ni hash.
+  function armarContextoTicket() {
+    return {
+      app: TICKETS_APP_ID,
+      version: APP_VERSION,
+      pestana: vistaActual,
+      url: location.origin + location.pathname,
+      navegador: navigator.userAgent,
+      pantalla: window.innerWidth + "x" + window.innerHeight,
+      online: navigator.onLine,
+      errores_recientes: ERRORES_RECIENTES.slice(),
+      fecha_local: new Date().toLocaleString("es-AR"),
+    };
+  }
+  function actualizarPreviewContexto() {
+    document.getElementById("tkContextoPreview").textContent =
+      "(app, pestaña, versión " + APP_VERSION + ", navegador" +
+      (ERRORES_RECIENTES.length ? ", " + ERRORES_RECIENTES.length + " error(es) reciente(s)" : ", sin errores recientes") + ")";
+  }
+
+  // ---------- Capturas del ticket nuevo ----------
+  function tkAgregarCapturas(files) {
+    var est = document.getElementById("estadoNuevoTicket");
+    var avisos = [];
+    Array.prototype.forEach.call(files || [], function (f) {
+      if (TK_TIPOS_IMAGEN.indexOf(f.type) === -1) { avisos.push(f.name + ": no es una imagen (PNG, JPG, WEBP o GIF)"); return; }
+      if (f.size > TK_MAX_BYTES_CAPTURA) { avisos.push((f.name || "captura") + ": pesa más de 5 MB"); return; }
+      if (tkCapturasPendientes.length >= TK_MAX_CAPTURAS) { avisos.push("máximo " + TK_MAX_CAPTURAS + " capturas por ticket"); return; }
+      tkCapturasPendientes.push(f);
+    });
+    est.textContent = avisos.length ? "Algunas no se sumaron: " + avisos.join(" · ") : "";
+    est.className = avisos.length ? "estado err" : "estado";
+    tkRenderThumbsNuevo();
+  }
+  function tkRenderThumbsNuevo() {
+    var cont = document.getElementById("tkThumbsNuevo");
+    cont.querySelectorAll("img").forEach(function (img) { try { URL.revokeObjectURL(img.src); } catch (e) { /* nada */ } });
+    cont.innerHTML = tkCapturasPendientes.map(function (f, i) {
+      return '<div class="tk-thumb"><img alt="captura ' + (i + 1) + '" src="' + URL.createObjectURL(f) + '"><button type="button" data-quitar-captura="' + i + '" title="Quitar">✕</button></div>';
+    }).join("");
+  }
+  document.getElementById("tkThumbsNuevo").addEventListener("click", function (e) {
+    var b = e.target.closest ? e.target.closest("[data-quitar-captura]") : null;
+    if (!b) return;
+    tkCapturasPendientes.splice(Number(b.getAttribute("data-quitar-captura")), 1);
+    tkRenderThumbsNuevo();
+  });
+  document.getElementById("tkCapturas").addEventListener("change", function () {
+    tkAgregarCapturas(this.files);
+    this.value = ""; // permite volver a elegir el mismo archivo
+  });
+  document.getElementById("tkDetalle").addEventListener("paste", function (e) {
+    var items = (e.clipboardData && e.clipboardData.items) || [];
+    var imgs = [];
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].kind === "file" && items[i].type.indexOf("image/") === 0) {
+        var f = items[i].getAsFile();
+        if (f) imgs.push(new File([f], "captura-pegada-" + Date.now() + "-" + i + ".png", { type: f.type || "image/png" }));
+      }
+    }
+    if (imgs.length) { e.preventDefault(); tkAgregarCapturas(imgs); }
+  });
+
+  // Sube las capturas pendientes y devuelve [{ bucket, path }]. Si una falla, corta todo (no se crea el ticket a medias).
+  function tkSubirCapturas() {
+    if (tkCapturasPendientes.length === 0) return Promise.resolve([]);
+    return tkConTimeout(sb.auth.getUser()).then(function (u) {
+      var uid = u && u.data && u.data.user ? u.data.user.id : null;
+      if (!uid) throw new Error("sesión vencida, volvé a ingresar");
+      return Promise.all(tkCapturasPendientes.map(function (f, i) {
+        var ext = (f.type.split("/")[1] || "png").replace("jpeg", "jpg");
+        var path = uid + "/" + Date.now() + "-" + i + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
+        return tkConTimeout(sb.storage.from(TK_BUCKET_CAPTURAS).upload(path, f, { contentType: f.type, upsert: false }), 30000)
+          .then(function (res) { tkChequear(res); return { bucket: TK_BUCKET_CAPTURAS, path: path }; });
+      }));
+    });
+  }
+
+  // Muestra miniaturas de un ticket guardado (URLs firmadas de 1 h: el bucket es privado).
+  function tkRenderCapturasGuardadas(t) {
+    var cont = document.getElementById("tkDetCapturas");
+    var caps = Array.isArray(t.capturas) ? t.capturas : [];
+    if (caps.length === 0) { cont.innerHTML = ""; return; }
+    cont.innerHTML = caps.map(function () { return '<div class="tk-thumb">Cargando…</div>'; }).join("");
+    var id = t.id;
+    Promise.all(caps.map(function (c) {
+      return tkConTimeout(sb.storage.from(c.bucket || TK_BUCKET_CAPTURAS).createSignedUrl(c.path, 3600))
+        .then(function (res) { return res && res.data ? res.data.signedUrl : null; })
+        .catch(function () { return null; });
+    })).then(function (urls) {
+      if (tkTicketAbierto !== id) return;
+      cont.innerHTML = urls.map(function (u, i) {
+        return u
+          ? '<a class="tk-thumb" href="' + escapeHtml(u) + '" target="_blank" rel="noopener" title="Abrir captura en tamaño completo"><img alt="captura ' + (i + 1) + '" src="' + escapeHtml(u) + '"></a>'
+          : '<div class="tk-thumb" title="No se pudo cargar la captura">⚠️ sin acceso</div>';
+      }).join("");
+    });
+  }
+
+  function ticketsAlEntrar() {
+    actualizarPreviewContexto();
+    if (!tkPermisoConsultado) consultarPermisoTickets();
+    if (!tkCargadoUnaVez) { tkCargadoUnaVez = true; cargarTickets(); }
+  }
+
+  function consultarPermisoTickets() {
+    return tkConTimeout(sb.rpc("puede_gestionar_tickets"))
+      .then(function (res) { tkChequear(res); tkPuedeGestionar = res.data === true; tkPermisoConsultado = true; })
+      .catch(function () { tkPuedeGestionar = false; }); // si falla solo se ocultan los controles; la base igual protege
+  }
+
+  // ---------- Crear ----------
+  document.getElementById("btnEnviarTicket").addEventListener("click", function () {
+    var btn = this, est = document.getElementById("estadoNuevoTicket");
+    var asunto = document.getElementById("tkAsunto").value.trim();
+    var detalle = document.getElementById("tkDetalle").value.trim();
+    if (asunto.length < 3) { est.textContent = "Poné un asunto (mínimo 3 caracteres)."; est.className = "estado err"; return; }
+    if (!detalle) { est.textContent = "Contá un poco más en el detalle."; est.className = "estado err"; return; }
+    var fila = {
+      tipo: document.getElementById("tkTipo").value,
+      prioridad: document.getElementById("tkPrioridad").value,
+      asunto: asunto,
+      detalle: detalle,
+      estado: "pendiente",
+      user_email: USUARIO_EMAIL,
+      app_origen: TICKETS_APP_ID,
+      contexto: document.getElementById("tkAdjuntarContexto").checked ? armarContextoTicket() : { app: TICKETS_APP_ID, version: APP_VERSION },
+    };
+    btn.disabled = true;
+    est.textContent = tkCapturasPendientes.length ? "Subiendo capturas…" : "Enviando…"; est.className = "estado";
+    tkSubirCapturas()
+      .then(function (caps) {
+        fila.capturas = caps;
+        est.textContent = "Enviando…";
+        return tkConTimeout(sb.from("tickets").insert([fila]).select("id").single());
+      })
+      .then(function (res) {
+        tkChequear(res);
+        est.textContent = "✅ Ticket #" + res.data.id + " cargado."; est.className = "estado ok";
+        document.getElementById("tkAsunto").value = "";
+        document.getElementById("tkDetalle").value = "";
+        document.getElementById("tkPrioridad").value = "media";
+        tkCapturasPendientes = [];
+        tkRenderThumbsNuevo();
+        return cargarTickets();
+      })
+      .catch(function (err) { est.textContent = "No se pudo cargar el ticket: " + err.message; est.className = "estado err"; })
+      .finally(function () { btn.disabled = false; });
+  });
+
+  // ---------- Listar ----------
+  function cargarTickets() {
+    var est = document.getElementById("estadoTickets");
+    est.textContent = "Cargando tickets…"; est.className = "estado";
+    var q = sb.from("tickets")
+      .select("id, created_at, updated_at, cerrado_at, tipo, asunto, detalle, estado, prioridad, app_origen, user_email, resolucion, resuelto_en_version, contexto, capturas")
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (document.getElementById("tkAlcance").value === "app") q = q.eq("app_origen", TICKETS_APP_ID);
+    return tkConTimeout(q)
+      .then(function (res) {
+        tkChequear(res);
+        tkTickets = res.data || [];
+        renderResumenTickets();
+        renderTablaTickets();
+      })
+      .catch(function (err) { est.textContent = "Error cargando tickets: " + err.message; est.className = "estado err"; });
+  }
+
+  function ticketsFiltrados() {
+    var tipo = document.getElementById("tkFiltroTipo").value;
+    var txt = document.getElementById("tkBuscar").value.trim().toLowerCase().replace(/^#/, "");
+    return tkTickets.filter(function (t) {
+      if (tipo && t.tipo !== tipo) return false;
+      if (tkFiltroEstado === "abiertos" && !tkEsAbierto(t)) return false;
+      if (tkFiltroEstado !== "abiertos" && tkFiltroEstado !== "todos" && (t.estado || "pendiente") !== tkFiltroEstado) return false;
+      if (txt) {
+        var hay = (String(t.id) + " " + (t.asunto || "") + " " + (t.detalle || "") + " " + (t.app_origen || "") + " " + (t.user_email || "")).toLowerCase();
+        if (hay.indexOf(txt) === -1) return false;
+      }
+      return true;
+    }).sort(function (a, b) {
+      var oa = tkEsAbierto(a) ? 0 : 1, ob = tkEsAbierto(b) ? 0 : 1;
+      if (oa !== ob) return oa - ob;
+      if (oa === 0) { // abiertos: primero lo más urgente y, a igual prioridad, lo más viejo
+        var pa = TK_ORDEN_PRIORIDAD[a.prioridad] != null ? TK_ORDEN_PRIORIDAD[a.prioridad] : 2;
+        var pb = TK_ORDEN_PRIORIDAD[b.prioridad] != null ? TK_ORDEN_PRIORIDAD[b.prioridad] : 2;
+        if (pa !== pb) return pa - pb;
+        return new Date(a.created_at) - new Date(b.created_at);
+      }
+      return new Date(b.cerrado_at || b.updated_at) - new Date(a.cerrado_at || a.updated_at); // cerrados: el último primero
+    });
+  }
+
+  function renderResumenTickets() {
+    var c = { "pendiente": 0, "en revision": 0, "resuelto": 0, "rechazado": 0 };
+    tkTickets.forEach(function (t) { var e = t.estado || "pendiente"; if (c[e] != null) c[e]++; });
+    var abiertos = c["pendiente"] + c["en revision"];
+    var alcance = document.getElementById("tkAlcance").value === "app" ? "de esta app" : "de todas las apps";
+    function kpi(filtro, help, label, valor) {
+      var activo = tkFiltroEstado === filtro ? " filtro-activo" : "";
+      return '<div class="kpi clickable' + activo + '" data-filtro="' + filtro + '">' + kpiHelp(help) + " " + label + " <b>" + valor + "</b></div>";
+    }
+    var cont = document.getElementById("tkResumen");
+    cont.innerHTML =
+      kpi("abiertos", "Tickets " + alcance + " que todavía hay que tratar (pendientes + en revisión). Es la vista por defecto. Clic para filtrar.", "Abiertos", abiertos) +
+      kpi("pendiente", "Cargados y todavía sin mirar. Clic para filtrar.", "Pendientes", c["pendiente"]) +
+      kpi("en revision", "Alguien los está analizando o trabajando. Clic para filtrar.", "En revisión", c["en revision"]) +
+      kpi("resuelto", "Cerrados con una resolución (qué se hizo y en qué versión). Clic para filtrar.", "Resueltos", c["resuelto"]) +
+      kpi("rechazado", "Cerrados sin cambios (no corresponde, duplicado, etc.), con el motivo. Clic para filtrar.", "Rechazados", c["rechazado"]) +
+      kpi("todos", "Todos los tickets " + alcance + " (hasta los últimos 500), abiertos y cerrados. Clic para ver todos.", "Total", tkTickets.length);
+    cont.querySelectorAll(".kpi.clickable").forEach(function (k) {
+      k.addEventListener("click", function (e) {
+        if (e.target.closest && e.target.closest(".kpi-help")) return; // el "?" abre su ayuda, no filtra
+        var f = k.getAttribute("data-filtro");
+        tkFiltroEstado = (tkFiltroEstado === f && f !== "abiertos") ? "abiertos" : f;
+        renderResumenTickets();
+        renderTablaTickets();
+      });
+    });
+  }
+
+  function renderTablaTickets() {
+    var tabla = document.getElementById("tablaTickets");
+    var est = document.getElementById("estadoTickets");
+    if (tkTickets.length === 0) {
+      tabla.innerHTML = "";
+      est.textContent = document.getElementById("tkAlcance").value === "app"
+        ? "Todavía no hay tickets de esta app. Cargá el primero arriba (o mirá \"Todas las apps\")."
+        : "Todavía no hay tickets.";
+      est.className = "estado";
+      return;
+    }
+    var filas = ticketsFiltrados();
+    if (filas.length === 0) {
+      tabla.innerHTML = "";
+      est.textContent = tkFiltroEstado === "abiertos" ? "🎉 No hay tickets abiertos con estos filtros." : "No hay tickets con estos filtros.";
+      est.className = "estado";
+      return;
+    }
+    est.textContent = ""; est.className = "estado";
+    var thead = "<thead><tr><th>#</th><th>Asunto</th><th>App</th><th>Tipo</th><th>Prioridad</th><th>Estado</th><th class='num'>Hace</th></tr></thead>";
+    var body = filas.map(function (t) {
+      return '<tr data-id="' + t.id + '">' +
+        "<td>" + t.id + "</td>" +
+        "<td>" + escapeHtml(t.asunto || "") + (Array.isArray(t.capturas) && t.capturas.length ? ' <span title="Tiene ' + t.capturas.length + ' captura(s)">📎</span>' : "") + "</td>" +
+        '<td><span class="tk-app">' + escapeHtml(t.app_origen || "sin app") + "</span></td>" +
+        "<td>" + tkBadgeTipo(t.tipo) + "</td>" +
+        "<td>" + tkBadgePrio(t.prioridad) + "</td>" +
+        "<td>" + tkBadgeEstado(t.estado) + "</td>" +
+        "<td class='num'>" + tkHace(t.created_at) + "</td></tr>";
+    }).join("");
+    tabla.innerHTML = thead + "<tbody>" + body + "</tbody>";
+  }
+
+  document.getElementById("tablaTickets").addEventListener("click", function (e) {
+    var tr = e.target.closest ? e.target.closest("tr[data-id]") : null;
+    if (tr) abrirTicket(Number(tr.getAttribute("data-id")));
+  });
+  document.getElementById("tkAlcance").addEventListener("change", function () { tkFiltroEstado = "abiertos"; cargarTickets(); });
+  document.getElementById("tkFiltroTipo").addEventListener("change", renderTablaTickets);
+  document.getElementById("tkBuscar").addEventListener("input", renderTablaTickets);
+  document.getElementById("btnRefrescarTickets").addEventListener("click", function () { cargarTickets(); });
+
+  // ---------- Detalle ----------
+  function buscarTicket(id) {
+    for (var i = 0; i < tkTickets.length; i++) if (tkTickets[i].id === id) return tkTickets[i];
+    return null;
+  }
+
+  function abrirTicket(id) {
+    var t = buscarTicket(id);
+    if (!t) return;
+    tkTicketAbierto = id;
+    document.getElementById("tkDetTitulo").textContent = "#" + t.id + " · " + (t.asunto || "");
+    document.getElementById("tkDetMeta").innerHTML =
+      tkBadgeTipo(t.tipo) + tkBadgePrio(t.prioridad) + tkBadgeEstado(t.estado) +
+      '<span>· ' + escapeHtml(t.app_origen || "sin app") + "</span>" +
+      "<span>· " + escapeHtml(t.user_email || "—") + "</span>" +
+      "<span>· " + tkFecha(t.created_at) + "</span>";
+    document.getElementById("tkDetDetalle").textContent = t.detalle || "(sin detalle)";
+    tkRenderCapturasGuardadas(t);
+    var ctx = t.contexto && Object.keys(t.contexto).length ? JSON.stringify(t.contexto, null, 2) : "Sin contexto técnico (cargado desde una versión anterior del módulo).";
+    document.getElementById("tkDetContexto").textContent = ctx;
+    document.getElementById("tkDetResolucion").innerHTML = t.resolucion
+      ? '<div class="tk-resolucion"><b>' + (t.estado === "rechazado" ? "Motivo del rechazo" : "Resolución") + (t.resuelto_en_version ? " (versión " + escapeHtml(t.resuelto_en_version) + ")" : "") + ":</b> " + escapeHtml(t.resolucion) + "</div>"
+      : "";
+
+    // Gestión: solo si la base dice que tenés permiso (igual lo valida al guardar)
+    var gestion = document.getElementById("tkDetGestion");
+    gestion.classList.toggle("oculto", !tkPuedeGestionar);
+    document.getElementById("tkDetEstado").value = t.estado || "pendiente";
+    document.getElementById("tkDetPrioridad").value = t.prioridad || "media";
+    document.getElementById("tkDetResolucionTxt").value = t.resolucion || "";
+    document.getElementById("tkDetVersion").value = t.resuelto_en_version || APP_VERSION;
+    actualizarCamposCierre();
+
+    document.getElementById("tkDetComentario").value = "";
+    var estDet = document.getElementById("estadoDetTicket");
+    estDet.textContent = ""; estDet.className = "estado";
+    document.getElementById("modalTicket").classList.remove("oculto");
+    cargarHistorial(id);
+  }
+
+  function actualizarCamposCierre() {
+    var e = document.getElementById("tkDetEstado").value;
+    document.getElementById("tkDetCierre").classList.toggle("oculto", !(e === "resuelto" || e === "rechazado"));
+  }
+  document.getElementById("tkDetEstado").addEventListener("change", actualizarCamposCierre);
+
+  function textoEvento(ev) {
+    switch (ev.tipo_evento) {
+      case "creado": return "Creó el ticket";
+      case "cambio_estado": return "Estado: " + (TK_ESTADO_LABEL[ev.valor_anterior] || ev.valor_anterior || "—") + " → " + (TK_ESTADO_LABEL[ev.valor_nuevo] || ev.valor_nuevo);
+      case "cambio_prioridad": return "Prioridad: " + (TK_PRIO_LABEL[ev.valor_anterior] || ev.valor_anterior || "—") + " → " + (TK_PRIO_LABEL[ev.valor_nuevo] || ev.valor_nuevo);
+      case "comentario": return "💬 " + (ev.comentario || "");
+      case "resolucion": return "✅ Resolución" + (ev.valor_nuevo ? " (versión " + ev.valor_nuevo + ")" : "") + ": " + (ev.comentario || "");
+      default: return ev.tipo_evento;
+    }
+  }
+
+  function cargarHistorial(id) {
+    var cont = document.getElementById("tkDetTimeline");
+    cont.innerHTML = '<div class="tk-ayuda">Cargando historial…</div>';
+    return tkConTimeout(sb.from("tickets_eventos").select("*").eq("ticket_id", id).order("created_at", { ascending: true }))
+      .then(function (res) {
+        tkChequear(res);
+        if (tkTicketAbierto !== id) return; // el usuario ya abrió otro
+        var evs = res.data || [];
+        cont.innerHTML = evs.length === 0 ? '<div class="tk-ayuda">Sin movimientos registrados.</div>' : evs.map(function (ev) {
+          return '<div class="tk-ev"><div class="tk-ev-cuando">' + tkFecha(ev.created_at) + " · " + escapeHtml(ev.autor_email || "sistema") + '</div><div class="tk-ev-txt">' + escapeHtml(textoEvento(ev)) + "</div></div>";
+        }).join("");
+      })
+      .catch(function (err) { cont.innerHTML = '<div class="estado err">No se pudo cargar el historial: ' + escapeHtml(err.message) + "</div>"; });
+  }
+
+  // ---------- Gestionar (estado / prioridad / resolución) ----------
+  document.getElementById("btnGuardarTicket").addEventListener("click", function () {
+    var btn = this, est = document.getElementById("estadoDetTicket");
+    var t = buscarTicket(tkTicketAbierto);
+    if (!t) return;
+    var nuevoEstado = document.getElementById("tkDetEstado").value;
+    var nuevaPrio = document.getElementById("tkDetPrioridad").value;
+    var cierra = nuevoEstado === "resuelto" || nuevoEstado === "rechazado";
+    var resol = document.getElementById("tkDetResolucionTxt").value.trim();
+    var version = document.getElementById("tkDetVersion").value.trim();
+
+    var cambios = {};
+    if (nuevoEstado !== (t.estado || "pendiente")) cambios.estado = nuevoEstado;
+    if (nuevaPrio !== (t.prioridad || "media")) cambios.prioridad = nuevaPrio;
+    if (cierra) {
+      if (!resol) { est.textContent = nuevoEstado === "rechazado" ? "Contá por qué se rechaza." : "Contá qué se hizo para resolverlo."; est.className = "estado err"; return; }
+      if (resol !== (t.resolucion || "")) cambios.resolucion = resol;
+      if (version !== (t.resuelto_en_version || "")) cambios.resuelto_en_version = version || null;
+    }
+    if (Object.keys(cambios).length === 0) { est.textContent = "No hay cambios para guardar."; est.className = "estado"; return; }
+    cambios.actualizado_por_email = USUARIO_EMAIL;
+
+    btn.disabled = true; est.textContent = "Guardando…"; est.className = "estado";
+    var id = t.id;
+    tkConTimeout(sb.from("tickets").update(cambios).eq("id", id).select("id"))
+      .then(function (res) {
+        tkChequear(res);
+        if (!res.data || res.data.length === 0) throw new Error("tu usuario no tiene permiso para gestionar tickets");
+        est.textContent = "✅ Guardado (queda en el historial)."; est.className = "estado ok";
+        return cargarTickets().then(function () { if (tkTicketAbierto === id) abrirTicket(id); document.getElementById("estadoDetTicket").textContent = "✅ Guardado (queda en el historial)."; document.getElementById("estadoDetTicket").className = "estado ok"; });
+      })
+      .catch(function (err) { est.textContent = "No se guardó: " + err.message; est.className = "estado err"; })
+      .finally(function () { btn.disabled = false; });
+  });
+
+  // ---------- Comentar (cualquier usuario habilitado) ----------
+  document.getElementById("btnComentarTicket").addEventListener("click", function () {
+    var btn = this, est = document.getElementById("estadoDetTicket");
+    var txt = document.getElementById("tkDetComentario").value.trim();
+    if (!txt) { est.textContent = "Escribí el comentario."; est.className = "estado err"; return; }
+    var id = tkTicketAbierto;
+    btn.disabled = true; est.textContent = "Enviando…"; est.className = "estado";
+    tkConTimeout(sb.from("tickets_eventos").insert([{ ticket_id: id, tipo_evento: "comentario", comentario: txt, autor_email: USUARIO_EMAIL }]))
+      .then(function (res) {
+        tkChequear(res);
+        document.getElementById("tkDetComentario").value = "";
+        est.textContent = "✅ Comentario agregado."; est.className = "estado ok";
+        return cargarHistorial(id);
+      })
+      .catch(function (err) { est.textContent = "No se pudo comentar: " + err.message; est.className = "estado err"; })
+      .finally(function () { btn.disabled = false; });
+  });
+
+  document.getElementById("btnCerrarTicket").addEventListener("click", function () {
+    document.getElementById("modalTicket").classList.add("oculto");
+    tkTicketAbierto = null;
+  });
+
+  // ---------- Exportar lote para Claude ----------
+  document.getElementById("btnExportarTickets").addEventListener("click", function () {
+    var est = document.getElementById("estadoTickets");
+    var filas = ticketsFiltrados();
+    if (filas.length === 0) { est.textContent = "No hay tickets para exportar con estos filtros."; est.className = "estado err"; return; }
+    var hoy = new Date().toISOString().slice(0, 10);
+    var alcance = document.getElementById("tkAlcance").value === "app" ? "solo " + TICKETS_APP_ID : "todas las apps";
+    var porApp = {};
+    filas.forEach(function (t) { var k = t.app_origen || "sin app"; (porApp[k] = porApp[k] || []).push(t); });
+
+    var md = "# Lote de tickets — " + hoy + "\n\n" +
+      "> Alcance: " + alcance + " · Filtro: " + tkFiltroEstado + " · " + filas.length + " ticket(s)\n>\n" +
+      "> **Instrucciones para Claude:** trabajá estos tickets en conjunto (agrupá los que tengan la misma causa y resolvelos juntos). " +
+      "Al terminar cada uno, registralo en Supabase (tabla `public.tickets`, proyecto " + SUPABASE_URL.replace("https://", "").split(".")[0] + ") con " +
+      "`estado='resuelto'`, `resolucion='qué se hizo'`, `resuelto_en_version='AAAA-MM-DD'` y `actualizado_por_email='claude'`; " +
+      "si no corresponde, `estado='rechazado'` con el motivo en `resolucion`. El historial se registra solo (trigger).\n\n";
+    Object.keys(porApp).sort().forEach(function (app) {
+      md += "## " + app + " (" + porApp[app].length + ")\n\n";
+      porApp[app].forEach(function (t) {
+        var c = t.contexto || {};
+        md += "### #" + t.id + " · " + (t.asunto || "") + "\n" +
+          "- **Tipo / prioridad / estado:** " + t.tipo + " · " + (t.prioridad || "media") + " · " + (t.estado || "pendiente") + "\n" +
+          "- **Cargado:** " + tkFecha(t.created_at) + " por " + (t.user_email || "—") + " (hace " + tkHace(t.created_at) + ")\n" +
+          "- **Detalle:** " + String(t.detalle || "").replace(/\n/g, "\n  ") + "\n" +
+          (c.pestana || c.version ? "- **Contexto:** pestaña " + (c.pestana || "?") + ", versión " + (c.version || "?") + (c.errores_recientes && c.errores_recientes.length ? ", errores: " + c.errores_recientes.map(function (x) { return x.msg; }).join(" | ") : "") + "\n" : "") +
+          (t.resolucion ? "- **Resolución actual:** " + t.resolucion + "\n" : "") + "\n";
+      });
+    });
+
+    var copiado = navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(md).then(function () { return true; }, function () { return false; }) : Promise.resolve(false);
+    copiado.then(function (ok) {
+      var blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = hoy + "_tickets-lote.md";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      est.textContent = (ok ? "📋 Copiado al portapapeles y descargado" : "Descargado") + " (" + filas.length + " tickets). Pegalo en tu chat con Claude.";
+      est.className = "estado ok";
+    });
+  });
 })();
 </script>
 </body>
