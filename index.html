@@ -346,6 +346,7 @@
     #tablaSel td.num,#tablaSel th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
     #tablaSel th[data-sel-sort]{cursor:pointer;}
     #tablaSel th[data-sel-sort]:hover{color:var(--amber);}
+    .cat-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
     .aviso-7d{font-size:0.78rem;color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-dim);border-radius:8px;padding:10px 12px;margin:0 0 12px;}
   </style>
 
@@ -393,6 +394,17 @@
        VISTA: Actualizar precios (masivo por SKU)
        ============================================================ -->
   <div id="vistaPrecios" class="oculto">
+    <!-- Catálogo SKU -> publicación (lo mantiene la función ml-catalogo; cron diario + botón manual) -->
+    <div class="panel">
+      <div class="cat-head">
+        <span class="tk-titulo-panel">🗂️ Catálogo de publicaciones</span>
+        <button class="chico secondary" id="btnSyncCatalogo" type="button" title="Vuelve a leer todas las publicaciones activas y pausadas de ML (tarda ~1 minuto)">🔄 Actualizar catálogo ahora</button>
+      </div>
+      <p class="tk-ayuda">Es la lista de qué publicaciones tiene cada SKU. Se actualiza sola todas las mañanas; si un SKU no aparece, la app igual lo busca en vivo en Mercado Libre al previsualizar.</p>
+      <div class="resumen-precios" id="catalogoResumen"><div class="kpi">Cargando catálogo…</div></div>
+      <div id="estadoCatalogo" class="estado" style="margin:0;"></div>
+    </div>
+
     <div class="panel" style="border-color:var(--amber-dim);">
       <label style="margin:0;color:var(--amber);font-weight:600;">💲 Actualización masiva de precios de lista y mayorista</label>
       <p style="font-size:0.8rem;color:var(--text-dim);margin:6px 0 10px;">
@@ -599,6 +611,9 @@
     <p>Sirve para actualizar el <b>precio de lista</b> (no el de promo) de muchas publicaciones de una. Cargás <b>SKU y precio</b> en una tabla de dos columnas (podés copiar las dos columnas de Excel y pegarlas en la primera celda: se completa sola). Como un mismo SKU suele estar en varias publicaciones, el precio se aplica a <b>todas las publicaciones activas y pausadas</b> de ese SKU (a la pausada le queda listo para cuando la reactivés; las cerradas se omiten). El flujo es en dos pasos: primero <b>Previsualizar</b> (no toca nada: trae de ML el precio actual de cada publicación y te muestra antes → después → Δ%, con un tiempo estimado mientras corre), y recién después <b>Aplicar en ML</b> (con confirmación escribiendo "APLICAR PRECIOS"). En el preview podés <b>editar el precio de cualquier fila</b> a mano antes de aplicar, y <b>clickear las tarjetas</b> de arriba (A actualizar / A revisar / Omitidas / Con problema) para filtrar la tabla por ese estado. Las publicaciones con variaciones quedan "a revisar" (el precio va por variación). Podés exportar todo a CSV. Encaja con el flujo masivo: bajás las promos, actualizás precios acá, y volvés a subir las promos.</p>
     <h3>Precio mayorista (columna de la derecha)</h3>
     <p>Al lado del precio de lista hay una columna <b>"Precio mayorista (final)"</b>: ahí ponés vos el <b>precio por unidad final</b> que querés cobrar cuando alguien compra <b>desde N unidades</b> (el N se elige arriba de la tabla; arranca en 5). En Mercado Libre esto es el "precio por cantidad" y <b>solo lo ven los compradores empresa</b> (cuentas con factura A), no los particulares. Podés cargar <b>solo el mayorista</b> (dejando vacío el precio de lista = no se toca), <b>solo el precio de lista</b>, o <b>los dos</b> (se aplica primero la lista y después el mayorista). Reglas: el mayorista tiene que ser <b>menor al precio de lista</b> final (si no, la fila queda "Mayorista inválido"); se maneja <b>un solo escalón</b> por publicación, así que cargar uno nuevo <b>reemplaza</b> al anterior; y como es un <b>monto fijo en pesos</b>, si después cambiás el precio de lista el mayorista no se ajusta solo. Por eso el preview te muestra el <b>mayorista actual</b> de cada publicación y te marca con ⚠️ "Aviso mayorista" las que cambian de lista sin mayorista nuevo y quedarían mal. En el preview podés editar el mayorista de cualquier fila (vaciarlo = no tocarlo) y la columna "vs lista" te muestra qué % de descuento representa. Al aplicar, la app confirma contra la respuesta de ML que el escalón quedó cargado ("✓ confirmado en ML"). Limitación: si una publicación tiene una promo <b>más barata</b> que su mayorista, ML muestra la promo y la app puede ver el mayorista actual como "no tiene".</p>
+    <h3>Catálogo de publicaciones: cómo encuentra cada SKU</h3>
+    <p>Para saber a qué publicaciones aplicar un precio, la app usa un <b>catálogo</b> guardado en la base con el SKU de cada publicación (y de cada variación). Ese catálogo <b>se actualiza solo todas las mañanas</b>, entre las 5 y las 8: recorre todas las publicaciones activas y pausadas de Mercado Libre, suma las nuevas y saca las cerradas o las que cambiaron de SKU. Si necesitás que tome algo recién publicado, tocá <b>"🔄 Actualizar catálogo ahora"</b> en esta pestaña (tarda alrededor de un minuto).</p>
+    <p>Si al previsualizar un SKU <b>no está en el catálogo</b>, la app lo <b>busca en vivo en Mercado Libre</b> y, si lo encuentra, lo usa y lo guarda para la próxima; el mensaje del preview te avisa cuáles se encontraron así. Si ni así aparece, el SKU no coincide <b>exacto</b> con el de la publicación: revisá mayúsculas, espacios y puntos contra lo cargado en ML. Un mismo SKU puede estar en varias publicaciones (por ejemplo, la misma plancha publicada varias veces): el precio se aplica a <b>todas</b>. Las publicaciones sin SKU cargado en ML no se pueden actualizar desde acá; el indicador "Sin SKU" te dice cuántas son.</p>
     <h3>Pestaña "🎫 Tickets"</h3>
     <p>Es el buzón para reportar <b>errores, mejoras o consultas</b> de esta app. Completás tipo, prioridad, asunto y detalle, y lo enviás. Si dejás tildado "Adjuntar contexto técnico", el ticket se guarda con la app, la versión, el navegador, la pestaña en la que estabas y los últimos errores que aparecieron en la consola, así se puede reproducir el problema sin preguntarte nada. Todos los tickets de <b>todas las apps del negocio</b> (promociones, stock, dashboard, etc.) se guardan en un <b>único lugar</b> del backend (tabla <code>tickets</code> de Supabase), cada uno marcado con la app de origen. Abajo está el <b>embudo</b>: por defecto ves los abiertos de esta app, ordenados por prioridad y después por antigüedad; con "Alcance" podés ver los de todas las apps, y las tarjetas de arriba filtran por estado. Al abrir un ticket ves su <b>historial completo</b> (quién lo creó, cada cambio de estado o prioridad, comentarios y cierre): ese historial lo escribe la base de datos sola y no se puede editar ni borrar. Solo los usuarios con permiso de gestión pueden cambiar estado, prioridad y cerrar tickets (al resolver o rechazar hay que escribir la resolución); el resto puede crear y comentar. "Exportar lote para Claude" arma un markdown con todos los abiertos para resolverlos en tanda en una conversación.</p>
     <p><b>Capturas:</b> podés adjuntar hasta 3 capturas de pantalla por ticket (5 MB cada una), eligiendo el archivo o pegándola con Ctrl+V dentro del detalle. Se guardan en un espacio privado: solo las ven los usuarios habilitados de la app, al abrir el ticket (📎 en la lista indica que tiene capturas). En Gráfica Límite, la cuenta de <b>Gerencia</b> es la que gestiona (cambia estado, prioridad y escribe la resolución); Stock crea, comenta y sigue el estado y la respuesta de sus tickets.</p>
@@ -817,13 +832,14 @@
   var FN_BASE = SUPABASE_URL + "/functions/v1";
   var URL_DIAG = FN_BASE + "/ml-promos-diag";
   var URL_BULK = FN_BASE + "/ml-promos-bulk";
-  var URL_ALIAS = FN_BASE + "/ml-promos-nombre-publico-crud"; // alias editables: nombre público (el que ve el comprador) por campaña
+  var URL_ALIAS = FN_BASE + "/ml-promos-nombre-publico-crud";
+  var URL_CATALOGO = FN_BASE + "/ml-catalogo";                          // catálogo SKU -> publicación (GET /estado, POST /sync) // alias editables: nombre público (el que ve el comprador) por campaña
   var URL_SNAPSHOT = FN_BASE + "/ml-promos-snapshot-crud";
   var TIMEOUT_MS = 20000;
 
   // --- Tickets (módulo transversal: mismo backend para todas las apps) ---
   var TICKETS_APP_ID = "grafica-promociones"; // identifica a ESTA app en el embudo común (cambiar al clonar/replicar)
-  var APP_VERSION = "2026-09-28.1";           // se adjunta a cada ticket; actualizar al deployar una versión nueva
+  var APP_VERSION = "2026-09-28.2";           // se adjunta a cada ticket; actualizar al deployar una versión nueva
 
   // Captura de errores recientes (se adjuntan como contexto técnico a los tickets). Buffer de 5.
   var ERRORES_RECIENTES = [];
@@ -2695,7 +2711,8 @@
      Backend: Edge Function ml-precios-bulk (preview / aplicar).
      ============================================================ */
   var URL_PRECIOS = FN_BASE + "/ml-precios-bulk";
-  var BATCH_SKUS_PREVIEW = 8;                 // ≤ MAX_SKUS_POR_PREVIEW (12) del server
+  var BATCH_SKUS_PREVIEW = 5;                 // ≤ MAX_SKUS_POR_PREVIEW (12) del server. Bajado de 8 a 5: en Gráfica un SKU
+                                              // llega a estar en ~20 publicaciones y la tanda no debe pasar el timeout (60 s)
   var filasPreviewPrecios = [];               // último preview
   var filasResultadoPrecios = null;           // último aplicar (si ya se aplicó)
 
@@ -2715,9 +2732,100 @@
       document.getElementById(VISTAS[k].tab).classList.toggle("activa", k === cual);
     });
     if (cual === "tickets") ticketsAlEntrar();
+    if (cual === "precios") catalogoAlEntrar();
   }
   Object.keys(VISTAS).forEach(function (k) {
     document.getElementById(VISTAS[k].tab).addEventListener("click", function () { mostrarVista(k); });
+  });
+
+  /* ---------- Catálogo SKU -> publicación (función ml-catalogo) ----------
+     GET  /estado -> cuántas publicaciones/SKUs hay y cuándo fue la última corrida completa.
+     POST /sync   -> fuerza una corrida (tarda ~1 min con ~2.300 publicaciones). Si el server
+                     corta por tiempo devuelve accion "en_curso" y se vuelve a llamar solo. */
+  var CATALOGO_MAX_PASOS_MANUAL = 6;
+  var catalogoConsultado = false;
+  var catalogoSincronizando = false;
+
+  function catalogoAlEntrar() {
+    if (!catalogoConsultado) { catalogoConsultado = true; cargarEstadoCatalogo(); }
+  }
+
+  function haceCuanto(fecha) {
+    if (!fecha) return "nunca";
+    var min = Math.round((Date.now() - new Date(fecha).getTime()) / 60000);
+    if (min < 1) return "recién";
+    if (min < 60) return "hace " + min + " min";
+    var h = Math.round(min / 60);
+    if (h < 48) return "hace " + h + " h";
+    return "hace " + Math.round(h / 24) + " días";
+  }
+
+  function renderEstadoCatalogo(d) {
+    var r = (d && d.resumen) || {};
+    var porEstado = r.por_estado || {};
+    function kpi(help, label, valor) { return '<div class="kpi">' + kpiHelp(help) + " " + label + " <b>" + valor + "</b></div>"; }
+    document.getElementById("catalogoResumen").innerHTML =
+      kpi("Publicaciones activas y pausadas de la cuenta de ML de Gráfica que están en el catálogo. Sale de recorrer todas las publicaciones con la API de ML (función ml-catalogo), una vez por día a la mañana o cuando tocás \"Actualizar catálogo ahora\".", "Publicaciones", (r.publicaciones || 0).toLocaleString("es-AR")) +
+      kpi("SKUs distintos cargados en esas publicaciones (el SKU de la publicación y el de cada variación). Es lo que la pestaña usa para saber a qué publicaciones aplicar el precio.", "SKUs", (r.skus || 0).toLocaleString("es-AR")) +
+      kpi("Activas / pausadas según el último recorrido del catálogo. El estado real se vuelve a leer de ML al previsualizar.", "Activas / pausadas", (porEstado.active || 0).toLocaleString("es-AR") + " / " + (porEstado.paused || 0).toLocaleString("es-AR")) +
+      kpi("SKUs que están en más de una publicación (ej. la misma plancha publicada varias veces). Al actualizar el precio de ese SKU se cambian TODAS sus publicaciones.", "SKUs en varias publicaciones", (r.skus_en_varias_publicaciones || 0).toLocaleString("es-AR")) +
+      kpi("Publicaciones sin SKU cargado en ML (ni en la publicación ni en sus variaciones). No se pueden actualizar desde acá hasta que se les cargue el SKU en ML.", "Sin SKU", (d && d.publicaciones_sin_sku) || 0) +
+      kpi("Cuándo terminó el último recorrido completo del catálogo. Se hace solo todas las mañanas (entre las 5 y las 8).", "Actualizado", haceCuanto(d && d.ultima_corrida_completa));
+    var est = document.getElementById("estadoCatalogo");
+    if (d && d.corrida_en_curso) {
+      est.textContent = "Actualización en curso: " + d.corrida_en_curso.procesados + "/" + d.corrida_en_curso.total + " publicaciones.";
+      est.className = "estado";
+    } else if (d && d.ultimo_error) {
+      est.textContent = "Último error del catálogo: " + d.ultimo_error; est.className = "estado err";
+    } else if (d && d.ejemplos_sin_sku && d.ejemplos_sin_sku.length) {
+      est.textContent = "Publicaciones sin SKU: " + d.ejemplos_sin_sku.join(", "); est.className = "estado";
+    } else { est.textContent = ""; est.className = "estado"; }
+  }
+
+  function cargarEstadoCatalogo() {
+    return fetchConTimeout(URL_CATALOGO + "/estado", { headers: { Authorization: AUTH } })
+      .then(function (res) {
+        if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "no se pudo leer el catálogo");
+        renderEstadoCatalogo(res.data);
+      })
+      .catch(function (err) {
+        document.getElementById("catalogoResumen").innerHTML = "";
+        var est = document.getElementById("estadoCatalogo");
+        est.textContent = "No se pudo leer el estado del catálogo: " + err.message + ". La búsqueda de SKUs igual funciona (busca en vivo en ML).";
+        est.className = "estado err";
+      });
+  }
+
+  document.getElementById("btnSyncCatalogo").addEventListener("click", function () {
+    if (catalogoSincronizando) return;
+    var btn = this, est = document.getElementById("estadoCatalogo"), pasos = 0, t0 = Date.now();
+    catalogoSincronizando = true; btn.disabled = true;
+    est.textContent = "Leyendo todas las publicaciones de ML (tarda alrededor de 1 minuto)…"; est.className = "estado";
+    function paso() {
+      pasos++;
+      fetchConTimeout(URL_CATALOGO + "/sync", { method: "POST", headers: { Authorization: AUTH, "Content-Type": "application/json" }, body: "{}" }, 90000)
+        .then(function (res) {
+          if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error actualizando el catálogo");
+          if (res.data.accion === "en_curso" && pasos < CATALOGO_MAX_PASOS_MANUAL) {
+            est.textContent = "Actualizando catálogo: " + res.data.procesados + "/" + res.data.total + " publicaciones…";
+            return paso();
+          }
+          var d = res.data;
+          var msg = d.accion === "completa"
+            ? "✅ Catálogo actualizado en " + fmtSeg((Date.now() - t0) / 1000) + ": " + d.total + " publicaciones" + (d.publicaciones_sin_sku ? ", " + d.publicaciones_sin_sku + " sin SKU" : "") + "."
+            : "Quedó a medias (" + (d.procesados || 0) + "/" + (d.total || 0) + "); el cron lo termina solo.";
+          var clase = d.accion === "completa" ? "estado ok" : "estado";
+          fin();
+          // Recarga los indicadores y deja visible el resultado de la actualización (no el aviso de "sin SKU").
+          cargarEstadoCatalogo().then(function () { est.textContent = msg; est.className = clase; });
+        })
+        .catch(function (err) {
+          est.textContent = "No se pudo actualizar el catálogo: " + err.message + ". Probá de nuevo en un rato."; est.className = "estado err";
+          fin();
+        });
+    }
+    function fin() { catalogoSincronizando = false; btn.disabled = false; }
+    paso();
   });
 
   // --- parsing de entrada ---
@@ -2886,6 +2994,7 @@
     filasPreviewPrecios = []; filasResultadoPrecios = null; filtroEstadoPrecios = null;
     var tandas = chunk(skus, BATCH_SKUS_PREVIEW), ti = 0, proc = 0;
     var t0 = Date.now();
+    var skusEnVivo = []; // SKUs que no estaban en el catálogo y el server encontró buscando en ML
     var estTotal = skus.length * PUBLIC_POR_SKU_EST * SEG_POR_PUBLICACION_EST;
     document.getElementById("btnPreviewPrecios").disabled = true;
     document.getElementById("btnAplicarPrecios").disabled = true;
@@ -2899,7 +3008,9 @@
           filasPreviewPrecios.push({ sku: p.sku || "(vacío)", item_id: null, title: null, estado: estErr, detalle: p.error });
         });
         document.getElementById("btnPreviewPrecios").disabled = false;
-        est.textContent = "Preview listo en " + fmtSeg((Date.now() - t0) / 1000) + ". Revisá y editá lo que haga falta antes de aplicar."; est.className = "estado ok";
+        est.textContent = "Preview listo en " + fmtSeg((Date.now() - t0) / 1000) + ". Revisá y editá lo que haga falta antes de aplicar." +
+          (skusEnVivo.length ? " (" + skusEnVivo.length + " SKU no estaba" + (skusEnVivo.length === 1 ? "" : "n") + " en el catálogo y se encontr" + (skusEnVivo.length === 1 ? "ó" : "aron") + " en vivo en ML: " + skusEnVivo.slice(0, 5).join(", ") + (skusEnVivo.length > 5 ? "…" : "") + ")" : "");
+        est.className = "estado ok";
         renderResumenPrecios();
         renderTablaPrecios();
         actualizarBotonAplicarPrecios();
@@ -2913,6 +3024,7 @@
       }, TIMEOUT_TANDA_MS)
         .then(function (res) {
           if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error en el preview");
+          if (Array.isArray(res.data.skus_encontrados_en_vivo)) skusEnVivo = skusEnVivo.concat(res.data.skus_encontrados_en_vivo);
           (res.data.filas || []).forEach(function (f) {
             // Editables en ML: se puede corregir precio/mayorista a mano antes de aplicar.
             f._editable = !!f.item_id && (f.estado === "OK" || f.estado === "MAYORISTA_INVALIDO");
