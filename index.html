@@ -740,6 +740,7 @@
     <p>Las listas que crecen con la cantidad de publicaciones (la grilla de carga, el preview de precios, los tickets, "% aplicados", la selección de candidatas, el detalle de una tanda y las publicaciones sin SKU) tienen una <b>altura fija y se scrollean por dentro</b>, con el encabezado siempre visible. Así los botones de cada módulo quedan a mano sin bajar toda la página. Al lado de "Limpiar" se ve cuántos SKU hay cargados en la grilla.</p>
     <h3>Seguir usando la app mientras corre una tanda</h3>
     <p>Cuando lanzás "Subir a todas", "Bajar de todas", "Bajar TODAS" o "Subir TODAS", aparece la ventana de progreso. Con el botón <b>"➖ Seguir usando la app"</b> (o con Cerrar) la ventana se achica a una <b>barrita abajo a la derecha</b> que sigue mostrando el avance y el tiempo que resta; la corrida no se corta. Tocando la barrita volvés al detalle, y cuando termina se pone verde. Dos reglas: <b>no cierres ni recargues la pestaña</b> mientras corre (el navegador te avisa), y solo puede correr <b>una tanda a la vez</b>.</p>
+    <p><b>Si una "Subir TODAS" se corta</b> (se cerró la pestaña, se cortó internet, etc.): lo que ya se subió queda bien en ML y se va sacando del respaldo a medida que avanza. Volvé a tocar <b>"Subir TODAS"</b> y sigue con lo que falta: las que ya están activas en su campaña se dan por hechas solas. La sesión se renueva sola durante corridas largas, aunque tengas la app minimizada.</p>
     <h3>% aplicados: el mismo % a todas</h3>
     <p>En "Ver % aplicados" de una campaña con precio (Deal, Campaña propia) podés escribir un % en <b>"Aplicar X% a todas"</b> y apretar <b>Rellenar</b>: copia ese % en todas las filas sin guardar nada. Después ajustás a mano las que quieras y apretás <b>"Guardar todas las modificadas"</b>: se aplican solo las filas cuyo % cambió, por tandas y con tiempo estimado. La columna <b>Resultado</b> muestra, por publicación, si quedó aplicado o si el % quedó fuera del rango que acepta ML (con el rango válido).</p>
     <h3>% de descuento: se pregunta cada vez, por campaña</h3>
@@ -960,7 +961,7 @@
 
   // --- Tickets (módulo transversal: mismo backend para todas las apps) ---
   var TICKETS_APP_ID = "grafica-promociones"; // identifica a ESTA app en el embudo común (cambiar al clonar/replicar)
-  var APP_VERSION = "2026-09-29.5";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
+  var APP_VERSION = "2026-09-29.6";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
 
   // Captura de errores recientes (se adjuntan como contexto técnico a los tickets). Buffer de 5.
   var ERRORES_RECIENTES = [];
@@ -1091,19 +1092,55 @@
   /* ============================================================
      HELPERS
      ============================================================ */
-  function fetchConTimeout(url, opciones, timeoutMs) {
-    var controller = new AbortController();
-    var timeoutId = setTimeout(function () { controller.abort(); }, timeoutMs || TIMEOUT_MS);
-    return fetch(url, Object.assign({}, opciones, { signal: controller.signal }))
-      .then(function (resp) {
-        clearTimeout(timeoutId);
-        return resp.json().then(function (data) { return { status: resp.status, data: data }; });
-      })
-      .catch(function (err) {
-        clearTimeout(timeoutId);
-        if (err.name === "AbortError") throw new Error("timeout");
-        throw err;
-      });
+  // 29/09: la sesión (JWT) dura 1 hora y la librería de login deja de renovarla sola cuando la pestaña
+  // no está a la vista. Una "Subir TODAS" de ~80 min se cortó con "unauthorized" a la hora. Ahora, antes
+  // de cada llamada con sesión, si al token le quedan < 2 min se renueva; y si el servidor igual responde
+  // 401 se renueva y se reintenta UNA vez (el 401 sale antes de tocar nada en ML, así que es seguro).
+  var sesionExpiraEn = 0; // epoch en segundos (session.expires_at)
+  var renovandoSesion = null;
+  function asegurarSesionFresca(forzar) {
+    if (!forzar && sesionExpiraEn && sesionExpiraEn - Date.now() / 1000 > 120) return Promise.resolve(AUTH);
+    if (!renovandoSesion) {
+      renovandoSesion = sb.auth.refreshSession()
+        .then(function (r) {
+          var ses = r && r.data && r.data.session;
+          if (ses) { AUTH = "Bearer " + ses.access_token; sesionExpiraEn = ses.expires_at || 0; }
+          return AUTH;
+        })
+        .catch(function () { return AUTH; })
+        .finally(function () { renovandoSesion = null; });
+    }
+    return renovandoSesion;
+  }
+  function usaSesion(opciones) {
+    var h = opciones && opciones.headers;
+    return !!(h && typeof h.Authorization === "string" && h.Authorization.indexOf("Bearer ") === 0);
+  }
+  function fetchConTimeout(url, opciones, timeoutMs, esReintentoAuth) {
+    opciones = opciones || {};
+    var conSesion = usaSesion(opciones);
+    var previo = conSesion ? asegurarSesionFresca(false) : Promise.resolve(null);
+    return previo.then(function () {
+      var op = Object.assign({}, opciones);
+      if (conSesion && AUTH) op.headers = Object.assign({}, opciones.headers, { Authorization: AUTH }); // siempre el token vigente
+      var controller = new AbortController();
+      var timeoutId = setTimeout(function () { controller.abort(); }, timeoutMs || TIMEOUT_MS);
+      return fetch(url, Object.assign(op, { signal: controller.signal }))
+        .then(function (resp) {
+          clearTimeout(timeoutId);
+          return resp.json().catch(function () { return null; }).then(function (data) { return { status: resp.status, data: data }; });
+        })
+        .catch(function (err) {
+          clearTimeout(timeoutId);
+          if (err.name === "AbortError") throw new Error("timeout");
+          throw err;
+        });
+    }).then(function (res) {
+      if (res.status === 401 && conSesion && !esReintentoAuth) {
+        return asegurarSesionFresca(true).then(function () { return fetchConTimeout(url, opciones, timeoutMs, true); });
+      }
+      return res;
+    });
   }
 
   function escapeHtml(s) {
@@ -1164,6 +1201,7 @@
   sb.auth.onAuthStateChange(function (_event, session) {
     if (session) {
       AUTH = "Bearer " + session.access_token;
+      sesionExpiraEn = session.expires_at || 0;
       USUARIO_EMAIL = (session.user && session.user.email) || null;
       if (appArrancada) return; // volver a la pestaña / renovar token: no se recarga nada
       appArrancada = true;
@@ -2841,10 +2879,19 @@
       return prepararGrupoRestore(g).then(function (p) { preparados.push(p); i++; return siguiente(); });
     };
     siguiente().then(function (lista) {
-      preparandoRestore = false;
-      els.estadoSnapshot.textContent = estadoPrevio;
-      els.btnSubirTodoGuardado.disabled = false;
-      ejecutarSubidaGlobal(lista.filter(function (p) { return p.items.length > 0; }));
+      var yaActivas = [];
+      lista.forEach(function (p) { yaActivas = yaActivas.concat(p.idsYaActivas || []); });
+      var pendientes = lista.reduce(function (s, p) { return s + p.items.length; }, 0);
+      var seguir = function () {
+        preparandoRestore = false;
+        els.estadoSnapshot.textContent = estadoPrevio;
+        els.btnSubirTodoGuardado.disabled = false;
+        if (yaActivas.length && pendientes === 0) { cargarEstadoSnapshot(); alert("Las " + yaActivas.length + " publicaciones del respaldo ya estaban activas en sus campañas: se sacaron del respaldo. No quedó nada por subir."); return; }
+        ejecutarSubidaGlobal(lista.filter(function (p) { return p.items.length > 0; }));
+      };
+      if (!yaActivas.length) return seguir();
+      els.estadoSnapshot.textContent = yaActivas.length + " ya estaban activas (se retoma una subida anterior): se sacan del respaldo…";
+      borrarDelRespaldo(yaActivas).then(seguir);
     }).catch(function (err) {
       preparandoRestore = false;
       els.estadoSnapshot.textContent = estadoPrevio;
@@ -2859,16 +2906,35 @@
         if (!res.data || !res.data.ok) throw new Error("campaña " + g.promotionId + ": " + ((res.data && res.data.error) || "error " + res.status));
         var candidatosPorId = {};
         (res.data.items_candidatos || []).forEach(function (it) { candidatosPorId[it.id] = it; });
+        // 29/09: si se retoma una subida cortada, las que YA están activas en la campaña se dan por hechas
+        // y se sacan del respaldo (antes quedaban ahí para siempre).
+        var activasPorId = {};
+        (res.data.items_activos || []).forEach(function (it) { activasPorId[it.id] = true; });
         var items = [];
         var idsSnapshotPorItemId = {};
+        var idsYaActivas = [];
         g.filas.forEach(function (f) {
           idsSnapshotPorItemId[f.item_id] = f.id;
+          if (activasPorId[f.item_id]) { idsYaActivas.push(f.id); return; }
           var base = candidatosPorId[f.item_id];
           if (!base) return; // ya no aparece como candidato -- se salta, queda en el respaldo para revisar a mano
           items.push({ id: base.id, original_price: base.original_price, min_discounted_price: base.min_discounted_price, max_discounted_price: base.max_discounted_price, porcentaje_item: f.porcentaje });
         });
-        return { promotionId: g.promotionId, promotionType: g.promotionType, nombre: g.promotionId, items: items, idsSnapshotPorItemId: idsSnapshotPorItemId };
+        return { promotionId: g.promotionId, promotionType: g.promotionType, nombre: g.promotionId, items: items, idsSnapshotPorItemId: idsSnapshotPorItemId, idsYaActivas: idsYaActivas };
       });
+  }
+
+  // Borra filas del respaldo en lotes chicos (la lista va en la URL: 2000 ids juntos no entran).
+  function borrarDelRespaldo(ids) {
+    var lotes = chunk(ids, 100), k = 0;
+    var sig = function () {
+      if (k >= lotes.length) return Promise.resolve();
+      var lote = lotes[k++];
+      return fetchConTimeout(URL_SNAPSHOT + "?ids=" + lote.join(","), { method: "DELETE", headers: { Authorization: AUTH } })
+        .catch(function () { /* si falla, quedan filas viejas en el respaldo: no es grave */ })
+        .then(sig);
+    };
+    return sig();
   }
 
   function ejecutarSubidaGlobal(grupos) {
@@ -2902,8 +2968,8 @@
         finCorrida();
 
         if (idsSnapshotExitosos.length > 0) {
-          fetchConTimeout(URL_SNAPSHOT + "?ids=" + idsSnapshotExitosos.join(","), { method: "DELETE", headers: { Authorization: AUTH } })
-            .catch(function () { /* si falla el borrado del respaldo no es grave, quedan filas viejas */ })
+          // Ya se fueron borrando tanda por tanda; esta pasada final solo reintenta por si alguna falló.
+          borrarDelRespaldo(idsSnapshotExitosos)
             .finally(function () { cargarEstadoSnapshot(); refrescarTrasRender = "todas"; arrancarApp(); });
         } else {
           cargarEstadoSnapshot();
@@ -2929,11 +2995,15 @@
             exitosos += res.data.exitosos || 0;
             errores += res.data.errores || 0;
             revisar += res.data.revisar || 0;
+            var idsTanda = [];
             (res.data.log || []).forEach(function (l) {
               if (l.estado === "APLICADO" && grupo.idsSnapshotPorItemId[l.item_id]) {
                 idsSnapshotExitosos.push(grupo.idsSnapshotPorItemId[l.item_id]);
+                idsTanda.push(grupo.idsSnapshotPorItemId[l.item_id]);
               }
             });
+            // 29/09: se sacan del respaldo al toque (antes, al final: si se cortaba, no se borraba nada).
+            if (idsTanda.length) borrarDelRespaldo(idsTanda);
             procesados += tanda.length;
             var restSubir = (Date.now() - t0Subir) / 1000 / procesados * (totalItems - procesados);
             els.resultadoResumen.textContent = "Procesando " + procesados + "/" + totalItems + " (" + grupo.nombre + ", resta " + fmtSeg(restSubir) + ")...";
@@ -2943,7 +3013,8 @@
           })
           .catch(function (err) {
             els.resultadoTitulo.textContent = "Se cortó a mitad de camino";
-            els.resultadoResumen.textContent = procesados + "/" + totalItems + " procesadas antes del error (" + err.message + ").";
+            els.resultadoResumen.textContent = procesados + "/" + totalItems + " procesadas antes del error (" + err.message + "). Lo ya subido quedó bien y se sacó del respaldo: tocá \"Subir TODAS\" de nuevo para seguir con el resto.";
+            cargarEstadoSnapshot();
             renderTablaLog(logGlobal, "subir");
             finCorrida();
           });
