@@ -434,8 +434,8 @@
     <div class="panel" style="border-color:var(--amber-dim);">
       <label style="margin:0;color:var(--amber);font-weight:600;">💲 Actualización masiva de precios de lista y mayorista</label>
       <p style="font-size:0.8rem;color:var(--text-dim);margin:6px 0 10px;">
-        Cargá <b>SKU</b> y <b>precio de lista</b>, y en <b>Mayorista</b> elegí <b>Sí</b> para cargarle también los <b>escalones mayoristas</b> de abajo, <b>No</b> para no tocarlos o <b>Quitar</b> para borrárselos (o copiá las columnas de Excel y pegalas en la primera celda: se completa sola; en la columna Mayorista vale "si"/"no"/"quitar").
-        Podés cambiar solo el precio, solo los escalones (precio vacío + Mayorista en Sí o Quitar), o los dos. Se aplica a <b>todas las publicaciones activas y pausadas</b> de ese SKU. Formato de precio AR: <code>12.500</code> o <code>12500</code> (decimales con coma, ej. <code>12500,50</code>).
+        Cargá <b>SKU</b> y <b>precio de lista</b>, y en <b>Mayorista</b>: <b>Sí</b> le carga los <b>escalones mayoristas</b> de abajo, <b>vacío</b> le <b>borra</b> los escalones que tenga, y <b>"No tocar"</b> los deja como están (o copiá las columnas de Excel y pegalas en la primera celda: se completa sola; en la columna Mayorista vale "si", vacío o "no").
+        ⚠️ <b>Mayorista vacío = se quitan los escalones</b>: si solo querés cambiar el precio y conservarlos, escribí "no". Se aplica a <b>todas las publicaciones activas y pausadas</b> de ese SKU. Formato de precio AR: <code>12.500</code> o <code>12500</code> (decimales con coma, ej. <code>12500,50</code>).
         Primero previsualizás (no toca nada), revisás el antes → después, y recién ahí aplicás.
       </p>
       <!-- Escalones mayoristas: preset compartido (lo edita Gerencia). Se guarda en app_config vía ml-precios-bulk. -->
@@ -462,7 +462,7 @@
       </div>
       <div style="overflow-x:auto;">
         <table class="grilla-entrada" id="grillaEntrada">
-          <thead><tr><th>SKU</th><th>Precio lista</th><th class="th-may"><label for="selMayTodos" style="display:inline;margin:0;">Mayorista</label> <select id="selMayTodos" class="sel-esc" title="Cambia la opción de todas las filas (y la de las filas nuevas)"><option value="si">Sí a todas</option><option value="no">No a todas</option><option value="quitar">Quitar a todas</option></select></th><th></th></tr></thead>
+          <thead><tr><th>SKU</th><th>Precio lista</th><th class="th-may"><label for="selMayTodos" style="display:inline;margin:0;">Mayorista</label> <select id="selMayTodos" class="sel-esc" title="Cambia la opción de todas las filas (y la de las filas nuevas)"><option value="quitar" selected>Vacío (quita) a todas</option><option value="si">Sí a todas</option><option value="no">No tocar a todas</option></select></th><th></th></tr></thead>
           <tbody id="grillaBody"></tbody>
         </table>
       </div>
@@ -681,8 +681,8 @@
     <h3>Escalones mayoristas (precio por cantidad)</h3>
     <p>En Mercado Libre, el "precio por cantidad" es un precio por unidad más bajo cuando alguien compra <b>desde N unidades</b>, y <b>solo lo ven los compradores empresa</b> (cuentas con factura A). La app lo maneja con <b>escalones</b>: por ejemplo "desde 2 u. 5% menos", "desde 4 u. 8% menos", "desde 5 u. 10% menos". ML permite <b>hasta 5 escalones</b> por publicación, con unidades que crecen y un precio que baja en cada escalón.</p>
     <p><b>Quién los define:</b> los escalones son un <b>preset compartido</b> que carga <b>Gerencia</b> con "✏️ Editar escalones" (arriba de la tabla). Stock los ve y los usa, pero no los puede cambiar. Se guardan en la base, así que todos usan los mismos desde cualquier compu.</p>
-    <p><b>Cómo se aplican:</b> en la tabla, poné <b>Mayorista = Sí</b> en las filas que querés que lleven los escalones (el selector del encabezado cambia todas las filas; al pegar desde Excel, la tercera columna acepta "si"/"no"/"quitar"). Podés dejar el precio de lista vacío para cargar <b>solo los escalones</b> sobre la lista actual. Los montos <b>no se escriben a mano</b>: se calculan como % sobre el <b>precio de lista final</b> de cada publicación (el nuevo si lo cambiás, el actual si no) y se redondean a pesos. Por eso, cuando subís la lista por inflación, alcanza con volver a aplicar con Mayorista en Sí para que los escalones acompañen.</p>
-    <p><b>Quitar los escalones:</b> poné <b>Mayorista = Quitar</b> en la fila del SKU (con o sin precio nuevo) y previsualizá. Se borran <b>todos</b> los escalones de <b>todas</b> las publicaciones activas y pausadas de ese SKU, y el comprador empresa vuelve a ver el precio de lista. El preview muestra "✕ se quitan todos" y el conteo "Se quitan escalones"; si la publicación no tenía escalones, esa fila queda "Sin cambios". También podés cambiar a "Quitar escalones" fila por fila en el preview. Al aplicar, la app verifica en ML que no quedó ninguno ("✓ confirmado en ML"); si la publicación tiene una promo más barata, ML no muestra los escalones y queda <b>"sin confirmar"</b>: revisalo cuando termine la promo.</p>
+    <p><b>Cómo se aplican:</b> en la tabla, poné <b>Mayorista = Sí</b> en las filas que querés que lleven los escalones (el selector del encabezado cambia todas las filas; al pegar desde Excel, la tercera columna acepta "si", vacío = quitar, o "no" = no tocar). Podés dejar el precio de lista vacío para cargar <b>solo los escalones</b> sobre la lista actual. Los montos <b>no se escriben a mano</b>: se calculan como % sobre el <b>precio de lista final</b> de cada publicación (el nuevo si lo cambiás, el actual si no) y se redondean a pesos. Por eso, cuando subís la lista por inflación, alcanza con volver a aplicar con Mayorista en Sí para que los escalones acompañen.</p>
+    <p><b>Quitar los escalones:</b> dejá <b>Mayorista vacío</b> en la fila del SKU (con o sin precio nuevo) y previsualizá. Es el valor por defecto: al pegar desde Excel, si la columna Mayorista viene vacía (o pegás solo SKU y precio), la fila queda en "Vacío (quita)". Para cambiar solo el precio <b>conservando</b> los escalones, escribí "no" en esa columna ("No tocar"). Se borran <b>todos</b> los escalones de <b>todas</b> las publicaciones activas y pausadas de ese SKU, y el comprador empresa vuelve a ver el precio de lista. El preview muestra "✕ se quitan todos" y el conteo "Se quitan escalones"; si la publicación no tenía escalones, esa fila queda "Sin cambios". También podés cambiar a "Quitar escalones" fila por fila en el preview. Al aplicar, la app verifica en ML que no quedó ninguno ("✓ confirmado en ML"); si la publicación tiene una promo más barata, ML no muestra los escalones y queda <b>"sin confirmar"</b>: revisalo cuando termine la promo.</p>
     <p><b>Qué muestra el preview:</b> los <b>escalones actuales</b> de cada publicación y los <b>nuevos</b> con su monto y %. Podés cambiar la opción de escalones (aplicar / sin cambio / quitar) en cualquier fila antes de aplicar. Te marca con ⚠️ dos casos: si la publicación tiene una <b>promo vigente más barata</b> que algún escalón (el comprador empresa paga el precio más bajo disponible, así que ese escalón no sirve mientras dure la promo), y si cambiás la lista <b>sin</b> recalcular escalones que ya tenía (quedan en monto fijo y se desalinean). Al aplicar, la app confirma contra la respuesta de ML que todos los escalones quedaron cargados ("✓ confirmado en ML"); cargar escalones <b>reemplaza</b> los que tuviera la publicación. Si ML rechaza por permisos, la cuenta de ML no tiene habilitado el precio por cantidad (B2B).</p>
     <p><b>Promo activa tapa los escalones:</b> mientras una publicación tiene una promo más barata, Mercado Libre <b>no muestra</b> su precio por cantidad (ni en la publicación ni por API), aunque esté cargado. Por eso la app guarda un registro de los escalones que se cargan <b>desde acá</b>: en "Escalones actuales" vas a ver "Según lo cargado desde la app el dd/mm" cuando el dato sale de ese registro, o "no visible" si hay promo y no hay registro (puede que se hayan cargado desde el panel de ML). Cuando termina la promo, los escalones vuelven a aparecer solos.</p>
     <h3>Catálogo de publicaciones: cómo encuentra cada SKU</h3>
@@ -913,7 +913,7 @@
 
   // --- Tickets (módulo transversal: mismo backend para todas las apps) ---
   var TICKETS_APP_ID = "grafica-promociones"; // identifica a ESTA app en el embudo común (cambiar al clonar/replicar)
-  var APP_VERSION = "2026-09-28.5";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
+  var APP_VERSION = "2026-09-29.1";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
 
   // Captura de errores recientes (se adjuntan como contexto técnico a los tickets). Buffer de 5.
   var ERRORES_RECIENTES = [];
@@ -3036,22 +3036,25 @@
   var FILAS_INICIALES = 6;
   var COLS_GRILLA = ["cel-sku", "cel-precio", "cel-may"];
 
-  // Columna Mayorista (v2026-09-28.5): "si" = aplicar los escalones del preset · "no" = no tocarlos ·
-  // "quitar" = borrar TODOS los escalones de las publicaciones de ese SKU.
+  // Columna Mayorista (v2026-09-29.1, pedido de Gerencia): "si" = aplicar los escalones del preset ·
+  // VACÍO = QUITAR todos los escalones de las publicaciones de ese SKU (es el valor por defecto) ·
+  // "no" = no tocarlos (hay que escribirlo explícitamente).
+  var MAYORISTA_POR_DEFECTO = "quitar"; // lo que vale una fila con la columna Mayorista vacía
   var OPCIONES_MAYORISTA = [
+    { v: "quitar", t: "Vacío (quita)" },
     { v: "si", t: "Sí" },
-    { v: "no", t: "No" },
-    { v: "quitar", t: "Quitar" },
+    { v: "no", t: "No tocar" },
   ];
-  // Texto pegado desde Excel -> "si" | "no" | "quitar" (null = no se reconoce y se deja como estaba)
+  // Texto pegado desde Excel -> "si" | "no" | "quitar" (vacío = quitar; null = no se reconoce y se deja como estaba)
   function parsearMayorista(v) {
-    var t = String(v || "").trim().toLowerCase();
+    var t = String(v == null ? "" : v).trim().toLowerCase();
+    if (t === "") return "quitar";
     if (/^(s|si|sí|x|1|true|verdadero|ok|aplicar)$/.test(t)) return "si";
     if (/^(n|no|0|false|falso|-)$/.test(t)) return "no";
     if (/^(q|quitar|sacar|borrar|eliminar)$/.test(t)) return "quitar";
     return null;
   }
-  function mayoristaPorDefecto() { var c = document.getElementById("selMayTodos"); return c ? c.value : "si"; }
+  function mayoristaPorDefecto() { var c = document.getElementById("selMayTodos"); return c ? c.value : MAYORISTA_POR_DEFECTO; }
   function htmlOpcionesMayorista(valor) {
     return OPCIONES_MAYORISTA.map(function (o) { return '<option value="' + o.v + '"' + (o.v === valor ? " selected" : "") + ">" + o.t + "</option>"; }).join("");
   }
@@ -3062,11 +3065,11 @@
     tr.innerHTML =
       '<td><input type="text" class="cel-sku" autocomplete="off" spellcheck="false"></td>' +
       '<td><input type="text" class="cel-precio" inputmode="decimal" autocomplete="off" placeholder="sin cambio"></td>' +
-      '<td class="td-may"><select class="cel-may" title="Sí: le carga los escalones del preset · No: no los toca · Quitar: le borra todos los escalones">' + htmlOpcionesMayorista("si") + '</select></td>' +
+      '<td class="td-may"><select class="cel-may" title="Vacío: le borra todos los escalones · Sí: le carga los escalones del preset · No tocar: los deja como están">' + htmlOpcionesMayorista(MAYORISTA_POR_DEFECTO) + '</select></td>' +
       '<td class="acc"><button type="button" class="btn-x" title="Quitar fila">✕</button></td>';
     var inpSku = tr.querySelector(".cel-sku"), inpPrecio = tr.querySelector(".cel-precio"), chkMay = tr.querySelector(".cel-may");
     inpSku.value = sku || ""; inpPrecio.value = precio || "";
-    chkMay.value = parsearMayorista(mayorista) || mayoristaPorDefecto();
+    chkMay.value = (mayorista != null && parsearMayorista(mayorista)) || mayoristaPorDefecto();
     marcarSelectMayorista(chkMay);
     chkMay.addEventListener("change", function () { marcarSelectMayorista(chkMay); });
     tr.querySelector(".btn-x").addEventListener("click", function () {
@@ -3103,15 +3106,20 @@
     var idx = Array.prototype.indexOf.call(body.rows, trInicio);
     lineas.forEach(function (linea, i) {
       var cols = linea.split("\t");
+      if (!cols.some(function (c) { return (c || "").trim() !== ""; })) return; // renglón vacío del Excel
       var fila = body.rows[idx + i] || agregarFilaEntrada();
       // Cada columna pegada cae en la celda siguiente a partir de donde pegaste (SKU → Precio → Mayorista sí/no/quitar).
       cols.forEach(function (valor, j) {
         var clase = COLS_GRILLA[colInicio + j];
         var v = (valor || "").trim();
-        if (!clase || v === "") return;
-        if (clase === "cel-may") { var b = parsearMayorista(v); if (b !== null) { var sel = fila.querySelector(".cel-may"); sel.value = b; marcarSelectMayorista(sel); } }
-        else fila.querySelector("." + clase).value = v;
+        if (!clase || clase === "cel-may") return; // Mayorista se resuelve abajo
+        if (v !== "") fila.querySelector("." + clase).value = v;
       });
+      // Mayorista: si la columna vino vacía o no vino en lo pegado, vale "vacío" = quitar (pedido de Gerencia).
+      var jMay = COLS_GRILLA.indexOf("cel-may") - colInicio;
+      var valorMay = (jMay >= 0 && jMay < cols.length) ? cols[jMay] : "";
+      var b = parsearMayorista(valorMay);
+      if (b !== null) { var sel = fila.querySelector(".cel-may"); sel.value = b; marcarSelectMayorista(sel); }
     });
   }
   function leerGrillaEntrada() {
@@ -3126,7 +3134,7 @@
       var precio = precioRaw === "" ? null : parsearPrecioAR(precioRaw);
       var error = null;
       if (sku === "") error = "falta SKU";
-      else if (precio === null && modo === "no") error = "falta precio de lista (o elegir Mayorista Sí / Quitar para tocar solo los escalones)";
+      else if (precio === null && modo === "no") error = "falta precio de lista (con Mayorista en \"No tocar\" la fila no cambia nada)";
       else if (precio !== null && !(isFinite(precio) && precio > 0)) error = "precio inválido";
       else if (may && escalonesPreset.length === 0) error = "no hay escalones mayoristas definidos (los carga Gerencia arriba de la tabla)";
       out.push({ sku: sku, precio: precio, mayorista: may, quitar: quitar, error: error });
@@ -3151,7 +3159,7 @@
   document.getElementById("btnLimpiarPrecios").addEventListener("click", function () {
     var body = document.getElementById("grillaBody");
     body.innerHTML = "";
-    document.getElementById("selMayTodos").value = "si"; marcarSelectMayorista(document.getElementById("selMayTodos"));
+    document.getElementById("selMayTodos").value = MAYORISTA_POR_DEFECTO; marcarSelectMayorista(document.getElementById("selMayTodos"));
     for (var i = 0; i < FILAS_INICIALES; i++) agregarFilaEntrada();
     document.getElementById("estadoPrecios").textContent = "";
     document.getElementById("panelResultadoPrecios").classList.add("oculto");
@@ -3414,7 +3422,6 @@
     if (f.quitar_escalones && noTiene) {
       f.quitar_escalones = false;
       if (f.precio_nuevo == null) { f.estado = "SIN_CAMBIOS"; f.detalle = "no tiene escalones mayoristas cargados: no hay nada que quitar"; f.aviso_mayorista = null; return; }
-      avisos.push("no tenía escalones mayoristas: solo se cambia el precio de lista");
     }
     if (f.quitar_escalones) {
       if (f.escalones_actuales == null) avisos.push("ML no deja ver si tiene escalones (hay una promo más barata o no se pudo leer): se manda igual el pedido de quitar; puede quedar sin confirmar");
@@ -3636,7 +3643,7 @@
         "Con escalones", conMay) +
       (nQuitar ? kpi("QUITAR", filasResultadoPrecios
         ? "Publicaciones a las que se les pidió quitar todos los escalones mayoristas (incluye las que dieron error). \"Confirmado\" = ML devolvió la lista de precios sin escalones; \"sin confirmar\" = hay una promo más barata y ML no los muestra. Clic para filtrar."
-        : "Publicaciones a las que se les van a quitar TODOS los escalones mayoristas (Mayorista = Quitar). Clic para filtrar.",
+        : "Publicaciones a las que se les van a quitar TODOS los escalones mayoristas (Mayorista vacío = quitar). Solo cuenta las que hoy tienen escalones o en las que ML no deja verlo. Clic para filtrar.",
         "Se quitan escalones", nQuitar) : "") +
       (avisosMay ? kpi("AVISO_MAY", "Publicaciones con un aviso de escalones: (1) tienen una promo vigente más barata que algún escalón (el comprador empresa paga el precio más bajo, así que ese escalón no sirve mientras dure la promo), o (2) les cambia la lista sin recalcular los escalones que ya tenían (quedan en monto fijo). Sale de leer los precios de cada publicación en ML al previsualizar. Clic para filtrar.", "Aviso escalones", avisosMay) : "");
     document.querySelectorAll("#resumenPrecios .kpi.clickable").forEach(function (k) {
