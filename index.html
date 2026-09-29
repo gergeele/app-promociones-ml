@@ -170,6 +170,20 @@
   .modal-cerrar { display: flex; justify-content: flex-end; margin-top: 16px; }
 
   table.log { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-top: 10px; }
+  /* v2026-09-29.4: listas largas con altura acotada y scroll interno (encabezado fijo), así los
+     botones de cada módulo quedan siempre a mano. Para acotar otra tabla: envolverla en .caja-scroll. */
+  .caja-scroll { max-height: min(60vh, 640px); overflow: auto; border: 1px solid var(--panel-border); border-radius: 8px; -webkit-overflow-scrolling: touch; }
+  .caja-scroll.baja { max-height: min(42vh, 420px); }
+  .caja-scroll.modal { max-height: 48vh; }
+  .caja-scroll > table { margin-top: 0; }
+  .caja-scroll:empty { display: none; }
+  .caja-scroll thead th { position: sticky; top: 0; z-index: 3; background: var(--panel); box-shadow: inset 0 -1px 0 var(--panel-border); }
+  .caja-scroll thead th.th-may { background: #FFF9F4; } /* opaco: el tinte naranja semitransparente dejaba ver las filas */
+  .contador-filas { font-size: 0.75rem; color: var(--text-dim); }
+  details.ayuda-plegable > summary { cursor: pointer; font-size: 0.8rem; color: var(--amber-dim); font-weight: 600; margin: 6px 0; list-style: none; }
+  details.ayuda-plegable > summary::-webkit-details-marker { display: none; }
+  details.ayuda-plegable > summary::before { content: "▸ "; }
+  details.ayuda-plegable[open] > summary::before { content: "▾ "; }
   table.log th, table.log td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--panel-border); }
   table.log th { color: var(--text-dim); font-weight: 600; }
   table.log th[data-sort]:hover { color: var(--amber); }
@@ -373,6 +387,8 @@
     #tablaSel th[data-sel-sort]{cursor:pointer;}
     #tablaSel th[data-sel-sort]:hover{color:var(--amber);}
     .cat-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+    .sin-sku-activa{color:var(--amber);font-weight:700;}
+    .sin-sku-titulo{max-width:280px;white-space:normal;}
     .aviso-7d{font-size:0.78rem;color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-dim);border-radius:8px;padding:10px 12px;margin:0 0 12px;}
   </style>
 
@@ -424,7 +440,10 @@
     <div class="panel">
       <div class="cat-head">
         <span class="tk-titulo-panel">🗂️ Catálogo de publicaciones</span>
-        <button class="chico secondary" id="btnSyncCatalogo" type="button" title="Vuelve a leer todas las publicaciones activas y pausadas de ML (tarda ~1 minuto)">🔄 Actualizar catálogo ahora</button>
+        <span style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="chico secondary" id="btnSinSku" type="button" title="Lista las publicaciones sin SKU con título, estado, precio y link, para revisarlas rápido">🔎 Publicaciones sin SKU</button>
+          <button class="chico secondary" id="btnSyncCatalogo" type="button" title="Vuelve a leer todas las publicaciones activas y pausadas de ML (tarda ~1 minuto)">🔄 Actualizar catálogo ahora</button>
+        </span>
       </div>
       <p class="tk-ayuda">Es la lista de qué publicaciones tiene cada SKU. Se actualiza sola todas las mañanas; si un SKU no aparece, la app igual lo busca en vivo en Mercado Libre al previsualizar.</p>
       <div class="resumen-precios" id="catalogoResumen"><div class="kpi">Cargando catálogo…</div></div>
@@ -433,11 +452,14 @@
 
     <div class="panel" style="border-color:var(--amber-dim);">
       <label style="margin:0;color:var(--amber);font-weight:600;">💲 Actualización masiva de precios de lista y mayorista</label>
+      <p style="font-size:0.8rem;color:var(--text-dim);margin:6px 0 4px;">SKU + precio de lista (pegá las columnas de Excel en la primera celda). ⚠️ <b>Mayorista vacío = se quitan los escalones</b>; para conservarlos escribí "no".</p>
+      <details class="ayuda-plegable"><summary>Cómo se carga (detalle)</summary>
       <p style="font-size:0.8rem;color:var(--text-dim);margin:6px 0 10px;">
         Cargá <b>SKU</b> y <b>precio de lista</b>, y en <b>Mayorista</b>: <b>Sí</b> le carga los <b>escalones mayoristas</b> de abajo, <b>vacío</b> le <b>borra</b> los escalones que tenga, y <b>"No tocar"</b> los deja como están (o copiá las columnas de Excel y pegalas en la primera celda: se completa sola; en la columna Mayorista vale "si", vacío o "no").
         ⚠️ <b>Mayorista vacío = se quitan los escalones</b>: si solo querés cambiar el precio y conservarlos, escribí "no". Se aplica a <b>todas las publicaciones activas y pausadas</b> de ese SKU. Formato de precio AR: <code>12.500</code> o <code>12500</code> (decimales con coma, ej. <code>12500,50</code>).
         Primero previsualizás (no toca nada), revisás el antes → después, y recién ahí aplicás.
       </p>
+      </details>
       <!-- Escalones mayoristas: preset compartido (lo edita Gerencia). Se guarda en app_config vía ml-precios-bulk. -->
       <div class="esc-panel" id="panelEscalones">
         <div class="esc-head">
@@ -460,7 +482,7 @@
         </div>
         <div id="estadoEscalones" class="estado" style="margin:6px 0 0;"></div>
       </div>
-      <div style="overflow-x:auto;">
+      <div class="caja-scroll baja" style="max-width:660px;">
         <table class="grilla-entrada" id="grillaEntrada">
           <thead><tr><th>SKU</th><th>Precio lista</th><th class="th-may"><label for="selMayTodos" style="display:inline;margin:0;">Mayorista</label> <select id="selMayTodos" class="sel-esc" title="Cambia la opción de todas las filas (y la de las filas nuevas)"><option value="quitar" selected>Vacío (quita) a todas</option><option value="si">Sí a todas</option><option value="no">No tocar a todas</option></select></th><th></th></tr></thead>
           <tbody id="grillaBody"></tbody>
@@ -470,6 +492,7 @@
         <button class="chico" id="btnPreviewPrecios">🔍 Previsualizar</button>
         <button class="chico secondary" id="btnAgregarFilaPrecio" type="button">+ Fila</button>
         <button class="chico secondary" id="btnLimpiarPrecios">Limpiar</button>
+        <span id="contadorFilasPrecios" class="contador-filas"></span>
         <span id="estadoPrecios" class="estado" style="margin:0;"></span>
       </div>
     </div>
@@ -481,7 +504,7 @@
         <button class="chico secondary" id="btnExportarPrecios">⬇️ Exportar CSV</button>
         <span id="estadoAplicarPrecios" class="estado" style="margin:0;"></span>
       </div>
-      <div style="overflow-x:auto;">
+      <div class="caja-scroll">
         <table class="tabla-precios" id="tablaPrecios"></table>
       </div>
     </div>
@@ -551,7 +574,7 @@
       </div>
       <div class="resumen-precios" id="tkResumen"></div>
       <div id="estadoTickets" class="estado"></div>
-      <div style="overflow-x:auto;"><table class="tabla-precios tk-tabla" id="tablaTickets"></table></div>
+      <div class="caja-scroll"><table class="tabla-precios tk-tabla" id="tablaTickets"></table></div>
     </div>
   </div>
 </div>
@@ -652,6 +675,28 @@
 </div>
 
 <!-- ============================================================
+     MODAL: publicaciones sin SKU (verificación rápida)
+     ============================================================ -->
+<div id="modalSinSku" class="modal-fondo oculto">
+  <div class="modal-caja" style="max-width:760px;">
+    <h2>🔎 Publicaciones sin SKU</h2>
+    <div class="aviso-7d">
+      <b>¿No las encontrás en el panel de Publicaciones de Mercado Libre?</b> Entonces son <b>links de pago / links de envío</b>: cobros que se crean por fuera del carrito (títulos como "Link de pago…" o "Envío…"). ML no las muestra en el listado de publicaciones, <b>no llevan SKU y no hace falta cargárselo</b>: no entran en la actualización de precios.<br>
+      Si alguna está <b>activa</b> y ya no se usa, conviene pausarla: cualquiera con el link la puede comprar a ese precio.
+    </div>
+    <p style="font-size:0.78rem;color:var(--text-dim);margin:0 0 8px;" id="sinSkuResumen"></p>
+    <div id="estadoSinSku" class="estado"></div>
+    <div class="caja-scroll modal">
+      <table class="log" id="tablaSinSku">
+        <thead><tr><th>Publicación</th><th>Título</th><th>Estado</th><th class="num">Precio</th><th class="num">Stock</th></tr></thead>
+        <tbody id="tablaSinSkuBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-cerrar"><button class="secondary" id="btnCerrarSinSku" type="button">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- ============================================================
      MODAL: Funcionamiento de la app
      ============================================================ -->
 <div id="modalFuncionamiento" class="modal-fondo oculto">
@@ -687,10 +732,12 @@
     <p><b>Promo activa tapa los escalones:</b> mientras una publicación tiene una promo más barata, Mercado Libre <b>no muestra</b> su precio por cantidad (ni en la publicación ni por API), aunque esté cargado. Por eso la app guarda un registro de los escalones que se cargan <b>desde acá</b>: en "Escalones actuales" vas a ver "Según lo cargado desde la app el dd/mm" cuando el dato sale de ese registro, o "no visible" si hay promo y no hay registro (puede que se hayan cargado desde el panel de ML). Cuando termina la promo, los escalones vuelven a aparecer solos.</p>
     <h3>Catálogo de publicaciones: cómo encuentra cada SKU</h3>
     <p>Para saber a qué publicaciones aplicar un precio, la app usa un <b>catálogo</b> guardado en la base con el SKU de cada publicación (y de cada variación). Ese catálogo <b>se actualiza solo todas las mañanas</b>, entre las 5 y las 8: recorre todas las publicaciones activas y pausadas de Mercado Libre, suma las nuevas y saca las cerradas o las que cambiaron de SKU. Si necesitás que tome algo recién publicado, tocá <b>"🔄 Actualizar catálogo ahora"</b> en esta pestaña (tarda alrededor de un minuto).</p>
-    <p>Si al previsualizar un SKU <b>no está en el catálogo</b>, la app lo <b>busca en vivo en Mercado Libre</b> y, si lo encuentra, lo usa y lo guarda para la próxima; el mensaje del preview te avisa cuáles se encontraron así. Si ni así aparece, el SKU no coincide <b>exacto</b> con el de la publicación: revisá mayúsculas, espacios y puntos contra lo cargado en ML. Un mismo SKU puede estar en varias publicaciones (por ejemplo, la misma plancha publicada varias veces): el precio se aplica a <b>todas</b>. Las publicaciones sin SKU cargado en ML no se pueden actualizar desde acá; el indicador "Sin SKU" te dice cuántas son.</p>
+    <p>Si al previsualizar un SKU <b>no está en el catálogo</b>, la app lo <b>busca en vivo en Mercado Libre</b> y, si lo encuentra, lo usa y lo guarda para la próxima; el mensaje del preview te avisa cuáles se encontraron así. Si ni así aparece, el SKU no coincide <b>exacto</b> con el de la publicación: revisá mayúsculas, espacios y puntos contra lo cargado en ML. Un mismo SKU puede estar en varias publicaciones (por ejemplo, la misma plancha publicada varias veces): el precio se aplica a <b>todas</b>. Las publicaciones sin SKU cargado en ML no se pueden actualizar desde acá; el indicador "Sin SKU" te dice cuántas son y el botón <b>"🔎 Publicaciones sin SKU"</b> las lista con título, estado, precio y link (leídos en el momento de ML). <b>Si no las encontrás en el panel de Publicaciones de ML, son links de pago / links de envío</b> (cobros creados por fuera del carrito): no llevan SKU y no hace falta cargárselo. Si alguna está activa y ya no se usa, conviene pausarla.</p>
     <h3>Pestaña "🎫 Tickets"</h3>
     <p>Es el buzón para reportar <b>errores, mejoras o consultas</b> de esta app. Completás tipo, prioridad, asunto y detalle, y lo enviás. Si dejás tildado "Adjuntar contexto técnico", el ticket se guarda con la app, la versión, el navegador, la pestaña en la que estabas y los últimos errores que aparecieron en la consola, así se puede reproducir el problema sin preguntarte nada. Todos los tickets de <b>todas las apps del negocio</b> (promociones, stock, dashboard, etc.) se guardan en un <b>único lugar</b> del backend (tabla <code>tickets</code> de Supabase), cada uno marcado con la app de origen. Abajo está el <b>embudo</b>: por defecto ves los abiertos de esta app, ordenados por prioridad y después por antigüedad; con "Alcance" podés ver los de todas las apps, y las tarjetas de arriba filtran por estado. Al abrir un ticket ves su <b>historial completo</b> (quién lo creó, cada cambio de estado o prioridad, comentarios y cierre): ese historial lo escribe la base de datos sola y no se puede editar ni borrar. Solo los usuarios con permiso de gestión pueden cambiar estado, prioridad y cerrar tickets (al resolver o rechazar hay que escribir la resolución); el resto puede crear y comentar. "Exportar lote para Claude" arma un markdown con todos los abiertos para resolverlos en tanda en una conversación.</p>
     <p><b>Capturas:</b> podés adjuntar hasta 3 capturas de pantalla por ticket (5 MB cada una), eligiendo el archivo o pegándola con Ctrl+V dentro del detalle. Se guardan en un espacio privado: solo las ven los usuarios habilitados de la app, al abrir el ticket (📎 en la lista indica que tiene capturas). En Gráfica Límite, la cuenta de <b>Gerencia</b> es la que gestiona (cambia estado, prioridad y escribe la resolución); Stock crea, comenta y sigue el estado y la respuesta de sus tickets.</p>
+    <h3>Tablas largas</h3>
+    <p>Las listas que crecen con la cantidad de publicaciones (la grilla de carga, el preview de precios, los tickets, "% aplicados", la selección de candidatas, el detalle de una tanda y las publicaciones sin SKU) tienen una <b>altura fija y se scrollean por dentro</b>, con el encabezado siempre visible. Así los botones de cada módulo quedan a mano sin bajar toda la página. Al lado de "Limpiar" se ve cuántos SKU hay cargados en la grilla.</p>
     <h3>Seguir usando la app mientras corre una tanda</h3>
     <p>Cuando lanzás "Subir a todas", "Bajar de todas", "Bajar TODAS" o "Subir TODAS", aparece la ventana de progreso. Con el botón <b>"➖ Seguir usando la app"</b> (o con Cerrar) la ventana se achica a una <b>barrita abajo a la derecha</b> que sigue mostrando el avance y el tiempo que resta; la corrida no se corta. Tocando la barrita volvés al detalle, y cuando termina se pone verde. Dos reglas: <b>no cierres ni recargues la pestaña</b> mientras corre (el navegador te avisa), y solo puede correr <b>una tanda a la vez</b>.</p>
     <h3>% aplicados: el mismo % a todas</h3>
@@ -782,7 +829,7 @@
       <button class="chico secondary" id="btnRellenarPct" type="button" title="Copia ese % en todas las filas (todavía no guarda)">Rellenar</button>
       <button class="chico" id="btnGuardarTodosPct" type="button">💾 Guardar todas las modificadas</button>
     </div>
-    <div style="overflow-x:auto;">
+    <div class="caja-scroll modal">
       <table class="log" id="tablaPctAplicados">
         <thead>
           <tr>
@@ -822,7 +869,7 @@
   <div class="modal-caja">
     <h2 id="resultadoTitulo">Resultado</h2>
     <p id="resultadoResumen"></p>
-    <div id="resultadoTablaWrap"></div>
+    <div id="resultadoTablaWrap" class="caja-scroll modal"></div>
 
     <div id="bloqueAplicarPctRevisar" class="oculto" style="margin-top:14px; padding-top:14px; border-top:1px solid var(--panel-border); display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
       <label style="margin:0; white-space:nowrap;">Aplicar % a las de "REVISAR":</label>
@@ -865,7 +912,7 @@
     </div>
     <div class="resumen-precios" id="selResumen"></div>
     <div id="selEstado" class="estado"></div>
-    <div style="overflow:auto;max-height:52vh;">
+    <div class="caja-scroll modal">
       <table class="log" id="tablaSel">
         <thead>
           <tr>
@@ -913,7 +960,7 @@
 
   // --- Tickets (módulo transversal: mismo backend para todas las apps) ---
   var TICKETS_APP_ID = "grafica-promociones"; // identifica a ESTA app en el embudo común (cambiar al clonar/replicar)
-  var APP_VERSION = "2026-09-29.1";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
+  var APP_VERSION = "2026-09-29.5";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
 
   // Captura de errores recientes (se adjuntan como contexto técnico a los tickets). Buffer de 5.
   var ERRORES_RECIENTES = [];
@@ -2744,7 +2791,7 @@
   });
 
   els.btnSubirTodoGuardado.addEventListener("click", function () {
-    if (hayCorridaEnCurso()) return;
+    if (hayCorridaEnCurso() || preparandoRestore) return;
     els.btnSubirTodoGuardado.disabled = true;
     fetchConTimeout(URL_SNAPSHOT, { headers: { Authorization: AUTH } })
       .then(function (res) {
@@ -2766,17 +2813,52 @@
         prepararYEjecutarRestore(listaGrupos);
       })
       .catch(function (err) { alert("Error leyendo el respaldo: " + err.message); })
-      .finally(function () { els.btnSubirTodoGuardado.disabled = false; });
+      .finally(function () { if (!preparandoRestore) els.btnSubirTodoGuardado.disabled = false; });
   });
 
+  // 29/09: las campañas grandes (la Campaña propia tiene ~2.000 publicaciones) tardan ~50 s en listarse
+  // en ML y el límite de 20 s cortaba "Subir TODAS". Ahora se consultan de a una, con espera larga
+  // y un reintento si se corta, mostrando el avance.
+  var TIMEOUT_LISTAR_CAMPANA_MS = 150000;
+  function listarCampanaParaRestore(g) {
+    var url = URL_BULK + "?promotion_id=" + encodeURIComponent(g.promotionId) + "&promotion_type=" + encodeURIComponent(g.promotionType);
+    var pedir = function () { return fetchConTimeout(url, { headers: { Authorization: AUTH } }, TIMEOUT_LISTAR_CAMPANA_MS); };
+    return pedir().catch(function (err) { if (err.message !== "timeout") throw err; return pedir(); });
+  }
+
+  var preparandoRestore = false; // evita un segundo clic mientras se consultan las campañas
   function prepararYEjecutarRestore(gruposSnapshot) {
-    var promesas = gruposSnapshot.map(function (g) {
-      var url = URL_BULK + "?promotion_id=" + encodeURIComponent(g.promotionId) + "&promotion_type=" + encodeURIComponent(g.promotionType);
-      return fetchConTimeout(url, { headers: { Authorization: AUTH } }).then(function (res) {
+    if (preparandoRestore) return;
+    preparandoRestore = true;
+    var i = 0, preparados = [];
+    var estadoPrevio = els.estadoSnapshot.textContent;
+    els.btnSubirTodoGuardado.disabled = true;
+    var siguiente = function () {
+      if (i >= gruposSnapshot.length) return Promise.resolve(preparados);
+      var g = gruposSnapshot[i];
+      els.estadoSnapshot.textContent = "Consultando campaña " + (i + 1) + "/" + gruposSnapshot.length + " en ML (" + g.filas.length + " publicaciones guardadas; las grandes tardan ~1 minuto)…";
+      els.estadoSnapshot.className = "estado";
+      return prepararGrupoRestore(g).then(function (p) { preparados.push(p); i++; return siguiente(); });
+    };
+    siguiente().then(function (lista) {
+      preparandoRestore = false;
+      els.estadoSnapshot.textContent = estadoPrevio;
+      els.btnSubirTodoGuardado.disabled = false;
+      ejecutarSubidaGlobal(lista.filter(function (p) { return p.items.length > 0; }));
+    }).catch(function (err) {
+      preparandoRestore = false;
+      els.estadoSnapshot.textContent = estadoPrevio;
+      els.btnSubirTodoGuardado.disabled = false;
+      alert("No se pudieron consultar las campañas para reaplicar (" + err.message + "). No se tocó nada; reintentá.");
+    });
+  }
+
+  function prepararGrupoRestore(g) {
+      return listarCampanaParaRestore(g).then(function (res) {
+        // Si ML/servidor falla, se corta todo (antes se tomaba como "0 candidatas" y se salteaba la campaña).
+        if (!res.data || !res.data.ok) throw new Error("campaña " + g.promotionId + ": " + ((res.data && res.data.error) || "error " + res.status));
         var candidatosPorId = {};
-        if (res.data && res.data.ok) {
-          (res.data.items_candidatos || []).forEach(function (it) { candidatosPorId[it.id] = it; });
-        }
+        (res.data.items_candidatos || []).forEach(function (it) { candidatosPorId[it.id] = it; });
         var items = [];
         var idsSnapshotPorItemId = {};
         g.filas.forEach(function (f) {
@@ -2787,13 +2869,6 @@
         });
         return { promotionId: g.promotionId, promotionType: g.promotionType, nombre: g.promotionId, items: items, idsSnapshotPorItemId: idsSnapshotPorItemId };
       });
-    });
-
-    Promise.all(promesas).then(function (preparados) {
-      ejecutarSubidaGlobal(preparados.filter(function (p) { return p.items.length > 0; }));
-    }).catch(function (err) {
-      alert("No se pudieron consultar las campañas para reaplicar (" + err.message + "). No se tocó nada; reintentá.");
-    });
   }
 
   function ejecutarSubidaGlobal(grupos) {
@@ -2944,7 +3019,7 @@
       kpi("SKUs distintos cargados en esas publicaciones (el SKU de la publicación y el de cada variación). Es lo que la pestaña usa para saber a qué publicaciones aplicar el precio.", "SKUs", (r.skus || 0).toLocaleString("es-AR")) +
       kpi("Activas / pausadas según el último recorrido del catálogo. El estado real se vuelve a leer de ML al previsualizar.", "Activas / pausadas", (porEstado.active || 0).toLocaleString("es-AR") + " / " + (porEstado.paused || 0).toLocaleString("es-AR")) +
       kpi("SKUs que están en más de una publicación (ej. la misma plancha publicada varias veces). Al actualizar el precio de ese SKU se cambian TODAS sus publicaciones.", "SKUs en varias publicaciones", (r.skus_en_varias_publicaciones || 0).toLocaleString("es-AR")) +
-      kpi("Publicaciones sin SKU cargado en ML (ni en la publicación ni en sus variaciones). No se pueden actualizar desde acá hasta que se les cargue el SKU en ML.", "Sin SKU", (d && d.publicaciones_sin_sku) || 0) +
+      kpi("Publicaciones sin SKU cargado en ML (ni en la publicación ni en sus variaciones), según el último recorrido del catálogo. No se pueden actualizar desde acá. Con el botón \"Publicaciones sin SKU\" ves cuáles son: si no aparecen en el panel de Publicaciones de ML, son links de pago / envío y no necesitan SKU.", "Sin SKU", (d && d.publicaciones_sin_sku) || 0) +
       kpi("Cuándo terminó el último recorrido completo del catálogo. Se hace solo todas las mañanas (entre las 5 y las 8).", "Actualizado", haceCuanto(d && d.ultima_corrida_completa));
     var est = document.getElementById("estadoCatalogo");
     if (d && d.corrida_en_curso) {
@@ -2952,10 +3027,43 @@
       est.className = "estado";
     } else if (d && d.ultimo_error) {
       est.textContent = "Último error del catálogo: " + d.ultimo_error; est.className = "estado err";
-    } else if (d && d.ejemplos_sin_sku && d.ejemplos_sin_sku.length) {
-      est.textContent = "Publicaciones sin SKU: " + d.ejemplos_sin_sku.join(", "); est.className = "estado";
     } else { est.textContent = ""; est.className = "estado"; }
+    var nSin = (d && d.publicaciones_sin_sku) || 0;
+    document.getElementById("btnSinSku").textContent = "🔎 Publicaciones sin SKU" + (nSin ? " (" + nSin + ")" : "");
   }
+
+  // ---------- Publicaciones sin SKU: detalle en vivo (ml-catalogo GET /sin-sku, solo lectura) ----------
+  var ESTADO_ML_TEXTO = { active: "Activa", paused: "Pausada", closed: "Cerrada", under_review: "En revisión", inactive: "Inactiva" };
+  function abrirModalSinSku() {
+    var body = document.getElementById("tablaSinSkuBody"), est = document.getElementById("estadoSinSku");
+    body.innerHTML = "";
+    document.getElementById("sinSkuResumen").textContent = "";
+    est.textContent = "Consultando en Mercado Libre…"; est.className = "estado";
+    document.getElementById("modalSinSku").classList.remove("oculto");
+    fetchConTimeout(URL_CATALOGO + "/sin-sku", { headers: { Authorization: AUTH } }, TIMEOUT_TANDA_MS)
+      .then(function (res) {
+        if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "no se pudo leer");
+        var d = res.data, items = d.items || [];
+        est.textContent = items.length ? "" : "No hay publicaciones sin SKU en el último recorrido del catálogo. 🎉";
+        est.className = items.length ? "estado" : "estado ok";
+        var activas = items.filter(function (it) { return it.status === "active"; }).length;
+        document.getElementById("sinSkuResumen").textContent = items.length
+          ? items.length + " publicación(es)" + (d.total > items.length ? " (de " + d.total + "; se listan las primeras " + items.length + ")" : "") +
+            " · " + activas + " activa(s) · según el catálogo del " + (d.ultima_corrida_completa ? fechaCorta(d.ultima_corrida_completa) : "—") + "; estado y precio leídos ahora de ML."
+          : "";
+        body.innerHTML = items.map(function (it) {
+          var link = it.permalink || ("https://articulo.mercadolibre.com.ar/" + String(it.id).replace("MLA", "MLA-"));
+          var estado = it.error ? '<span class="sin-cambio">' + escapeHtml(it.error) + "</span>"
+            : '<span class="' + (it.status === "active" ? "sin-sku-activa" : "") + '">' + escapeHtml(ESTADO_ML_TEXTO[it.status] || it.status || "—") + "</span>";
+          return "<tr><td><a href='" + escapeHtml(link) + "' target='_blank' rel='noopener' style='color:var(--amber);text-decoration:none;'>" + escapeHtml(it.id) + " ↗</a></td>" +
+            "<td class='sin-sku-titulo'>" + escapeHtml(it.title || "—") + "</td><td>" + estado + "</td>" +
+            "<td class='num'>" + fmtPrecio(it.price) + "</td><td class='num'>" + (it.stock != null ? Number(it.stock).toLocaleString("es-AR") : "—") + "</td></tr>";
+        }).join("");
+      })
+      .catch(function (err) { est.textContent = "No se pudo consultar: " + err.message + ". Probá de nuevo."; est.className = "estado err"; });
+  }
+  document.getElementById("btnSinSku").addEventListener("click", abrirModalSinSku);
+  document.getElementById("btnCerrarSinSku").addEventListener("click", function () { document.getElementById("modalSinSku").classList.add("oculto"); });
 
   function cargarEstadoCatalogo() {
     return fetchConTimeout(URL_CATALOGO + "/estado", { headers: { Authorization: AUTH } })
@@ -3093,7 +3201,15 @@
   function agregarFilaEntrada(sku, precio, mayorista) {
     var tr = crearFilaEntrada(sku, precio, mayorista);
     document.getElementById("grillaBody").appendChild(tr);
+    actualizarContadorFilas();
     return tr;
+  }
+  // Cuántas filas tienen SKU cargado (la grilla scrollea por dentro: así se sabe cuántas hay sin bajar).
+  function actualizarContadorFilas() {
+    var n = 0;
+    Array.prototype.forEach.call(document.getElementById("grillaBody").rows, function (tr) { if (tr.querySelector(".cel-sku").value.trim()) n++; });
+    var el = document.getElementById("contadorFilasPrecios");
+    if (el) el.textContent = n ? n + " SKU cargado" + (n === 1 ? "" : "s") : "";
   }
   // Pega un bloque de Excel (filas con \n, columnas con \t) desde la celda (fila, col) hacia abajo.
   function manejarPastePrecios(e, trInicio, colInicio) {
@@ -3121,6 +3237,7 @@
       var b = parsearMayorista(valorMay);
       if (b !== null) { var sel = fila.querySelector(".cel-may"); sel.value = b; marcarSelectMayorista(sel); }
     });
+    actualizarContadorFilas();
   }
   function leerGrillaEntrada() {
     var out = [];
@@ -3143,6 +3260,8 @@
   }
   (function initGrilla() {
     for (var i = 0; i < FILAS_INICIALES; i++) agregarFilaEntrada();
+    document.getElementById("grillaBody").addEventListener("input", actualizarContadorFilas);
+    document.getElementById("grillaBody").addEventListener("click", function (e) { if (e.target.closest && e.target.closest(".btn-x")) setTimeout(actualizarContadorFilas, 0); });
     // El selector del encabezado cambia "Mayorista" en todas las filas (y es el valor de las filas nuevas).
     var selTodos = document.getElementById("selMayTodos");
     marcarSelectMayorista(selTodos);
@@ -3596,7 +3715,8 @@
         if (raw === "") f.precio_nuevo = null;
         else {
           var nuevo = parsearPrecioAR(raw);
-          if (isFinite(nuevo) && nuevo > 0) f.precio_nuevo = nuevo; // inválido: se ignora y se re-dibuja el valor anterior
+          // Igual al actual = no se toca la lista (misma regla que el servidor, v9.2). Inválido: se ignora.
+          if (isFinite(nuevo) && nuevo > 0) f.precio_nuevo = Math.abs(nuevo - f.precio_antes) < 0.005 ? null : nuevo;
         }
         recalcularFila(f);
         renderResumenPrecios(); renderTablaPrecios(); actualizarBotonAplicarPrecios();
