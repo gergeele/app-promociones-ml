@@ -222,6 +222,39 @@
   }
   .tipo-fila:last-child { border-bottom: none; }
   .tipo-fila .cant { color: var(--amber); font-weight: 700; }
+
+  /* -------------------- Procesos de servidor (Bajar / Subir TODAS) -------------------- */
+  .acciones-globales-botones { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .proceso-panel { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--panel-border); }
+  .proceso-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+  .proceso-titulo { font-weight: 700; color: var(--text); font-size: 0.95rem; }
+  .proceso-meta { font-size: 0.75rem; color: var(--text-dim); }
+  .proceso-fase { font-size: 0.82rem; color: var(--text-dim); margin-bottom: 8px; }
+  .proceso-kpis { margin-top: 10px; }
+  @media (min-width: 560px) { .proceso-kpis { grid-template-columns: repeat(5, 1fr); } }
+  .proceso-nota { font-size: 0.8rem; color: var(--text-dim); background: var(--panel-2); border: 1px solid var(--panel-border); border-radius: 8px; padding: 10px 12px; margin-top: 10px; }
+  .proceso-nota.ok { color: var(--ok); background: var(--ok-soft); border-color: var(--ok); }
+  .proceso-acciones { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .proceso-historial { margin-top: 10px; }
+  .chip-estado { display: inline-flex; align-items: center; gap: 6px; font-size: 0.7rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; vertical-align: middle; background: var(--panel-border); color: var(--text-dim); }
+  .chip-estado.activo { background: var(--amber-soft); color: var(--amber); }
+  .chip-estado.ok { background: var(--ok-soft); color: var(--ok); }
+  .chip-estado.err { background: var(--err-soft); color: var(--err); }
+  .punto-vivo { width: 7px; height: 7px; border-radius: 50%; background: var(--amber); animation: latido 1.2s ease-in-out infinite; }
+  @keyframes latido { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+  .barra-proceso { height: 8px; background: var(--panel-2); border: 1px solid var(--panel-border); border-radius: 999px; overflow: hidden; }
+  .barra-relleno { height: 100%; background: var(--ok); border-radius: 999px; transition: width .6s ease; }
+  .barra-relleno.viva { background: linear-gradient(90deg, var(--amber-dim), var(--amber)); }
+  .tabla-proceso { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  .tabla-proceso th { position: sticky; top: 0; background: #FFFFFF; text-align: left; color: var(--text-dim); font-weight: 600; padding: 8px; border-bottom: 1px solid var(--panel-border); z-index: 1; }
+  .tabla-proceso td { padding: 7px 8px; border-bottom: 1px solid var(--panel-border); vertical-align: top; }
+  .tabla-proceso tr:hover td { background: var(--panel-2); }
+  .tabla-proceso .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .chip-item { font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; white-space: nowrap; background: var(--panel-border); color: var(--text-dim); }
+  .chip-item.revisar, .chip-item.parcial { background: var(--amber-soft); color: var(--amber); }
+  .chip-item.error { background: var(--err-soft); color: var(--err); }
+  .banner-version { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 95; display: flex; gap: 12px; align-items: center; background: var(--amber-soft); border: 1px solid var(--amber); color: var(--text); border-radius: 10px; padding: 10px 14px; font-size: 0.85rem; box-shadow: 0 6px 20px rgba(0,0,0,.15); max-width: calc(100vw - 32px); }
+  @media (max-width: 520px) { .banner-version { left: 16px; right: 16px; transform: none; flex-wrap: wrap; } }
 </style>
 </head>
 <body>
@@ -399,16 +432,18 @@
   </nav>
 
   <div id="vistaPromos">
-  <!-- Acciones globales: bajar/subir todo (para actualizaciones masivas de precio) -->
-  <div class="panel" style="border-color:var(--amber-dim);">
+  <!-- Acciones globales: Bajar/Subir TODAS. Corren EN EL SERVIDOR (función ml-procesos): la app solo las lanza y muestra el avance. -->
+  <div class="panel" style="border-color:var(--amber-dim);" id="panelAccionesGlobales">
     <label style="margin:0; color:var(--amber); font-weight:600;">⚠️ Acciones globales</label>
-    <p style="font-size:0.8rem; color:var(--text-dim); margin:6px 0 12px;">Para cuando necesitás actualizar precios masivamente: bajás todas las promos activas (guarda el % de cada una), actualizás precios en ML, y después las volvés a subir con esos mismos %.</p>
-    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+    <p style="font-size:0.8rem; color:var(--text-dim); margin:6px 0 12px;">Para actualizar precios masivamente: bajás todas las promos activas (se guarda el % de cada una), actualizás precios y después las volvés a subir con esos mismos %. <b>Corren en el servidor:</b> podés cerrar la pestaña o apagar la compu y siguen solas; el avance se ve desde cualquier usuario.</p>
+    <div class="acciones-globales-botones">
       <button class="danger chico" id="btnBajarTodo">⬇️ Bajar TODAS las promociones</button>
       <button class="chico oculto" id="btnSubirTodoGuardado">⬆️ Subir TODAS (con los % guardados)</button>
+      <button class="chico secondary oculto" id="btnSubirSugerido" title="Para las que ML dejó en revisión: usa el precio que sugiere ML, con un tope de %">💡 Subir las que quedaron con el precio sugerido de ML</button>
       <button class="chico secondary oculto" id="btnDescartarSnapshot" title="Borra la cola de % guardados sin tocar nada en Mercado Libre">🗑️ Descartar respaldo</button>
-      <span id="estadoSnapshot" class="estado" style="margin:0;"></span>
     </div>
+    <div id="estadoSnapshot" class="estado"></div>
+    <div id="procesoPanel" class="proceso-panel oculto"></div>
   </div>
 
   <!-- Métricas de las ofertas -->
@@ -706,7 +741,7 @@
     <h3>De dónde salen los datos</h3>
     <p>Se consulta en vivo la API de Mercado Libre (recurso <code>seller-promotions</code>) usando el token de la app de Mercado Libre de Gráfica Límite (guardado en el backend, nunca en esta página). No hay copia local de las promociones — lo que ves es el estado real en ML en el momento de cargar la página.</p>
     <h3>Los 12 tipos de promoción</h3>
-    <p>Cada card muestra un tipo. Los que tienen borde naranja y botones los controlás vos: podés subir todas las publicaciones candidatas de una campaña con un clic. "Bajar de todas" (por card) está disponible en <b>todos</b> los tipos de promoción: saca las publicaciones solo de ESA campaña, sin tocar las demás promos. En Oferta del día y Relámpago, ML suele rechazar la baja una vez activas: la app lo intenta igual y te muestra el rechazo publicación por publicación. El resto son invitaciones de ML — se muestran para que sepas qué tenés corriendo. Las cards traen sus candidatos/activos <b>solas una única vez al abrir la app</b>; después no se recargan solas — cada una se actualiza a mano con su botón "🔄 Ver candidatos/activos" (o todas juntas con "Actualizar candidatos/activos de todas"). Así la app no dispara consultas a ML todo el tiempo. Excepción: al terminar una tanda, se refresca sola la card que tocaste (o todas, si fue "Bajar TODAS" / "Subir TODAS"), para que veas los números ya actualizados.</p>
+    <p>Cada card muestra un tipo. Los que tienen borde naranja y botones los controlás vos: podés subir todas las publicaciones candidatas de una campaña con un clic. "Bajar de todas" (por card) está disponible en <b>todos</b> los tipos de promoción: saca las publicaciones solo de ESA campaña, sin tocar las demás promos. En Oferta del día y Relámpago, ML suele rechazar la baja una vez activas: la app lo intenta igual y te muestra el rechazo publicación por publicación. El resto son invitaciones de ML — se muestran para que sepas qué tenés corriendo. Las cards traen sus candidatos/activos <b>solas una única vez al abrir la app</b>; después no se recargan solas — cada una se actualiza a mano con su botón "🔄 Ver candidatos/activos" (o todas juntas con "Actualizar candidatos/activos de todas"). Así la app no dispara consultas a ML todo el tiempo. Excepción: al terminar una tanda, se refresca sola la card que tocaste (o todas, cuando termina un "Bajar TODAS" / "Subir TODAS" del servidor), para que veas los números ya actualizados.</p>
     <h3>¿Por qué el nombre de una campaña no coincide con lo que ves en Mercado Libre?</h3>
     <p>La API de Mercado Libre no devuelve el nombre que ve el comprador, solo un nombre interno de marketing (ej. "MK T3 AO BELLEZA Q4 2026"). Es una limitación de ML, no de la app. Con el lápiz ✏️ al lado del nombre abrís <b>"Datos de la campaña"</b> y cargás el nombre público a mano <b>una sola vez</b> (ej. "Lo mejor de todos los días"): queda guardado en la base y se usa en toda la app; el interno sigue abajo en chiquito como referencia. Si lo dejás vacío, vuelve el nombre interno.</p>
     <h3>"Ver en ML ↗" y "Solo por API"</h3>
@@ -719,8 +754,11 @@
     <p>Al abrir la app, las cards se consultan <b>de a 3 por vez</b> (las demás muestran "En cola..."), para no saturar a Mercado Libre. Cada consulta espera hasta 60 segundos y, si se corta, se reintenta una vez sola; si vuelve a fallar, la card muestra el error con un botón "Reintentar".</p>
     <h3>Subir a todas / Bajar de todas</h3>
     <p>"Subir a todas" busca las publicaciones candidatas de esa campaña puntual. En las campañas donde <b>vos definís el precio</b> (Deal, Campaña propia, Oferta del día) les aplica el precio calculado con el % que definas en el momento (ver siguiente punto). En las campañas donde <b>el precio lo fija Mercado Libre</b> ("Con aporte de Mercado Libre" como "Potencia tus ventas", co-financiada, volumen, etc.) se abre una lista con el % que ML va a aplicar en cada publicación (descuento total, cuánto pone ML y cuánto ponés vos): escribís tu <b>% máximo</b>, elegís si compararlo contra el descuento total o contra lo que ponés vos, tocás "Seleccionar hasta ese %" y se suben <b>solo las tildadas</b> (podés tildar o destildar a mano). "Bajar de todas" saca las que están activas. Ambas acciones muestran un detalle publicación por publicación al terminar, con opción de reintentar si algo falló.</p>
-    <h3>Bajar TODAS / Subir TODAS (para actualizar precios masivo)</h3>
-    <p>El botón "⬇️ Bajar TODAS las promociones" es para el flujo de actualización masiva de precios: saca cada publicación de <b>todas</b> sus promociones de una sola llamada (usa el borrado en bloque por publicación de ML). Antes de bajar nada, guarda el % que tenían las campañas reaplicables (Deal y Campaña propia) para poder volver a subirlas igual. El modal de confirmación te separa en tres grupos qué va a pasar: las que <b>se reaplican con "Subir TODAS"</b> (Deal / Campaña propia), las que <b>se bajan pero volvés a sumar a mano</b> (co-financiada, volumen, etc. — ahí el precio lo fija ML), y las que <b>no se pueden bajar desde acá</b> (Oferta del día y Relámpago, que ML no deja sacar por API — se gestionan desde el panel de ML). El flujo típico es: Bajar TODAS → actualizar precios en ML → "⬆️ Subir TODAS (con los % guardados)". Mientras haya respaldo pendiente se muestra cuántas publicaciones son y de qué fecha es; si esa precarga ya no te sirve (por ejemplo, decidiste no volver a subirlas), el botón "🗑️ Descartar respaldo" la borra — no toca nada en Mercado Libre, solo limpia la cola. Para que junte bien lo activo, primero apretá "Actualizar métricas" (o "Ver candidatos/activos" en las cards).</p>
+    <h3>Bajar TODAS / Subir TODAS (para actualizar precios masivo) — corren en el servidor</h3>
+    <p>Flujo típico: <b>⬇️ Bajar TODAS</b> → actualizar precios (pestaña 💲) → <b>⬆️ Subir TODAS (con los % guardados)</b>. Los dos botones <b>no trabajan en tu navegador</b>: crean un proceso que ejecuta el servidor (Supabase, función <i>ml-procesos</i>) en vueltas cada 15 segundos. Podés cerrar la pestaña, apagar la compu o abrir la app desde otro usuario: el avance se ve igual en "Acciones globales". Los pueden lanzar Stock y Gerencia; corre <b>un solo proceso a la vez</b> y, mientras corre, los botones por card quedan bloqueados para no pisarse.</p>
+    <p><b>Bajar TODAS:</b> el servidor lee EN VIVO todas las campañas activas de Mercado Libre (no depende de lo que tengas cargado en las cards) y además revisa una por una las publicaciones <b>pausadas</b>, porque ML no las muestra en el listado de las campañas. Antes de bajar guarda en el <b>respaldo</b> el % de Campaña propia y Deal; después saca cada publicación de todas sus promos de una sola vez. Las que ML fija el precio (co-financiadas, con aporte de ML, volumen, etc.) se bajan igual, pero se vuelven a sumar a mano desde su card. Oferta del día y Relámpago no se pueden bajar por API: se informan aparte.</p>
+    <p><b>Subir TODAS (con los % guardados):</b> recorre el respaldo; si una publicación ya está activa en su campaña se da por hecha; si es candidata, se sube con su % calculado sobre el precio de lista ACTUAL y se verifica en ML el precio que quedó. Lo que sale bien se borra del respaldo; lo que ML deja <b>en revisión</b> (pide otro %) o con error queda para el próximo intento. Si ML ya no la ofrece como candidata (campaña terminada, publicación en revisión), queda como <b>omitida</b>.</p>
+    <p><b>💡 Subir las que quedaron con el precio sugerido de ML:</b> para lo que sigue en el respaldo (normalmente las "en revisión"), aplica el precio que sugiere ML, con un <b>tope de %</b> que elegís: si el sugerido implica más descuento que el tope, no se toca. <b>✋ Cancelar proceso</b> lo frena en segundos; lo ya hecho queda hecho. Al terminar, <b>📋 Ver detalle</b> lista solo lo que hay que mirar (con link a cada publicación, SKU y qué pasó) y se puede bajar en CSV; <b>🕘 Procesos anteriores</b> muestra los últimos 5 con quién los lanzó. <b>🗑️ Descartar respaldo</b> borra la cola de % guardados sin tocar Mercado Libre.</p>
     <h3>Pestaña "Actualizar precios"</h3>
     <p>Sirve para actualizar el <b>precio de lista</b> (no el de promo) de muchas publicaciones de una. Cargás <b>SKU y precio</b> en la tabla (podés copiar las columnas de Excel y pegarlas en la primera celda: se completa sola); la tercera columna, <b>Mayorista</b>, indica si ese SKU lleva también los escalones mayoristas (ver más abajo). Como un mismo SKU suele estar en varias publicaciones, el precio se aplica a <b>todas las publicaciones activas y pausadas</b> de ese SKU (a la pausada le queda listo para cuando la reactivés; las cerradas se omiten). El flujo es en dos pasos: primero <b>Previsualizar</b> (no toca nada: trae de ML el precio actual de cada publicación y te muestra antes → después → Δ%, con un tiempo estimado mientras corre), y recién después <b>Aplicar en ML</b> (con confirmación escribiendo "APLICAR PRECIOS"). En el preview podés <b>editar el precio de cualquier fila</b> a mano antes de aplicar, y <b>clickear las tarjetas</b> de arriba (A actualizar / A revisar / Omitidas / Con problema) para filtrar la tabla por ese estado. Las publicaciones con variaciones quedan "a revisar" (el precio va por variación). Podés exportar todo a CSV. Encaja con el flujo masivo: bajás las promos, actualizás precios acá, y volvés a subir las promos.</p>
     <h3>Escalones mayoristas (precio por cantidad)</h3>
@@ -739,8 +777,8 @@
     <h3>Tablas largas</h3>
     <p>Las listas que crecen con la cantidad de publicaciones (la grilla de carga, el preview de precios, los tickets, "% aplicados", la selección de candidatas, el detalle de una tanda y las publicaciones sin SKU) tienen una <b>altura fija y se scrollean por dentro</b>, con el encabezado siempre visible. Así los botones de cada módulo quedan a mano sin bajar toda la página. Al lado de "Limpiar" se ve cuántos SKU hay cargados en la grilla.</p>
     <h3>Seguir usando la app mientras corre una tanda</h3>
-    <p>Cuando lanzás "Subir a todas", "Bajar de todas", "Bajar TODAS" o "Subir TODAS", aparece la ventana de progreso. Con el botón <b>"➖ Seguir usando la app"</b> (o con Cerrar) la ventana se achica a una <b>barrita abajo a la derecha</b> que sigue mostrando el avance y el tiempo que resta; la corrida no se corta. Tocando la barrita volvés al detalle, y cuando termina se pone verde. Dos reglas: <b>no cierres ni recargues la pestaña</b> mientras corre (el navegador te avisa), y solo puede correr <b>una tanda a la vez</b>.</p>
-    <p><b>Si una "Subir TODAS" se corta</b> (se cerró la pestaña, se cortó internet, etc.): lo que ya se subió queda bien en ML y se va sacando del respaldo a medida que avanza. Volvé a tocar <b>"Subir TODAS"</b> y sigue con lo que falta: las que ya están activas en su campaña se dan por hechas solas. La sesión se renueva sola durante corridas largas, aunque tengas la app minimizada.</p>
+    <p>Cuando lanzás "Subir a todas" o "Bajar de todas" desde una card, aparece la ventana de progreso. Con el botón <b>"➖ Seguir usando la app"</b> (o con Cerrar) la ventana se achica a una <b>barrita abajo a la derecha</b> que sigue mostrando el avance y el tiempo que resta; la corrida no se corta. Tocando la barrita volvés al detalle, y cuando termina se pone verde. Dos reglas: <b>no cierres ni recargues la pestaña</b> mientras corre una tanda de card (el navegador te avisa; Bajar/Subir TODAS no tienen esta limitación porque corren en el servidor), y solo puede correr <b>una tanda a la vez</b>.</p>
+    <p><b>Aviso de versión nueva:</b> cada 5 minutos (y al volver a la pestaña) la app se fija si se publicó una versión nueva. Si la hay, aparece arriba un aviso con el botón <b>"🔄 Recargar"</b>: una pestaña abierta sigue usando la versión vieja hasta que se recarga.</p>
     <h3>% aplicados: el mismo % a todas</h3>
     <p>En "Ver % aplicados" de una campaña con precio (Deal, Campaña propia) podés escribir un % en <b>"Aplicar X% a todas"</b> y apretar <b>Rellenar</b>: copia ese % en todas las filas sin guardar nada. Después ajustás a mano las que quieras y apretás <b>"Guardar todas las modificadas"</b>: se aplican solo las filas cuyo % cambió, por tandas y con tiempo estimado. La columna <b>Resultado</b> muestra, por publicación, si quedó aplicado o si el % quedó fuera del rango que acepta ML (con el rango válido).</p>
     <h3>% de descuento: se pregunta cada vez, por campaña</h3>
@@ -792,7 +830,7 @@
     <h2>⚠️ ¿Bajar TODAS las promociones?</h2>
     <p id="bajarTodoResumen1"></p>
     <div id="bajarTodoListaGrupos" style="font-size:0.82rem; color:var(--text-dim); max-height:200px; overflow-y:auto;"></div>
-    <p style="font-size:0.8rem; color:var(--text-dim);">Antes de bajar nada se guarda el % de las campañas reaplicables (Deal y Campaña propia), para poder volver a subirlas igual con "Subir TODAS (con los % guardados)". Cada publicación se saca de <b>todas</b> sus promos de una sola vez.</p>
+    <p style="font-size:0.8rem; color:var(--text-dim);">Antes de bajar cada publicación se guarda el % de Campaña propia y Deal, para volver a subirlas igual con "Subir TODAS (con los % guardados)". Cada publicación se saca de <b>todas</b> sus promos de una sola vez. <b>Corre en el servidor:</b> después de confirmar podés cerrar la pestaña; el avance queda a la vista en "Acciones globales".</p>
     <div class="modal-cerrar" style="justify-content:space-between;">
       <button class="secondary" id="btnCancelarBajarTodo1">Cancelar</button>
       <button class="danger" id="btnContinuarBajarTodo1">Continuar</button>
@@ -811,6 +849,42 @@
     <div class="modal-cerrar" style="justify-content:space-between;">
       <button class="secondary" id="btnCancelarBajarTodo2">Cancelar</button>
       <button class="danger" id="btnConfirmarBajarTodo2" disabled>Confirmar y bajar todo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Subir con el precio sugerido de ML (tope de %)
+     ============================================================ -->
+<div id="modalSugerido" class="modal-fondo oculto">
+  <div class="modal-caja">
+    <h2>💡 Subir con el precio sugerido de ML</h2>
+    <p>Hay <b id="sugeridoCantidad">0</b> publicaciones en el respaldo (en general, las que ML dejó <b>en revisión</b> porque pide un % mayor al guardado). A cada una se le aplica el <b>precio que sugiere ML</b> para su campaña.</p>
+    <p style="font-size:0.82rem; color:var(--text-dim);">Tope de seguridad: si el sugerido implica <b>más</b> descuento que este %, esa publicación NO se toca y queda en revisión.</p>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <label for="inputTopeSugerido" style="margin:0;">Descuento máximo aceptado:</label>
+      <input type="number" id="inputTopeSugerido" min="1" max="90" step="0.5" style="width:90px;"> <span>%</span>
+    </div>
+    <div id="estadoTopeSugerido" class="estado"></div>
+    <div class="modal-cerrar" style="justify-content:space-between;">
+      <button class="secondary" id="btnCancelarSugerido">Cancelar</button>
+      <button id="btnConfirmarSugerido">Lanzar en el servidor</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Detalle del último proceso de servidor (problemas + CSV)
+     ============================================================ -->
+<div id="modalDetalleProceso" class="modal-fondo oculto">
+  <div class="modal-caja" style="max-width:900px;">
+    <h2 id="detalleProcesoTitulo">Detalle del proceso</h2>
+    <p id="detalleProcesoResumen" style="font-size:0.85rem;"></p>
+    <p style="font-size:0.78rem; color:var(--text-dim); margin-top:-4px;">Se listan solo las publicaciones con algo para mirar (en revisión, error, parcial u omitida). Las que salieron bien no aparecen.</p>
+    <div id="detalleProcesoTabla"></div>
+    <div class="modal-cerrar" style="justify-content:space-between;">
+      <button class="secondary" id="btnCsvDetalleProceso">⬇️ Descargar CSV</button>
+      <button id="btnCerrarDetalleProceso">Cerrar</button>
     </div>
   </div>
 </div>
@@ -938,6 +1012,10 @@
 </div>
 
 <!-- Barrita flotante: corrida en segundo plano (clic = volver al detalle) -->
+<div id="bannerVersion" class="banner-version oculto" role="status">
+  <span id="versionNuevaTexto">Hay una versión nueva de la app.</span>
+  <button class="chico" id="btnRecargarVersion">🔄 Recargar</button>
+</div>
 <div id="pillCorrida" class="pill-corrida oculto" role="button" tabindex="0" title="Tocá para ver el detalle">
   <span class="pill-spinner"></span><span id="pillCorridaTexto"></span>
 </div>
@@ -961,7 +1039,7 @@
 
   // --- Tickets (módulo transversal: mismo backend para todas las apps) ---
   var TICKETS_APP_ID = "grafica-promociones"; // identifica a ESTA app en el embudo común (cambiar al clonar/replicar)
-  var APP_VERSION = "2026-09-29.6";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
+  var APP_VERSION = "2026-09-30.1";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
 
   // Captura de errores recientes (se adjuntan como contexto técnico a los tickets). Buffer de 5.
   var ERRORES_RECIENTES = [];
@@ -1049,6 +1127,25 @@
     estadoMetricas: document.getElementById("estadoMetricas"),
     modalConfirmar: document.getElementById("modalConfirmar"),
     btnBajarTodo: document.getElementById("btnBajarTodo"),
+    panelAccionesGlobales: document.getElementById("panelAccionesGlobales"),
+    procesoPanel: document.getElementById("procesoPanel"),
+    btnSubirSugerido: document.getElementById("btnSubirSugerido"),
+    btnDescartarSnapshot: document.getElementById("btnDescartarSnapshot"),
+    modalSugerido: document.getElementById("modalSugerido"),
+    inputTopeSugerido: document.getElementById("inputTopeSugerido"),
+    sugeridoCantidad: document.getElementById("sugeridoCantidad"),
+    estadoTopeSugerido: document.getElementById("estadoTopeSugerido"),
+    btnCancelarSugerido: document.getElementById("btnCancelarSugerido"),
+    btnConfirmarSugerido: document.getElementById("btnConfirmarSugerido"),
+    modalDetalleProceso: document.getElementById("modalDetalleProceso"),
+    detalleProcesoTitulo: document.getElementById("detalleProcesoTitulo"),
+    detalleProcesoResumen: document.getElementById("detalleProcesoResumen"),
+    detalleProcesoTabla: document.getElementById("detalleProcesoTabla"),
+    btnCerrarDetalleProceso: document.getElementById("btnCerrarDetalleProceso"),
+    btnCsvDetalleProceso: document.getElementById("btnCsvDetalleProceso"),
+    bannerVersion: document.getElementById("bannerVersion"),
+    versionNuevaTexto: document.getElementById("versionNuevaTexto"),
+    btnRecargarVersion: document.getElementById("btnRecargarVersion"),
     btnSubirTodoGuardado: document.getElementById("btnSubirTodoGuardado"),
     estadoSnapshot: document.getElementById("estadoSnapshot"),
     modalBajarTodo1: document.getElementById("modalBajarTodo1"),
@@ -2039,6 +2136,7 @@
   }
   // Devuelve true (y avisa) si ya hay una corrida viva: no se puede lanzar otra en paralelo.
   function hayCorridaEnCurso() {
+    if (hayProcesoServidor()) return true; // Bajar/Subir TODAS corriendo en el servidor
     if (!corridaEnCurso) return false;
     alert("Hay una corrida en curso (" + els.resultadoResumen.textContent + ").\nEsperá a que termine para lanzar otra.");
     return true;
@@ -2555,245 +2653,396 @@
   });
 
   /* ============================================================
-     ACCIONES GLOBALES: Bajar TODAS / Subir TODAS (con % guardados)
+     ACCIONES GLOBALES: Bajar TODAS / Subir TODAS — CORREN EN EL SERVIDOR
+     ------------------------------------------------------------
+     30/09: la app ya no hace el trabajo en la pestaña. Solo CREA el proceso en la
+     función ml-procesos (Supabase) y muestra el avance. El servidor lo ejecuta en
+     vueltas de ~1 minuto disparadas cada 15 s: se puede cerrar la pestaña, apagar
+     la compu o abrir la app desde otro lado (Stock o Gerencia) y se ve lo mismo.
+       POST /crear {tipo:"bajar_todo"|"subir_todo", modo?:"sugerido", pct_maximo?}
+       GET  /estado[?detalle=1]    POST /cancelar {id}
+     Para sumar un proceso nuevo (ej. "bajar solo una campaña"): agregarlo en
+     TEXTOS_PROCESO + un botón que llame crearProceso({...}).
      ============================================================ */
-  var planBajarPendiente = null;
+  var URL_PROCESOS = FN_BASE + "/ml-procesos";
+  var POLL_ACTIVO_MS = 5000;          // avance mientras corre (pestaña a la vista)
+  var POLL_OCULTO_MS = 30000;         // pestaña en segundo plano: más espaciado
+  var POLL_REINTENTO_MS = 15000;      // si falla la consulta de avance
+  var PCT_MAXIMO_SUGERIDO_DEFAULT = 20;
+  var TIPOS_REAPLICABLES = ["DEAL", "SELLER_CAMPAIGN"];     // vuelven con "Subir TODAS" (se guarda su %)
+  var TIPOS_NO_BAJABLES_BULK = ["DOD", "LIGHTNING"];         // ML no deja bajarlos por API
 
-  // Tipos "con precio" que el vendedor define -> se pueden reaplicar despues con
-  // "Subir TODAS (con los % guardados)". El resto de los tipos bajables tambien
-  // se sacan, pero para volver a sumarlos hay que usar "Subir a todas" por card
-  // (ML fija el precio, no hay % que reaplicar).
-  var TIPOS_REAPLICABLES = ["DEAL", "SELLER_CAMPAIGN"];
-  // El bulk-delete-por-item de ML NO puede bajar estos (los rechaza) -> se avisan aparte.
-  var TIPOS_NO_BAJABLES_BULK = ["DOD", "LIGHTNING"];
+  var TEXTOS_PROCESO = {
+    bajar_todo: { titulo: "⬇️ Bajar TODAS las promociones", corto: "Bajar TODAS" },
+    subir_todo: { titulo: "⬆️ Subir TODAS (con los % guardados)", corto: "Subir TODAS" },
+    subir_sugerido: { titulo: "💡 Subir con el precio sugerido de ML", corto: "Subir con sugerido" },
+  };
+  var ESTADOS_PROCESO = {
+    preparando: { txt: "Preparando", cls: "activo" },
+    en_curso: { txt: "En curso", cls: "activo" },
+    terminado: { txt: "Terminado", cls: "ok" },
+    cancelado: { txt: "Cancelado", cls: "dim" },
+    error: { txt: "Frenado por error", cls: "err" },
+  };
+  var ESTADOS_ITEM = {
+    ok: "OK", revisar: "En revisión", error: "Error", parcial: "Parcial", omitida: "Omitida",
+    ya_estaba: "Ya estaba", cancelada: "Cancelada", pendiente: "Pendiente", tomado: "En proceso",
+  };
 
-  // Recorre TODAS las campañas activas y arma el plan del boton global.
-  // El motor es el bulk-delete-por-item: una llamada por publicacion saca al item
-  // de TODAS sus promos de una, asi que deduplicamos por item_id.
-  function recolectarPlanBajarTodo() {
-    var porItem = {};          // item_id -> true (dedup)
-    var filasSnapshot = [];    // solo tipos reaplicables (para "Subir TODAS")
-    var resumenReaplic = {};   // nombre campaña -> cantidad (se reaplican con %)
-    var resumenResumar = {};   // nombre campaña -> cantidad (se bajan, se re-suman a mano)
-    var noBajables = {};       // nombre campaña -> cantidad (DOD / relampago, no se pueden)
+  var procesoActual = null;           // última respuesta de /estado
+  var procesoActivoServidor = false;  // hay un proceso preparando / en curso
+  var pollProcesoId = null;
+  var ultimoProblemas = null;         // detalle del último proceso (para el modal y el CSV)
 
-    ultimasPromosActivas.forEach(function (p) {
-      if (!p.id) return;
-      var estado = promoItemsState[p.id];
-      if (!estado || !estado.activos || estado.activos.length === 0) return;
-      var nombre = p.name || p.id;
-      var esReaplic = TIPOS_REAPLICABLES.indexOf(p.type) !== -1;
-      var esNoBajable = TIPOS_NO_BAJABLES_BULK.indexOf(p.type) !== -1;
-
-      estado.activos.forEach(function (it) {
-        if (esNoBajable) {
-          noBajables[nombre] = (noBajables[nombre] || 0) + 1;
-          return; // no entran al bulk
-        }
-        porItem[it.id] = true;
-        if (esReaplic) {
-          resumenReaplic[nombre] = (resumenReaplic[nombre] || 0) + 1;
-          var pct = it.original_price > 0 ? Math.round((1 - it.price / it.original_price) * 1000) / 10 : 0;
-          filasSnapshot.push({ item_id: it.id, promotion_id: p.id, promotion_type: p.type, porcentaje: pct, precio_original: it.original_price });
-        } else {
-          resumenResumar[nombre] = (resumenResumar[nombre] || 0) + 1;
-        }
-      });
-    });
-
-    var itemIdsUnicos = Object.keys(porItem).map(function (id) { return { id: id }; });
-    return {
-      itemIdsUnicos: itemIdsUnicos,
-      totalItemsUnicos: itemIdsUnicos.length,
-      filasSnapshot: filasSnapshot,
-      resumenReaplic: resumenReaplic,
-      resumenResumar: resumenResumar,
-      noBajables: noBajables,
-    };
+  function claveTexto(p) { return p.tipo === "subir_todo" && p.modo === "sugerido" ? "subir_sugerido" : p.tipo; }
+  function fechaHora(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" }) + " " + d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+  }
+  function linkItemML(itemId) {
+    return '<a href="https://articulo.mercadolibre.com.ar/' + escapeHtml(String(itemId).replace("MLA", "MLA-")) + '" target="_blank" rel="noopener" style="color:var(--amber);text-decoration:none;">' + escapeHtml(itemId) + "</a>";
   }
 
-  // Arma el bloque HTML de una seccion del modal (titulo + lista de campañas con conteo).
-  function seccionResumenBajar(titulo, mapaNombreCount, colorTitulo) {
-    var nombres = Object.keys(mapaNombreCount);
-    if (nombres.length === 0) return "";
-    var filas = nombres.map(function (n) {
-      return "<div>• " + escapeHtml(n) + " — " + mapaNombreCount[n] + " publicaciones</div>";
-    }).join("");
-    return '<div style="margin-top:10px;"><div style="font-weight:700; font-size:0.8rem; color:' + colorTitulo + ';">' + escapeHtml(titulo) + '</div>' + filas + '</div>';
+  // --- Consulta de estado + polling ---------------------------------------------------------
+  function programarPoll(ms) {
+    if (pollProcesoId) clearTimeout(pollProcesoId);
+    pollProcesoId = setTimeout(function () { cargarEstadoProcesos(false); }, ms);
+  }
+
+  function cargarEstadoProcesos(conDetalle) {
+    return fetchConTimeout(URL_PROCESOS + "/estado" + (conDetalle ? "?detalle=1" : ""), { headers: { Authorization: AUTH } }, 30000)
+      .then(function (res) {
+        if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error " + res.status);
+        var estabaActivo = procesoActivoServidor;
+        procesoActual = res.data;
+        var p = res.data.proceso;
+        procesoActivoServidor = !!(p && (p.estado === "preparando" || p.estado === "en_curso"));
+        if (res.data.problemas) ultimoProblemas = { procesoId: p && p.id, filas: res.data.problemas };
+        renderAccionesGlobales();
+        if (procesoActivoServidor) {
+          programarPoll(document.hidden ? POLL_OCULTO_MS : POLL_ACTIVO_MS);
+        } else if (estabaActivo) {
+          // Terminó mientras mirábamos: detalle de problemas + refrescar las cards (cambió todo en ML).
+          cargarEstadoProcesos(true);
+          refrescarTrasRender = "todas";
+          arrancarApp();
+        }
+        return res.data;
+      })
+      .catch(function (err) {
+        els.estadoSnapshot.textContent = "No se pudo leer el estado de los procesos (" + err.message + "). Reintento en " + Math.round(POLL_REINTENTO_MS / 1000) + " s.";
+        els.estadoSnapshot.className = "estado err";
+        programarPoll(POLL_REINTENTO_MS);
+      });
+  }
+  // Compatibilidad: el resto de la app llama a cargarEstadoSnapshot() al arrancar / tras corridas.
+  function cargarEstadoSnapshot() { return cargarEstadoProcesos(false); }
+
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && procesoActivoServidor) cargarEstadoProcesos(false);
+  });
+
+  // --- Render del panel ---------------------------------------------------------------------
+  function renderAccionesGlobales() {
+    var d = procesoActual || {};
+    var respaldo = d.respaldo_total || 0;
+    var activo = procesoActivoServidor;
+
+    els.btnBajarTodo.disabled = activo;
+    els.btnSubirTodoGuardado.classList.toggle("oculto", respaldo === 0);
+    els.btnSubirSugerido.classList.toggle("oculto", respaldo === 0);
+    els.btnDescartarSnapshot.classList.toggle("oculto", respaldo === 0);
+    els.btnSubirTodoGuardado.disabled = activo;
+    els.btnSubirSugerido.disabled = activo;
+    els.btnDescartarSnapshot.disabled = activo;
+    els.btnBajarTodo.title = activo ? "Hay un proceso corriendo en el servidor: esperá a que termine o cancelalo." : "";
+
+    if (respaldo > 0) {
+      els.estadoSnapshot.innerHTML = "<b>" + respaldo + "</b> publicaciones en el respaldo esperando volver a subirse. " +
+        kpiHelp("Respaldo = la lista de publicaciones que se bajaron con \"Bajar TODAS\" y todavía no volvieron a su campaña, con el % que tenían. Se guarda en la base (tabla ml_promos_snapshot) solo para Campaña propia y Deal. Cada una sale del respaldo cuando vuelve a subir bien; las que ML deja en revisión o con error se quedan para el próximo intento.");
+    } else {
+      els.estadoSnapshot.textContent = activo ? "" : "Respaldo vacío: no hay nada pendiente de volver a subir.";
+    }
+    els.estadoSnapshot.className = "estado";
+
+    renderPanelProceso(d);
+  }
+
+  function renderPanelProceso(d) {
+    var p = d.proceso;
+    if (!p) { els.procesoPanel.classList.add("oculto"); return; }
+    els.procesoPanel.classList.remove("oculto");
+    var activo = procesoActivoServidor;
+    var tx = TEXTOS_PROCESO[claveTexto(p)] || { titulo: p.tipo };
+    var est = ESTADOS_PROCESO[p.estado] || { txt: p.estado, cls: "dim" };
+    var c = d.conteos || {};
+    var total = d.total_cola || 0;
+    var hechas = Math.max(0, total - (d.pendientes || 0));
+    var pct = total > 0 ? Math.round(hechas / total * 100) : 0;
+
+    // Línea de fase (en preparación todavía no hay cola completa).
+    var fase = "";
+    if (p.estado === "preparando") {
+      var ap = p.avance_preparacion || {};
+      if (p.fase === "promos" || p.fase === "snapshot") fase = "Leyendo qué campañas hay que recorrer…";
+      else if (p.fase === "listar") fase = "Leyendo las campañas en Mercado Libre" + (ap.campanas_total ? " (" + ap.campanas_hechas + "/" + ap.campanas_total + ")" : "") + "… las grandes tardan ~1 minuto.";
+      else if (p.fase === "pausadas") fase = "Revisando publicaciones pausadas (ML no las muestra en las campañas)" + (ap.por_consultar ? " (" + ap.consultadas + "/" + ap.por_consultar + ")" : "") + "…";
+      else if (p.fase === "verificar") fase = "Consultando una por una las que no aparecen en su campaña" + (ap.por_consultar ? " (" + ap.consultadas + "/" + ap.por_consultar + ")" : "") + "…";
+      fase += " Ya van " + total + " publicaciones en la cola.";
+    } else if (p.estado === "en_curso") {
+      fase = "Trabajando en Mercado Libre: " + hechas + " de " + total + " publicaciones" + (d.por_minuto ? " (" + d.por_minuto + " por minuto)" : "") + ".";
+    } else if (p.terminado_at) {
+      var dur = p.iniciado_at ? (new Date(p.terminado_at) - new Date(p.creado_at)) / 1000 : null;
+      fase = "Cerró el " + fechaHora(p.terminado_at) + (dur ? " · duró " + fmtSeg(dur) : "") + ".";
+    }
+
+    var errores = (c.error || 0) + (c.parcial || 0);
+    var noBajablesTotal = (p.no_bajables || []).reduce(function (a, n) { return a + (Number(n.items) || 0); }, 0);
+    var kpis =
+      statBox(hechas + "/" + total, "Procesadas", total === 0,
+        "Publicaciones ya trabajadas sobre el total de la cola. La cola la arma el servidor leyendo EN VIVO Mercado Libre: en Bajar TODAS, todas las publicaciones con alguna promo activa (incluidas las pausadas); en Subir TODAS, las del respaldo.") +
+      statBox(c.ok || 0, p.tipo === "bajar_todo" ? "Bajadas OK" : "Subidas OK", !c.ok,
+        p.tipo === "bajar_todo"
+          ? "Publicaciones que ML confirmó que salieron de sus promociones (o que ya no tenían ninguna activa)."
+          : "Publicaciones que volvieron a su campaña. El servidor calcula el precio con el % guardado sobre el precio de lista ACTUAL y después relee en ML el precio que quedó.") +
+      (p.tipo === "subir_todo"
+        ? statBox(c.revisar || 0, "En revisión", !c.revisar,
+          "ML no aceptó el % guardado: pide otro rango (en general un % mayor, por la regla de los ~7 días: mide el descuento contra el precio más bajo de la última semana). No se tocó nada en ML y siguen en el respaldo. En el detalle ves el % mínimo que pide ML y su precio sugerido.")
+        : statBox(c.parcial || 0, "Parciales", !c.parcial,
+          "Publicaciones que salieron de algunas promos pero no de todas: casi siempre porque también estaban en una Oferta del día o Relámpago, que ML no deja bajar por API.")) +
+      statBox(errores + (c.omitida || 0), "Errores / omitidas", !(errores + (c.omitida || 0)),
+        "Error: ML rechazó el pedido (el motivo está en el detalle; los errores pasajeros, como 409 o 429, se reintentan solos hasta 3 veces). Omitida: la publicación ya no figura como candidata de su campaña o ML no la deja consultar (por ejemplo, en revisión); sigue en el respaldo.") +
+      (activo
+        ? statBox(d.eta_seg != null ? fmtSeg(d.eta_seg) : "—", "Tiempo restante", d.eta_seg == null,
+          "Estimación: publicaciones pendientes ÷ velocidad real desde que arrancó (por minuto). Mientras prepara la cola no hay estimación. Subir tarda más que bajar porque verifica cada precio en ML.")
+        : (p.tipo === "subir_todo"
+          ? statBox(c.ya_estaba || 0, "Ya estaban", !c.ya_estaba,
+            "Publicaciones del respaldo que al momento de subir ya estaban activas en su campaña (por ejemplo, se subieron a mano). Se dan por hechas y salen del respaldo.")
+          : statBox(noBajablesTotal, "No bajables", !noBajablesTotal,
+            "Publicaciones en Oferta del día o Relámpago: ML no deja sacarlas por API, así que el proceso no las toca. Se gestionan desde el panel de Mercado Libre. Sale del listado en vivo de esas campañas.")));
+
+    var html =
+      '<div class="proceso-cab"><div class="proceso-titulo">' + escapeHtml(tx.titulo) +
+      ' <span class="chip-estado ' + est.cls + '">' + (activo ? '<span class="punto-vivo"></span>' : "") + escapeHtml(est.txt) + "</span></div>" +
+      '<div class="proceso-meta">Lanzado por ' + escapeHtml(p.creado_por || "?") + " · " + fechaHora(p.creado_at) +
+      (p.modo === "sugerido" && p.pct_maximo ? " · tope " + p.pct_maximo + "%" : "") + "</div></div>" +
+      '<div class="proceso-fase">' + escapeHtml(fase) + "</div>" +
+      (activo || p.estado === "terminado" ? '<div class="barra-proceso"><div class="barra-relleno' + (activo ? " viva" : "") + '" style="width:' + (p.estado === "preparando" ? 8 : pct) + '%"></div></div>' : "") +
+      '<div class="metricas-grid proceso-kpis">' + kpis + "</div>";
+
+    if (activo && d.sin_avance_min >= 4) {
+      html += '<div class="aviso-7d" style="margin:10px 0 0;">Hace ' + d.sin_avance_min + " minutos que no avanza. Si sigue así, avisale a Gerencia (el detalle técnico queda en el panel de Supabase → Edge Functions → ml-procesos).</div>";
+    }
+    if (p.ultimo_error && (activo || p.estado === "error")) {
+      html += '<div class="estado err">Último problema: ' + escapeHtml(p.ultimo_error) + (activo ? " (se reintenta solo)" : "") + "</div>";
+    }
+    if (p.tipo === "bajar_todo" && p.no_bajables && p.no_bajables.length && !activo) {
+      html += '<div class="proceso-nota">No se pueden bajar desde acá (se gestionan en el panel de ML): ' +
+        p.no_bajables.map(function (n) { return escapeHtml(n.nombre || n.id) + (n.items ? " (" + n.items + ")" : ""); }).join(", ") + ".</div>";
+    }
+    if (p.estado === "terminado" && p.tipo === "bajar_todo") {
+      html += '<div class="proceso-nota ok">Siguiente paso: actualizá los precios (pestaña 💲) y después tocá "⬆️ Subir TODAS (con los % guardados)". Las promos que ML fija (co-financiadas, con aporte de ML, etc.) se vuelven a sumar a mano desde su card.</div>';
+    }
+    if (p.estado === "terminado" && p.tipo === "subir_todo" && (c.revisar || 0) > 0) {
+      html += '<div class="proceso-nota">Quedaron ' + c.revisar + " en revisión: podés esperar unos días (la regla de 7 días se va corriendo) o usar \"💡 Subir las que quedaron con el precio sugerido de ML\". " + escapeHtml(TEXTO_REGLA_7D) + "</div>";
+    }
+
+    html += '<div class="proceso-acciones">' +
+      (activo ? '<button class="chico secondary" id="btnCancelarProceso"' + (p.cancelar ? " disabled" : "") + ">" + (p.cancelar ? "Cancelando…" : "✋ Cancelar proceso") + "</button>" : "") +
+      (!activo ? '<button class="chico secondary" id="btnDetalleProceso">📋 Ver detalle</button>' : "") +
+      ((d.ultimos || []).length > 1 ? '<button class="chico secondary" id="btnHistorialProcesos">🕘 Procesos anteriores</button>' : "") +
+      "</div>" +
+      '<div id="historialProcesos" class="oculto proceso-historial"></div>';
+
+    els.procesoPanel.innerHTML = html;
+
+    var bCancel = document.getElementById("btnCancelarProceso");
+    if (bCancel) bCancel.addEventListener("click", function () { cancelarProceso(p.id); });
+    var bDet = document.getElementById("btnDetalleProceso");
+    if (bDet) bDet.addEventListener("click", abrirDetalleProceso);
+    var bHist = document.getElementById("btnHistorialProcesos");
+    if (bHist) bHist.addEventListener("click", function () {
+      var cont = document.getElementById("historialProcesos");
+      cont.classList.toggle("oculto");
+      cont.innerHTML = (d.ultimos || []).map(function (u) {
+        var e = ESTADOS_PROCESO[u.estado] || { txt: u.estado, cls: "dim" };
+        var cc = (u.resumen && u.resumen.conteos) || {};
+        var partes = ["ok", "revisar", "error", "parcial", "omitida", "ya_estaba", "cancelada"].filter(function (k) { return cc[k]; })
+          .map(function (k) { return ESTADOS_ITEM[k] + ": " + cc[k]; }).join(" · ");
+        return '<div class="tipo-fila"><span>#' + u.id + " " + escapeHtml((TEXTOS_PROCESO[claveTexto(u)] || { corto: u.tipo }).corto) +
+          ' <span class="chip-estado ' + e.cls + '">' + escapeHtml(e.txt) + "</span><br><small>" + escapeHtml(u.creado_por || "") + " · " + fechaHora(u.creado_at) + "</small></span>" +
+          '<span style="text-align:right;font-size:0.75rem;color:var(--text-dim);">' + escapeHtml(partes || "—") + "</span></div>";
+      }).join("");
+    });
+  }
+
+  // --- Crear / cancelar ---------------------------------------------------------------------
+  function crearProceso(body, boton) {
+    if (boton) boton.disabled = true;
+    return fetchConTimeout(URL_PROCESOS + "/crear", {
+      method: "POST",
+      headers: { Authorization: AUTH, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }, 30000)
+      .then(function (res) {
+        if (res.status === 409) { alert(res.data && res.data.error || "Ya hay un proceso en curso."); return; }
+        if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error " + res.status);
+        procesoActivoServidor = true;
+        els.panelAccionesGlobales.scrollIntoView({ behavior: "smooth", block: "start" });
+      })
+      .catch(function (err) { alert("No se pudo lanzar el proceso: " + err.message + ". No se tocó nada en Mercado Libre."); })
+      .finally(function () { if (boton) boton.disabled = false; cargarEstadoProcesos(false); });
+  }
+
+  function cancelarProceso(id) {
+    if (!confirm("¿Cancelar el proceso?\n\nSe frena en los próximos segundos. Lo que ya se hizo en Mercado Libre queda hecho (no se deshace).\nSi era un Bajar TODAS, las publicaciones que no llegó a bajar siguen con su promo.")) return;
+    fetchConTimeout(URL_PROCESOS + "/cancelar", {
+      method: "POST",
+      headers: { Authorization: AUTH, "Content-Type": "application/json" },
+      body: JSON.stringify({ id: id }),
+    }, 30000)
+      .then(function (res) { if (!res.data || !res.data.ok) alert((res.data && res.data.error) || "No se pudo cancelar."); })
+      .catch(function (err) { alert("No se pudo cancelar: " + err.message); })
+      .finally(function () { cargarEstadoProcesos(false); });
+  }
+
+  // Bloquea acciones por card mientras corre un proceso global (se pisarían en ML).
+  function hayProcesoServidor() {
+    if (!procesoActivoServidor) return false;
+    alert("Hay un proceso masivo corriendo en el servidor (" + ((procesoActual && procesoActual.proceso && (TEXTOS_PROCESO[claveTexto(procesoActual.proceso)] || {}).corto) || "Bajar/Subir TODAS") + "). Esperá a que termine o cancelalo desde \"Acciones globales\".");
+    return true;
+  }
+
+  // --- Bajar TODAS: 2 confirmaciones ---------------------------------------------------------
+  function seccionResumenBajar(titulo, nombres, colorTitulo) {
+    if (!nombres.length) return "";
+    return '<div style="margin-top:10px;"><div style="font-weight:700; font-size:0.8rem; color:' + colorTitulo + ';">' + escapeHtml(titulo) + "</div>" +
+      nombres.map(function (n) { return "<div>• " + escapeHtml(n) + "</div>"; }).join("") + "</div>";
   }
 
   els.btnBajarTodo.addEventListener("click", function () {
     if (hayCorridaEnCurso()) return;
-    var plan = recolectarPlanBajarTodo();
-    var hayNoBajables = Object.keys(plan.noBajables).length > 0;
-
-    if (plan.totalItemsUnicos === 0) {
-      if (hayNoBajables) {
-        alert("Las únicas promos activas son Oferta del día / Relámpago, que ML no deja bajar desde acá. Se gestionan desde el panel de ML.");
-      } else {
-        alert("No hay publicaciones activas para bajar ahora mismo. Tip: usá \"Actualizar métricas\" o \"Ver candidatos/activos\" en las cards para que la app las cargue.");
-      }
-      return;
-    }
-
-    els.bajarTodoResumen1.textContent = "Esto va a sacar " + plan.totalItemsUnicos + " publicación(es) de todas sus promociones (una llamada por publicación):";
+    var reaplic = [], resumar = [], noBaj = [];
+    ultimasPromosActivas.forEach(function (p) {
+      var nombre = (p.id && aliasNombresPublicos[p.id]) || p.name || p.id;
+      if (TIPOS_NO_BAJABLES_BULK.indexOf(p.type) !== -1) noBaj.push(nombre);
+      else if (TIPOS_REAPLICABLES.indexOf(p.type) !== -1) reaplic.push(nombre);
+      else resumar.push(nombre);
+    });
+    els.bajarTodoResumen1.textContent = "El servidor va a leer EN VIVO todas las campañas activas (" + ultimasPromosActivas.length + ") y sacar cada publicación de todas sus promociones, incluidas las pausadas:";
     els.bajarTodoListaGrupos.innerHTML =
-      seccionResumenBajar("Se reaplican con \"Subir TODAS (con los % guardados)\":", plan.resumenReaplic, "var(--ok)") +
-      seccionResumenBajar("Se bajan, pero las volvés a sumar a mano (ML fija el precio):", plan.resumenResumar, "var(--amber)") +
-      (Object.keys(plan.noBajables).length > 0
-        ? seccionResumenBajar("No se pueden bajar desde acá (se gestionan en ML):", plan.noBajables, "var(--text-dim)")
-        : "");
-
-    planBajarPendiente = plan;
+      seccionResumenBajar("Vuelven con \"Subir TODAS (con los % guardados)\":", reaplic, "var(--ok)") +
+      seccionResumenBajar("Se bajan, pero se vuelven a sumar a mano desde su card (el precio lo fija ML):", resumar, "var(--amber)") +
+      seccionResumenBajar("No se pueden bajar desde acá (se gestionan en el panel de ML):", noBaj, "var(--text-dim)");
     els.modalBajarTodo1.classList.remove("oculto");
   });
-
-  els.btnCancelarBajarTodo1.addEventListener("click", function () {
-    planBajarPendiente = null;
-    els.modalBajarTodo1.classList.add("oculto");
-  });
-
+  els.btnCancelarBajarTodo1.addEventListener("click", function () { els.modalBajarTodo1.classList.add("oculto"); });
   els.btnContinuarBajarTodo1.addEventListener("click", function () {
     els.modalBajarTodo1.classList.add("oculto");
     els.inputConfirmarBajarTodo.value = "";
     els.btnConfirmarBajarTodo2.disabled = true;
     els.modalBajarTodo2.classList.remove("oculto");
+    els.inputConfirmarBajarTodo.focus();
   });
-
   els.inputConfirmarBajarTodo.addEventListener("input", function () {
-    els.btnConfirmarBajarTodo2.disabled = els.inputConfirmarBajarTodo.value.trim() !== "BAJAR TODO";
+    els.btnConfirmarBajarTodo2.disabled = els.inputConfirmarBajarTodo.value.trim().toUpperCase() !== "BAJAR TODO";
   });
-
-  els.btnCancelarBajarTodo2.addEventListener("click", function () {
-    planBajarPendiente = null;
-    els.modalBajarTodo2.classList.add("oculto");
-  });
-
+  els.btnCancelarBajarTodo2.addEventListener("click", function () { els.modalBajarTodo2.classList.add("oculto"); });
   els.btnConfirmarBajarTodo2.addEventListener("click", function () {
-    if (!planBajarPendiente) return;
-    var plan = planBajarPendiente;
-    planBajarPendiente = null;
     els.modalBajarTodo2.classList.add("oculto");
+    crearProceso({ tipo: "bajar_todo" }, els.btnBajarTodo);
+  });
 
-    // Si no hay filas reaplicables, no llamamos al snapshot (rechaza filas vacias) y bajamos directo.
-    if (!plan.filasSnapshot || plan.filasSnapshot.length === 0) {
-      ejecutarBajaGlobalPorItem(plan);
+  // --- Subir TODAS con % guardados -----------------------------------------------------------
+  els.btnSubirTodoGuardado.addEventListener("click", function () {
+    if (hayCorridaEnCurso()) return;
+    var n = (procesoActual && procesoActual.respaldo_total) || 0;
+    var aviso7d = avisoPreciosRecientes();
+    if (!confirm("Se van a volver a subir las " + n + " publicaciones del respaldo, cada una con el % que tenía guardado (calculado sobre el precio de lista ACTUAL)." +
+      (aviso7d ? "\n\n" + aviso7d : "") + "\n\nCorre en el servidor: podés cerrar la pestaña. ¿Continuar?")) return;
+    crearProceso({ tipo: "subir_todo" }, els.btnSubirTodoGuardado);
+  });
+
+  // --- Subir las que quedaron con el precio sugerido de ML ------------------------------------
+  els.btnSubirSugerido.addEventListener("click", function () {
+    if (hayCorridaEnCurso()) return;
+    els.inputTopeSugerido.value = PCT_MAXIMO_SUGERIDO_DEFAULT;
+    els.sugeridoCantidad.textContent = (procesoActual && procesoActual.respaldo_total) || 0;
+    els.estadoTopeSugerido.textContent = "";
+    els.modalSugerido.classList.remove("oculto");
+  });
+  els.btnCancelarSugerido.addEventListener("click", function () { els.modalSugerido.classList.add("oculto"); });
+  els.btnConfirmarSugerido.addEventListener("click", function () {
+    var tope = Number(String(els.inputTopeSugerido.value).replace(",", "."));
+    if (!isFinite(tope) || tope < 1 || tope > 90) {
+      els.estadoTopeSugerido.textContent = "Poné un tope entre 1 y 90 %.";
+      els.estadoTopeSugerido.className = "estado err";
       return;
     }
-
-    fetchConTimeout(URL_SNAPSHOT, {
-      method: "POST",
-      headers: { Authorization: AUTH, "Content-Type": "application/json" },
-      body: JSON.stringify({ filas: plan.filasSnapshot }),
-    })
-      .then(function (res) {
-        if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error guardando el respaldo");
-        ejecutarBajaGlobalPorItem(plan);
-      })
-      .catch(function (err) {
-        alert("No se pudo guardar el respaldo de % — se cancela para no perder esa info. " + err.message);
-      });
+    els.modalSugerido.classList.add("oculto");
+    crearProceso({ tipo: "subir_todo", modo: "sugerido", pct_maximo: tope }, els.btnSubirSugerido);
   });
 
-  // Ejecuta el bulk-delete-por-item en tandas chicas, con progreso visible.
-  function ejecutarBajaGlobalPorItem(plan) {
-    var items = plan.itemIdsUnicos;
-    var logGlobal = [];
-    var exitosos = 0, parciales = 0, sinOfertas = 0, errores = 0;
-    var totalItems = items.length;
-    var procesados = 0;
-    var tandas = chunk(items, BATCH_SIZE);
-    var ti = 0;
-    var t0Bajar = Date.now();
-    iniciarCorrida();
-
-    els.resultadoTitulo.textContent = "Bajando TODAS las promociones...";
-    els.resultadoResumen.textContent = "Procesando 0/" + totalItems + " (estimado " + fmtSeg(totalItems * 0.5) + ")...";
-    els.resultadoTablaWrap.innerHTML = "";
-    els.btnReintentarFallidos.classList.add("oculto");
-    els.btnUsarSugerido.classList.add("oculto");
-    els.bloqueAplicarPctRevisar.classList.add("oculto");
-    els.modalResultado.classList.remove("oculto");
-
-    function siguienteTanda() {
-      if (ti >= tandas.length) {
-        els.resultadoTitulo.textContent = "Resultado — Bajar TODAS las promociones";
-        var resumen = totalItems + " publicación(es) procesada(s) — " + exitosos + " bajada(s), " + errores + " con error";
-        if (parciales > 0) resumen += ", " + parciales + " parcial(es)";
-        if (sinOfertas > 0) resumen += ", " + sinOfertas + " sin promos activas";
-        els.resultadoResumen.textContent = resumen + ".";
-        renderTablaLog(logGlobal, "bajar");
-        finCorrida();
-        cargarEstadoSnapshot();
-        refrescarTrasRender = "todas";
-        arrancarApp();
-        return;
-      }
-      var tanda = tandas[ti];
-      fetchConTimeout(URL_BULK, {
-        method: "POST",
-        headers: { Authorization: AUTH, "Content-Type": "application/json" },
-        body: JSON.stringify({ accion: "bajar_todo_item", items: tanda }),
-      }, TIMEOUT_TANDA_MS)
-        .then(function (res) {
-          if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error en tanda");
-          logGlobal = logGlobal.concat(res.data.log || []);
-          exitosos += res.data.exitosos || 0;
-          parciales += res.data.parciales || 0;
-          sinOfertas += res.data.sin_ofertas || 0;
-          errores += res.data.errores || 0;
-          procesados += tanda.length; ti++;
-          var restBajar = (Date.now() - t0Bajar) / 1000 / ti * (tandas.length - ti);
-          els.resultadoResumen.textContent = "Procesando " + procesados + "/" + totalItems + " (resta " + fmtSeg(restBajar) + ")...";
-          renderTablaLog(logGlobal, "bajar");
-          siguienteTanda();
-        })
-        .catch(function (err) {
-          els.resultadoTitulo.textContent = "Se cortó a mitad de camino";
-          els.resultadoResumen.textContent = procesados + "/" + totalItems + " procesadas antes del error (" + err.message + "). El respaldo de % (si había) ya está guardado — podés usar \"Subir TODAS (con los % guardados)\" cuando quieras para terminar.";
-          renderTablaLog(logGlobal, "bajar");
-          finCorrida();
-          cargarEstadoSnapshot();
-        });
+  // --- Detalle del último proceso (modal + CSV) ----------------------------------------------
+  function textoProblema(f) {
+    var r = f.resultado || {};
+    if (f.estado === "revisar" && r.porcentaje_minimo != null) {
+      return "Pediste " + (r.porcentaje_pedido != null ? r.porcentaje_pedido : f.porcentaje) + "% y ML pide mínimo " + r.porcentaje_minimo + "%" +
+        (r.sugerido && r.precio_original ? " · sugerido de ML: $" + Math.round(r.sugerido).toLocaleString("es-AR") + " (" + Math.round((1 - r.sugerido / r.precio_original) * 1000) / 10 + "%)" : "");
     }
-
-    siguienteTanda();
+    return r.detalle || "";
   }
 
-  function cargarEstadoSnapshot() {
-    fetchConTimeout(URL_SNAPSHOT, { headers: { Authorization: AUTH } })
-      .then(function (res) {
-        if (!res.data || !res.data.ok) return;
-        var filas = res.data.filas || [];
-        var btnDescartar = document.getElementById("btnDescartarSnapshot");
-        if (filas.length > 0) {
-          els.btnSubirTodoGuardado.classList.remove("oculto");
-          btnDescartar.classList.remove("oculto");
-          // Fecha del respaldo más viejo: para saber de cuándo es la precarga.
-          var masVieja = filas[0].creado_at ? new Date(filas[0].creado_at) : null;
-          var desde = masVieja ? " (guardado el " + masVieja.toLocaleDateString("es-AR") + " " + masVieja.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }) + ")" : "";
-          els.estadoSnapshot.textContent = filas.length + " publicaciones esperando volver a subirse" + desde + ".";
-          els.estadoSnapshot.className = "estado";
-        } else {
-          els.btnSubirTodoGuardado.classList.add("oculto");
-          btnDescartar.classList.add("oculto");
-          els.estadoSnapshot.textContent = "";
-        }
-      })
-      .catch(function () { /* no crítico */ });
+  function abrirDetalleProceso() {
+    var d = procesoActual;
+    if (!d || !d.proceso) return;
+    var p = d.proceso;
+    els.detalleProcesoTitulo.textContent = "#" + p.id + " · " + (TEXTOS_PROCESO[claveTexto(p)] || { titulo: p.tipo }).titulo;
+    var c = d.conteos || {};
+    els.detalleProcesoResumen.textContent = Object.keys(ESTADOS_ITEM).filter(function (k) { return c[k]; })
+      .map(function (k) { return ESTADOS_ITEM[k] + ": " + c[k]; }).join(" · ") + (p.creado_por ? " — lanzado por " + p.creado_por + " el " + fechaHora(p.creado_at) : "");
+    els.detalleProcesoTabla.innerHTML = '<div class="estado">Cargando detalle…</div>';
+    els.modalDetalleProceso.classList.remove("oculto");
+    var usarCache = ultimoProblemas && ultimoProblemas.procesoId === p.id;
+    (usarCache ? Promise.resolve() : cargarEstadoProcesos(true)).then(function () {
+      var filas = (ultimoProblemas && ultimoProblemas.filas) || [];
+      if (!filas.length) { els.detalleProcesoTabla.innerHTML = '<div class="estado ok">Sin problemas: todo salió bien. ✔</div>'; return; }
+      els.detalleProcesoTabla.innerHTML = '<div class="caja-scroll modal"><table class="tabla-proceso"><thead><tr><th>Estado</th><th>Publicación</th><th>SKU</th><th>Campaña</th><th class="num">% guardado</th><th>Qué pasó</th></tr></thead><tbody>' +
+        filas.map(function (f) {
+          return "<tr><td><span class=\"chip-item " + escapeHtml(f.estado) + "\">" + escapeHtml(ESTADOS_ITEM[f.estado] || f.estado) + "</span></td><td>" + linkItemML(f.item_id) + "</td><td>" + escapeHtml(f.sku || "—") +
+            "</td><td>" + escapeHtml(f.promotion_id || "(todas)") + '</td><td class="num">' + (f.porcentaje != null ? escapeHtml(f.porcentaje) + "%" : "—") + "</td><td>" + escapeHtml(textoProblema(f)) + "</td></tr>";
+        }).join("") + "</tbody></table></div>" +
+        (filas.length >= 1500 ? '<div class="estado">Se muestran las primeras 1.500.</div>' : "");
+    });
   }
+  els.btnCerrarDetalleProceso.addEventListener("click", function () { els.modalDetalleProceso.classList.add("oculto"); });
+  els.btnCsvDetalleProceso.addEventListener("click", function () {
+    var filas = (ultimoProblemas && ultimoProblemas.filas) || [];
+    if (!filas.length) { alert("No hay filas para descargar."); return; }
+    var esc = function (v) { var s = String(v == null ? "" : v); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    var lineas = [["estado", "item_id", "sku", "campaña", "porcentaje_guardado", "que_paso"].join(";")].concat(filas.map(function (f) {
+      return [ESTADOS_ITEM[f.estado] || f.estado, f.item_id, f.sku, f.promotion_id, f.porcentaje, textoProblema(f)].map(esc).join(";");
+    }));
+    var blob = new Blob(["﻿" + lineas.join("\n")], { type: "text/csv;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "proceso_" + (procesoActual && procesoActual.proceso ? procesoActual.proceso.id : "") + "_" + new Date().toISOString().slice(0, 10) + ".csv";
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
+  });
 
-  // Descartar la cola de % guardados (ml_promos_snapshot). NO toca Mercado Libre:
-  // solo borra el respaldo. Útil cuando quedó una precarga vieja que ya no se va a reaplicar.
+  // --- Descartar respaldo (no toca ML; solo limpia la cola de % guardados) ---------------------
   var TANDA_BORRADO_SNAPSHOT = 100;
-  document.getElementById("btnDescartarSnapshot").addEventListener("click", function () {
+  els.btnDescartarSnapshot.addEventListener("click", function () {
+    if (hayProcesoServidor()) return;
     var btn = this;
     btn.disabled = true;
     fetchConTimeout(URL_SNAPSHOT, { headers: { Authorization: AUTH } })
       .then(function (res) {
         if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error leyendo el respaldo");
         var filas = res.data.filas || [];
-        if (filas.length === 0) { cargarEstadoSnapshot(); return; }
+        if (filas.length === 0) { cargarEstadoProcesos(false); return; }
         var fecha = filas[0].creado_at ? new Date(filas[0].creado_at).toLocaleDateString("es-AR") : "?";
         if (!confirm("Vas a descartar el respaldo de " + filas.length + " publicaciones (guardado el " + fecha + ").\n\nNo se toca nada en Mercado Libre, pero después ya NO vas a poder usar \"Subir TODAS (con los % guardados)\" para esas publicaciones. ¿Continuar?")) return;
 
@@ -2817,213 +3066,44 @@
         }).then(function (total) {
           els.estadoSnapshot.textContent = "Respaldo descartado (" + total + " filas). Queda limpio.";
           els.estadoSnapshot.className = "estado ok";
-          setTimeout(cargarEstadoSnapshot, 2500);
+          setTimeout(function () { cargarEstadoProcesos(false); }, 2500);
         });
       })
       .catch(function (err) {
         els.estadoSnapshot.textContent = "No se pudo descartar: " + err.message + ". Lo que ya se borró queda borrado; reintentá para terminar.";
         els.estadoSnapshot.className = "estado err";
-        setTimeout(cargarEstadoSnapshot, 5000); // dejo leer el error antes de refrescar el contador
+        setTimeout(function () { cargarEstadoProcesos(false); }, 5000);
       })
       .finally(function () { btn.disabled = false; });
   });
 
-  els.btnSubirTodoGuardado.addEventListener("click", function () {
-    if (hayCorridaEnCurso() || preparandoRestore) return;
-    els.btnSubirTodoGuardado.disabled = true;
-    fetchConTimeout(URL_SNAPSHOT, { headers: { Authorization: AUTH } })
-      .then(function (res) {
-        if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error");
-        var filas = res.data.filas || [];
-        if (filas.length === 0) { alert("No hay nada guardado para reaplicar."); return; }
-
-        var grupos = {};
-        filas.forEach(function (f) {
-          var key = f.promotion_id + "||" + f.promotion_type;
-          if (!grupos[key]) grupos[key] = { promotionId: f.promotion_id, promotionType: f.promotion_type, filas: [] };
-          grupos[key].filas.push(f);
-        });
-
-        var listaGrupos = Object.keys(grupos).map(function (k) { return grupos[k]; });
-        var aviso7d = avisoPreciosRecientes();
-        if (!confirm("Se van a reaplicar " + filas.length + " publicaciones con el % que tenían guardado, en " + listaGrupos.length + " campaña(s)." + (aviso7d ? "\n\n" + aviso7d : "") + "\n\n¿Continuar?")) return;
-
-        prepararYEjecutarRestore(listaGrupos);
-      })
-      .catch(function (err) { alert("Error leyendo el respaldo: " + err.message); })
-      .finally(function () { if (!preparandoRestore) els.btnSubirTodoGuardado.disabled = false; });
-  });
-
-  // 29/09: las campañas grandes (la Campaña propia tiene ~2.000 publicaciones) tardan ~50 s en listarse
-  // en ML y el límite de 20 s cortaba "Subir TODAS". Ahora se consultan de a una, con espera larga
-  // y un reintento si se corta, mostrando el avance.
-  var TIMEOUT_LISTAR_CAMPANA_MS = 150000;
-  function listarCampanaParaRestore(g) {
-    var url = URL_BULK + "?promotion_id=" + encodeURIComponent(g.promotionId) + "&promotion_type=" + encodeURIComponent(g.promotionType);
-    var pedir = function () { return fetchConTimeout(url, { headers: { Authorization: AUTH } }, TIMEOUT_LISTAR_CAMPANA_MS); };
-    return pedir().catch(function (err) { if (err.message !== "timeout") throw err; return pedir(); });
-  }
-
-  var preparandoRestore = false; // evita un segundo clic mientras se consultan las campañas
-  function prepararYEjecutarRestore(gruposSnapshot) {
-    if (preparandoRestore) return;
-    preparandoRestore = true;
-    var i = 0, preparados = [];
-    var estadoPrevio = els.estadoSnapshot.textContent;
-    els.btnSubirTodoGuardado.disabled = true;
-    var siguiente = function () {
-      if (i >= gruposSnapshot.length) return Promise.resolve(preparados);
-      var g = gruposSnapshot[i];
-      els.estadoSnapshot.textContent = "Consultando campaña " + (i + 1) + "/" + gruposSnapshot.length + " en ML (" + g.filas.length + " publicaciones guardadas; las grandes tardan ~1 minuto)…";
-      els.estadoSnapshot.className = "estado";
-      return prepararGrupoRestore(g).then(function (p) { preparados.push(p); i++; return siguiente(); });
-    };
-    siguiente().then(function (lista) {
-      var yaActivas = [];
-      lista.forEach(function (p) { yaActivas = yaActivas.concat(p.idsYaActivas || []); });
-      var pendientes = lista.reduce(function (s, p) { return s + p.items.length; }, 0);
-      var seguir = function () {
-        preparandoRestore = false;
-        els.estadoSnapshot.textContent = estadoPrevio;
-        els.btnSubirTodoGuardado.disabled = false;
-        if (yaActivas.length && pendientes === 0) { cargarEstadoSnapshot(); alert("Las " + yaActivas.length + " publicaciones del respaldo ya estaban activas en sus campañas: se sacaron del respaldo. No quedó nada por subir."); return; }
-        ejecutarSubidaGlobal(lista.filter(function (p) { return p.items.length > 0; }));
-      };
-      if (!yaActivas.length) return seguir();
-      els.estadoSnapshot.textContent = yaActivas.length + " ya estaban activas (se retoma una subida anterior): se sacan del respaldo…";
-      borrarDelRespaldo(yaActivas).then(seguir);
-    }).catch(function (err) {
-      preparandoRestore = false;
-      els.estadoSnapshot.textContent = estadoPrevio;
-      els.btnSubirTodoGuardado.disabled = false;
-      alert("No se pudieron consultar las campañas para reaplicar (" + err.message + "). No se tocó nada; reintentá.");
-    });
-  }
-
-  function prepararGrupoRestore(g) {
-      return listarCampanaParaRestore(g).then(function (res) {
-        // Si ML/servidor falla, se corta todo (antes se tomaba como "0 candidatas" y se salteaba la campaña).
-        if (!res.data || !res.data.ok) throw new Error("campaña " + g.promotionId + ": " + ((res.data && res.data.error) || "error " + res.status));
-        var candidatosPorId = {};
-        (res.data.items_candidatos || []).forEach(function (it) { candidatosPorId[it.id] = it; });
-        // 29/09: si se retoma una subida cortada, las que YA están activas en la campaña se dan por hechas
-        // y se sacan del respaldo (antes quedaban ahí para siempre).
-        var activasPorId = {};
-        (res.data.items_activos || []).forEach(function (it) { activasPorId[it.id] = true; });
-        var items = [];
-        var idsSnapshotPorItemId = {};
-        var idsYaActivas = [];
-        g.filas.forEach(function (f) {
-          idsSnapshotPorItemId[f.item_id] = f.id;
-          if (activasPorId[f.item_id]) { idsYaActivas.push(f.id); return; }
-          var base = candidatosPorId[f.item_id];
-          if (!base) return; // ya no aparece como candidato -- se salta, queda en el respaldo para revisar a mano
-          items.push({ id: base.id, original_price: base.original_price, min_discounted_price: base.min_discounted_price, max_discounted_price: base.max_discounted_price, porcentaje_item: f.porcentaje });
-        });
-        return { promotionId: g.promotionId, promotionType: g.promotionType, nombre: g.promotionId, items: items, idsSnapshotPorItemId: idsSnapshotPorItemId, idsYaActivas: idsYaActivas };
-      });
-  }
-
-  // Borra filas del respaldo en lotes chicos (la lista va en la URL: 2000 ids juntos no entran).
-  function borrarDelRespaldo(ids) {
-    var lotes = chunk(ids, 100), k = 0;
-    var sig = function () {
-      if (k >= lotes.length) return Promise.resolve();
-      var lote = lotes[k++];
-      return fetchConTimeout(URL_SNAPSHOT + "?ids=" + lote.join(","), { method: "DELETE", headers: { Authorization: AUTH } })
-        .catch(function () { /* si falla, quedan filas viejas en el respaldo: no es grave */ })
-        .then(sig);
-    };
-    return sig();
-  }
-
-  function ejecutarSubidaGlobal(grupos) {
-    if (grupos.length === 0) {
-      alert("Ninguna de las publicaciones guardadas aparece como candidata ahora mismo — revisalas a mano (puede que ya no tengan la invitación vigente).");
-      return;
-    }
-
-    var logGlobal = [];
-    var exitosos = 0, errores = 0, revisar = 0;
-    var idsSnapshotExitosos = [];
-    var totalItems = grupos.reduce(function (s, g) { return s + g.items.length; }, 0);
-    var procesados = 0;
-    var gi = 0;
-    var t0Subir = Date.now();
-    iniciarCorrida();
-
-    els.resultadoTitulo.textContent = "Subiendo TODAS (con % guardados)...";
-    els.resultadoResumen.textContent = "Procesando 0/" + totalItems + " (estimado " + fmtSeg(totalItems * SEG_POR_ITEM_SUBIR_EST) + ")...";
-    els.resultadoTablaWrap.innerHTML = "";
-    els.btnReintentarFallidos.classList.add("oculto");
-    els.btnUsarSugerido.classList.add("oculto");
-    els.bloqueAplicarPctRevisar.classList.add("oculto");
-    els.modalResultado.classList.remove("oculto");
-
-    function siguienteGrupo() {
-      if (gi >= grupos.length) {
-        els.resultadoTitulo.textContent = "Resultado — Subir TODAS (con % guardados)";
-        els.resultadoResumen.textContent = totalItems + " publicaciones procesadas — " + exitosos + " OK, " + errores + " con error, " + revisar + " en revisión." + (revisar > 0 ? " " + TEXTO_REGLA_7D : "");
-        renderTablaLog(logGlobal, "subir");
-        finCorrida();
-
-        if (idsSnapshotExitosos.length > 0) {
-          // Ya se fueron borrando tanda por tanda; esta pasada final solo reintenta por si alguna falló.
-          borrarDelRespaldo(idsSnapshotExitosos)
-            .finally(function () { cargarEstadoSnapshot(); refrescarTrasRender = "todas"; arrancarApp(); });
-        } else {
-          cargarEstadoSnapshot();
-          refrescarTrasRender = "todas";
-          arrancarApp();
+  /* ============================================================
+     AVISO DE VERSIÓN NUEVA
+     GitHub Pages tarda 1-2 min en publicar y una pestaña abierta sigue con la versión vieja
+     hasta que se recarga. Cada 5 min (y al volver a la pestaña) se lee el index publicado
+     sin caché y se compara APP_VERSION.
+     ============================================================ */
+  var CHEQUEO_VERSION_MS = 5 * 60 * 1000;
+  function chequearVersionNueva() {
+    if (location.protocol === "file:") return;
+    fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.text() : ""; })
+      .then(function (t) {
+        var m = t && t.match(/var APP_VERSION = "([^"]+)"/);
+        if (m && m[1] !== APP_VERSION) {
+          els.versionNuevaTexto.textContent = "Hay una versión nueva de la app (" + m[1] + "). Recargá para usarla.";
+          els.bannerVersion.classList.remove("oculto");
         }
-        return;
-      }
-      var grupo = grupos[gi];
-      var tandas = chunk(grupo.items, BATCH_SIZE);
-      var ti = 0;
-      function siguienteTandaGrupo() {
-        if (ti >= tandas.length) { gi++; siguienteGrupo(); return; }
-        var tanda = tandas[ti];
-        fetchConTimeout(URL_BULK, {
-          method: "POST",
-          headers: { Authorization: AUTH, "Content-Type": "application/json" },
-          body: JSON.stringify({ promotion_id: grupo.promotionId, promotion_type: grupo.promotionType, accion: "subir", items: tanda, porcentaje_base: 15, excepciones: [] }),
-        }, TIMEOUT_TANDA_MS)
-          .then(function (res) {
-            if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error en tanda");
-            logGlobal = logGlobal.concat(res.data.log || []);
-            exitosos += res.data.exitosos || 0;
-            errores += res.data.errores || 0;
-            revisar += res.data.revisar || 0;
-            var idsTanda = [];
-            (res.data.log || []).forEach(function (l) {
-              if (l.estado === "APLICADO" && grupo.idsSnapshotPorItemId[l.item_id]) {
-                idsSnapshotExitosos.push(grupo.idsSnapshotPorItemId[l.item_id]);
-                idsTanda.push(grupo.idsSnapshotPorItemId[l.item_id]);
-              }
-            });
-            // 29/09: se sacan del respaldo al toque (antes, al final: si se cortaba, no se borraba nada).
-            if (idsTanda.length) borrarDelRespaldo(idsTanda);
-            procesados += tanda.length;
-            var restSubir = (Date.now() - t0Subir) / 1000 / procesados * (totalItems - procesados);
-            els.resultadoResumen.textContent = "Procesando " + procesados + "/" + totalItems + " (" + grupo.nombre + ", resta " + fmtSeg(restSubir) + ")...";
-            renderTablaLog(logGlobal, "subir");
-            ti++;
-            siguienteTandaGrupo();
-          })
-          .catch(function (err) {
-            els.resultadoTitulo.textContent = "Se cortó a mitad de camino";
-            els.resultadoResumen.textContent = procesados + "/" + totalItems + " procesadas antes del error (" + err.message + "). Lo ya subido quedó bien y se sacó del respaldo: tocá \"Subir TODAS\" de nuevo para seguir con el resto.";
-            cargarEstadoSnapshot();
-            renderTablaLog(logGlobal, "subir");
-            finCorrida();
-          });
-      }
-      siguienteTandaGrupo();
-    }
-
-    siguienteGrupo();
+      })
+      .catch(function () { /* sin red: se reintenta en el próximo ciclo */ });
   }
+  els.btnRecargarVersion.addEventListener("click", function () {
+    if (corridaEnCurso && !confirm("Hay una tanda corriendo en esta pestaña: si recargás se corta. ¿Recargar igual?")) return;
+    location.reload();
+  });
+  setInterval(chequearVersionNueva, CHEQUEO_VERSION_MS);
+  setTimeout(chequearVersionNueva, 60000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) chequearVersionNueva(); });
 
   /* ============================================================
      MÓDULO: Actualización masiva de precios de lista (por SKU)
