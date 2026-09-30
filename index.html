@@ -56,6 +56,7 @@
     margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
   }
   header.top h1 { font-size: 1.3rem; color: var(--amber); margin: 0; }
+  header.top .version-app { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; font-variant-numeric: tabular-nums; }
   header.top .acciones { display: flex; gap: 8px; }
 
   .panel {
@@ -282,7 +283,10 @@
      ============================================================ -->
 <div id="app" class="oculto">
   <header class="top">
-    <h1>🏷️ Promociones ML — Gráfica Límite</h1>
+    <div>
+      <h1>🏷️ Promociones ML — Gráfica Límite</h1>
+      <div class="version-app" title="Versión de la app que tenés abierta. Si aparece el aviso de versión nueva, recargá.">versión <span id="appVersionTxt">—</span></div>
+    </div>
     <div class="acciones">
       <button class="secondary chico" id="btnFuncionamiento">ℹ️ Funcionamiento de la app</button>
       <button class="secondary chico" id="btnLogout">Salir</button>
@@ -778,7 +782,7 @@
     <p>Las listas que crecen con la cantidad de publicaciones (la grilla de carga, el preview de precios, los tickets, "% aplicados", la selección de candidatas, el detalle de una tanda y las publicaciones sin SKU) tienen una <b>altura fija y se scrollean por dentro</b>, con el encabezado siempre visible. Así los botones de cada módulo quedan a mano sin bajar toda la página. Al lado de "Limpiar" se ve cuántos SKU hay cargados en la grilla.</p>
     <h3>Seguir usando la app mientras corre una tanda</h3>
     <p>Cuando lanzás "Subir a todas" o "Bajar de todas" desde una card, aparece la ventana de progreso. Con el botón <b>"➖ Seguir usando la app"</b> (o con Cerrar) la ventana se achica a una <b>barrita abajo a la derecha</b> que sigue mostrando el avance y el tiempo que resta; la corrida no se corta. Tocando la barrita volvés al detalle, y cuando termina se pone verde. Dos reglas: <b>no cierres ni recargues la pestaña</b> mientras corre una tanda de card (el navegador te avisa; Bajar/Subir TODAS no tienen esta limitación porque corren en el servidor), y solo puede correr <b>una tanda a la vez</b>.</p>
-    <p><b>Aviso de versión nueva:</b> cada 5 minutos (y al volver a la pestaña) la app se fija si se publicó una versión nueva. Si la hay, aparece arriba un aviso con el botón <b>"🔄 Recargar"</b>: una pestaña abierta sigue usando la versión vieja hasta que se recarga.</p>
+    <p><b>Aviso de versión nueva:</b> cada 5 minutos (y al volver a la pestaña) la app se fija si se publicó una versión nueva. Si la hay, aparece arriba un aviso con el botón <b>"🔄 Recargar"</b>: una pestaña abierta sigue usando la versión vieja hasta que se recarga. La versión que tenés abierta se ve siempre debajo del título de la app.</p>
     <h3>% aplicados: el mismo % a todas</h3>
     <p>En "Ver % aplicados" de una campaña con precio (Deal, Campaña propia) podés escribir un % en <b>"Aplicar X% a todas"</b> y apretar <b>Rellenar</b>: copia ese % en todas las filas sin guardar nada. Después ajustás a mano las que quieras y apretás <b>"Guardar todas las modificadas"</b>: se aplican solo las filas cuyo % cambió, por tandas y con tiempo estimado. La columna <b>Resultado</b> muestra, por publicación, si quedó aplicado o si el % quedó fuera del rango que acepta ML (con el rango válido).</p>
     <h3>% de descuento: se pregunta cada vez, por campaña</h3>
@@ -1039,7 +1043,7 @@
 
   // --- Tickets (módulo transversal: mismo backend para todas las apps) ---
   var TICKETS_APP_ID = "grafica-promociones"; // identifica a ESTA app en el embudo común (cambiar al clonar/replicar)
-  var APP_VERSION = "2026-09-30.1";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
+  var APP_VERSION = "2026-09-30.2";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
 
   // Captura de errores recientes (se adjuntan como contexto técnico a los tickets). Buffer de 5.
   var ERRORES_RECIENTES = [];
@@ -3084,6 +3088,7 @@
      sin caché y se compara APP_VERSION.
      ============================================================ */
   var CHEQUEO_VERSION_MS = 5 * 60 * 1000;
+  document.getElementById("appVersionTxt").textContent = APP_VERSION; // visible debajo del título
   function chequearVersionNueva() {
     if (location.protocol === "file:") return;
     fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" })
