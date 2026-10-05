@@ -335,6 +335,7 @@
     .esc-promo-edit{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:0.8rem;}
     .esc-promo-edit label{margin:0;font-size:0.78rem;}
     .esc-promo-edit input{width:80px;text-align:right;}
+    .nota-variaciones{font-size:0.68rem;color:var(--text-dim);margin-top:3px;}
     .esc-ref{font-size:0.66rem;color:var(--text-dim);text-align:right;white-space:nowrap;}
     .esc-lista{font-size:0.74rem;line-height:1.45;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
     .th-may label{display:inline-flex;gap:5px;align-items:center;margin:0;cursor:pointer;color:inherit;font-weight:600;}
@@ -791,7 +792,7 @@
     <p><b>Subir TODAS (con los % guardados):</b> recorre el respaldo; si una publicación ya está activa en su campaña se da por hecha; si es candidata, se sube con su % calculado sobre el precio de lista ACTUAL y se verifica en ML el precio que quedó. Lo que sale bien se borra del respaldo; lo que ML deja <b>en revisión</b> (pide otro %) o con error queda para el próximo intento. Si ML ya no la ofrece como candidata (campaña terminada, publicación en revisión), queda como <b>omitida</b>.</p>
     <p><b>💡 Subir las que quedaron con el precio sugerido de ML:</b> para lo que sigue en el respaldo (normalmente las "en revisión"), aplica el precio que sugiere ML, con un <b>tope de %</b> que elegís: si el sugerido implica más descuento que el tope, no se toca. <b>✋ Cancelar proceso</b> lo frena en segundos; lo ya hecho queda hecho. Al terminar, <b>📋 Ver detalle</b> lista solo lo que hay que mirar (con link a cada publicación, SKU y qué pasó) y se puede bajar en CSV; <b>🕘 Procesos anteriores</b> muestra los últimos 5 con quién los lanzó. <b>🗑️ Descartar respaldo</b> borra la cola de % guardados sin tocar Mercado Libre.</p>
     <h3>Pestaña "Actualizar precios"</h3>
-    <p>Sirve para actualizar el <b>precio de lista</b> (no el de promo) de muchas publicaciones de una. Cargás <b>SKU y precio</b> en la tabla (podés copiar las columnas de Excel y pegarlas en la primera celda: se completa sola); la tercera columna, <b>Mayorista</b>, indica si ese SKU lleva también los escalones mayoristas (ver más abajo). Como un mismo SKU suele estar en varias publicaciones, el precio se aplica a <b>todas las publicaciones activas y pausadas</b> de ese SKU (a la pausada le queda listo para cuando la reactivés; las cerradas se omiten). El flujo es en dos pasos: primero <b>Previsualizar</b> (no toca nada: trae de ML el precio actual de cada publicación y te muestra antes → después → Δ%, con un tiempo estimado mientras corre), y recién después <b>Aplicar en ML</b> (con confirmación escribiendo "APLICAR PRECIOS"). En el preview podés <b>editar el precio de cualquier fila</b> a mano antes de aplicar, y <b>clickear las tarjetas</b> de arriba (A actualizar / A revisar / Omitidas / Con problema) para filtrar la tabla por ese estado. Las publicaciones con variaciones quedan "a revisar" (el precio va por variación). Podés exportar todo a CSV. Encaja con el flujo masivo: bajás las promos, actualizás precios acá, y volvés a subir las promos.</p>
+    <p>Sirve para actualizar el <b>precio de lista</b> (no el de promo) de muchas publicaciones de una. Cargás <b>SKU y precio</b> en la tabla (podés copiar las columnas de Excel y pegarlas en la primera celda: se completa sola); la tercera columna, <b>Mayorista</b>, indica si ese SKU lleva también los escalones mayoristas (ver más abajo). Como un mismo SKU suele estar en varias publicaciones, el precio se aplica a <b>todas las publicaciones activas y pausadas</b> de ese SKU (a la pausada le queda listo para cuando la reactivés; las cerradas se omiten). El flujo es en dos pasos: primero <b>Previsualizar</b> (no toca nada: trae de ML el precio actual de cada publicación y te muestra antes → después → Δ%, con un tiempo estimado mientras corre), y recién después <b>Aplicar en ML</b> (con confirmación escribiendo "APLICAR PRECIOS"). En el preview podés <b>editar el precio de cualquier fila</b> a mano antes de aplicar, y <b>clickear las tarjetas</b> de arriba (A actualizar / A revisar / Omitidas / Con problema) para filtrar la tabla por ese estado. <b>Publicaciones con variaciones</b> (ej. una tinta con 6 colores, cada color con su SKU): Mercado Libre usa un solo precio de lista y los mismos escalones para toda la publicación. Si todas las variaciones tienen el mismo precio, la app la actualiza entera (avisa "🎨 N variaciones: valen para todas"). Si cargás varios SKU de la misma publicación, tienen que tener los mismos valores: con valores distintos quedan en "Conflicto entre variaciones" y no se toca nada; con valores iguales se aplica una sola vez. Si las variaciones tienen precios distintos entre sí, quedan "a revisar" y se editan a mano en ML. Podés exportar todo a CSV. Encaja con el flujo masivo: bajás las promos, actualizás precios acá, y volvés a subir las promos.</p>
     <h3>Escalones mayoristas (precio por cantidad)</h3>
     <p>En Mercado Libre, el "precio por cantidad" es un precio por unidad más bajo cuando alguien compra <b>desde N unidades</b>, y <b>solo lo ven los compradores empresa</b> (cuentas con factura A). La app lo maneja con <b>escalones</b> (por ejemplo "desde 5 u." y "desde 10 u."). ML permite <b>hasta 5 escalones</b> por publicación, con unidades que crecen y un precio que baja en cada escalón.</p>
     <p><b>Quién define qué:</b> <b>Gerencia</b> define, con "✏️ Editar escalones", las <b>unidades</b> de cada escalón (las mismas para todos los SKU) y el <b>% de la promo general</b> (la campaña propia que está activa todos los meses sobre todas las publicaciones; hoy 10 %). Se guarda en la base y lo usa todo el equipo. El <b>precio de cada escalón lo escribís vos, SKU por SKU</b>, en la tabla: hay una columna "Desde N u." por cada escalón, donde va el precio final por unidad.</p>
@@ -1071,7 +1072,7 @@
 
   // --- Tickets (módulo transversal: mismo backend para todas las apps) ---
   var TICKETS_APP_ID = "grafica-promociones"; // identifica a ESTA app en el embudo común (cambiar al clonar/replicar)
-  var APP_VERSION = "2026-10-05.1";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
+  var APP_VERSION = "2026-10-05.2";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
 
   // Captura de errores recientes (se adjuntan como contexto técnico a los tickets). Buffer de 5.
   var ERRORES_RECIENTES = [];
@@ -3709,6 +3710,7 @@
 
     function sig() {
       if (ti >= tandas.length) {
+        consolidarVariaciones(filasPreviewPrecios);
         conError.forEach(function (p) {
           var estErr = p.error === "falta SKU" ? "SKU_NO_ENCONTRADO" : (/escal/.test(p.error) ? "MAYORISTA_INVALIDO" : "PRECIO_INVALIDO");
           filasPreviewPrecios.push({ sku: p.sku || "(vacío)", item_id: null, title: null, estado: estErr, detalle: p.error });
@@ -3735,6 +3737,7 @@
           (res.data.filas || []).forEach(function (f) {
             // Montos cargados en la grilla para ese SKU: permiten recalcular la fila si se edita la lista o la opción.
             f._montos = (pedidoPorSku[f.sku] && pedidoPorSku[f.sku].montos.length) ? pedidoPorSku[f.sku].montos : null;
+            f._pedido = pedidoPorSku[f.sku] || null; // lo que se pidió para ese SKU (para comparar SKU de una misma publicación)
             // Editables en ML: se puede corregir el precio o cambiar la opción de escalones a mano antes de aplicar.
             f._editable = !!f.item_id && (f.estado === "OK" || f.estado === "MAYORISTA_INVALIDO");
             filasPreviewPrecios.push(f);
@@ -3754,6 +3757,40 @@
         });
     }
     sig();
+  }
+
+  // v2026-10-05.2: publicaciones CON VARIACIONES. Cada color/variante es un SKU, pero ML usa un solo precio de
+  // lista y los mismos escalones para toda la publicación. Si varios SKU de la grilla caen en la misma publicación:
+  //   - con lo mismo pedido (lista, escalones, quitar) -> se aplica una sola vez (las otras filas quedan "Sin cambios");
+  //   - con valores distintos -> todas quedan en CONFLICTO_VARIACIONES y no se aplica nada (decisión de Gerencia).
+  function firmaPedido(q) { return q ? JSON.stringify([q.precio, q.montos, !!q.quitar]) : ""; }
+  function consolidarVariaciones(filas) {
+    var porItem = {};
+    filas.forEach(function (f) { if (f.item_id && f._pedido && f.variaciones && f.estado !== "REVISAR_VARIACIONES") (porItem[f.item_id] = porItem[f.item_id] || []).push(f); });
+    Object.keys(porItem).forEach(function (id) {
+      var grupo = porItem[id];
+      if (grupo.length < 2) return;
+      var skus = grupo.map(function (f) { return f.sku; });
+      var firmas = {};
+      grupo.forEach(function (f) { firmas[firmaPedido(f._pedido)] = true; });
+      if (Object.keys(firmas).length > 1) {
+        grupo.forEach(function (f) {
+          f.estado = "CONFLICTO_VARIACIONES"; f._editable = false; f.escalones_nuevos = null; f.quitar_escalones = false; f.aviso_mayorista = null;
+          f.detalle = "Los SKU de esta publicación (" + skus.join(", ") + ") tienen valores distintos en la tabla. ML usa un solo precio de lista y los mismos escalones para todas las variaciones: cargalos iguales y volvé a previsualizar.";
+        });
+      } else {
+        grupo.slice(1).forEach(function (f) {
+          f.estado = "SIN_CAMBIOS"; f._editable = false; f.escalones_nuevos = null; f.quitar_escalones = false; f.precio_nuevo = null; f.aviso_mayorista = null;
+          f.detalle = "misma publicación que el SKU " + grupo[0].sku + ": el cambio se aplica una sola vez para todas las variaciones";
+        });
+      }
+    });
+  }
+  function notaVariaciones(f) {
+    if (!f.variaciones) return "";
+    var otros = (f.skus_publicacion || []).filter(function (x) { return x !== f.sku; });
+    return '<div class="nota-variaciones" title="' + escapeHtml((f.skus_publicacion || []).join(" · ")) + '">🎨 ' + f.variaciones + " variaciones: el precio y los escalones valen para todas" +
+      (otros.length ? " (también " + escapeHtml(otros.slice(0, 3).join(", ")) + (otros.length > 3 ? " y " + (otros.length - 3) + " más" : "") + ")" : "") + "</div>";
   }
 
   function pctContra(base, valor) {
@@ -3804,7 +3841,7 @@
   var ETIQUETA_ESTADO_PRECIO = {
     OK: "Se actualiza", APLICADO: "Aplicado",
     MAYORISTA_INVALIDO: "Mayorista inválido", SIN_CAMBIOS: "Sin cambios",
-    REVISAR_VARIACIONES: "Revisar (variaciones)",
+    REVISAR_VARIACIONES: "Revisar (variaciones)", CONFLICTO_VARIACIONES: "Conflicto entre variaciones",
     OMITIDA_STATUS: "Omitida (cerrada)", OMITIDA_TOPE: "Omitida (tope)",
     SKU_NO_ENCONTRADO: "SKU no encontrado", PRECIO_INVALIDO: "Precio inválido", ERROR: "Error",
   };
@@ -3830,7 +3867,7 @@
     OK: ["OK", "APLICADO"],
     REVISAR: ["REVISAR_VARIACIONES"],
     OMITIDAS: ["OMITIDA_STATUS", "OMITIDA_TOPE", "SIN_CAMBIOS"],
-    PROBLEMA: ["SKU_NO_ENCONTRADO", "PRECIO_INVALIDO", "MAYORISTA_INVALIDO", "ERROR"],
+    PROBLEMA: ["SKU_NO_ENCONTRADO", "PRECIO_INVALIDO", "MAYORISTA_INVALIDO", "CONFLICTO_VARIACIONES", "ERROR"],
   };
   // Filtros que no son por estado (predicado propio). Para sumar uno: agregalo acá y su KPI en renderResumenPrecios.
   var FILTROS_ESPECIALES = {
@@ -3951,7 +3988,7 @@
 
       body += "<tr" + filaCls + "><td>" + escapeHtml(f.sku || "—") + "</td><td>" + pub + "</td>" +
         "<td><span class='tag-log " + claseEstadoPrecio(f.estado) + "'>" + escapeHtml(ETIQUETA_ESTADO_PRECIO[f.estado] || f.estado) + "</span>" +
-        (f.warning_grande ? ' ⚠️' : "") + detalle + aviso + "</td>" +
+        (f.warning_grande ? ' ⚠️' : "") + detalle + aviso + notaVariaciones(f) + "</td>" +
         "<td class='num'>" + fmtPrecio(f.precio_antes) + "</td>" +
         "<td class='num'>" + celdaNuevo + "</td>" +
         "<td class='num'>" + celdaDelta(f.pct) + "</td>" +
@@ -3995,10 +4032,10 @@
   }
 
   function renderResumenPrecios() {
-    var c = { OK: 0, REVISAR_VARIACIONES: 0, OMITIDA_STATUS: 0, OMITIDA_TOPE: 0, SIN_CAMBIOS: 0, SKU_NO_ENCONTRADO: 0, PRECIO_INVALIDO: 0, MAYORISTA_INVALIDO: 0, ERROR: 0 };
+    var c = { OK: 0, REVISAR_VARIACIONES: 0, OMITIDA_STATUS: 0, OMITIDA_TOPE: 0, SIN_CAMBIOS: 0, SKU_NO_ENCONTRADO: 0, PRECIO_INVALIDO: 0, MAYORISTA_INVALIDO: 0, CONFLICTO_VARIACIONES: 0, ERROR: 0 };
     filasPreviewPrecios.forEach(function (f) { if (c[f.estado] != null) c[f.estado]++; });
     var omit = c.OMITIDA_STATUS + c.OMITIDA_TOPE + c.SIN_CAMBIOS;
-    var probl = c.SKU_NO_ENCONTRADO + c.PRECIO_INVALIDO + c.MAYORISTA_INVALIDO + c.ERROR;
+    var probl = c.SKU_NO_ENCONTRADO + c.PRECIO_INVALIDO + c.MAYORISTA_INVALIDO + c.CONFLICTO_VARIACIONES + c.ERROR;
     var fuenteMay = filasResultadoPrecios || filasPreviewPrecios;
     var conMay = fuenteMay.filter(function (f) { return filasResultadoPrecios ? f.mayorista_verificado === true : (f.estado === "OK" && !!f.escalones_nuevos); }).length;
     var avisosMay = fuenteMay.filter(function (f) { return !!f.aviso_mayorista; }).length;
@@ -4010,9 +4047,9 @@
     }
     document.getElementById("resumenPrecios").innerHTML =
       kpi("OK", "Publicaciones activas/pausadas que se van a actualizar. Solo estas se aplican. Clic para filtrar la tabla.", "A actualizar", c.OK) +
-      kpi("REVISAR", "Publicaciones con variaciones: el precio va por variación, no se toca desde acá. Clic para filtrar.", "A revisar", c.REVISAR_VARIACIONES) +
+      kpi("REVISAR", "Publicaciones con variaciones que tienen precios distintos entre sí: se editan a mano en ML. (Las que tienen todas el mismo precio sí se actualizan desde acá: precio y escalones valen para todas.) Clic para filtrar.", "A revisar", c.REVISAR_VARIACIONES) +
       kpi("OMITIDAS", "Publicaciones cerradas/finalizadas que ML no deja editar, o que superaron el tope por tanda. Clic para filtrar.", "Omitidas", omit) +
-      kpi("PROBLEMA", "SKU que no aparece en el catálogo ni en ML, precio inválido, escalones que no se pueden calcular (cada escalón tiene que quedar por debajo del anterior), o error consultando ML. Clic para filtrar.", "Con problema", probl) +
+      kpi("PROBLEMA", "SKU que no aparece en el catálogo ni en ML, precio inválido, escalones inválidos (cada escalón tiene que quedar por debajo del anterior y de la lista), SKU de una misma publicación con variaciones cargados con valores distintos, o error consultando ML. Clic para filtrar.", "Con problema", probl) +
       kpi("MAYORISTA", filasResultadoPrecios
         ? "Publicaciones a las que se les cargaron los escalones mayoristas y ML los devolvió todos en su lista de precios (confirmado). Sale de la respuesta de ML al aplicar. Clic para filtrar."
         : "Publicaciones que van a recibir escalones mayoristas nuevos: los precios finales que cargaste en la tabla para su SKU (reemplazan los que tenga). Al lado de cada uno ves cuánto descuenta sobre el precio con la promo general. Clic para filtrar.",
