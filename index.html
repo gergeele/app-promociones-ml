@@ -103,6 +103,9 @@
     line-height: 1.4; z-index: 20; text-align: left; box-shadow: 0 6px 20px rgba(0,0,0,0.12);
   }
   .kpi-help.abierto .globo { display: block; }
+  /* v2026-10-08.1 (ticket #14): abierto se posiciona fijo respecto de la ventana (JS lo ubica y lo
+     mantiene dentro de la pantalla). Antes quedaba cortado contra el borde de los modales con scroll. */
+  .kpi-help.abierto .globo.fijo { position: fixed; bottom: auto; transform: none; z-index: 1000; max-width: calc(100vw - 24px); }
 
   /* -------------------- Hero cards por tipo -------------------- */
   .grid-tipos { display: grid; grid-template-columns: 1fr; gap: 14px; }
@@ -142,9 +145,26 @@
   }
   .btn-alias:hover { background: transparent; color: var(--amber-dim); }
   .nombre-interno { font-size: 0.7rem; color: var(--text-dim); margin-top: 2px; }
+  /* Nota del equipo por campaña (ticket #16) */
+  .nota-campana { font-size: 0.74rem; color: var(--text); background: var(--amber-soft); border-left: 3px solid var(--amber-dim); border-radius: 6px; padding: 5px 8px; margin-top: 6px; white-space: pre-wrap; word-break: break-word; }
+  /* Regeneración automática de campañas propias (tickets #18 y #20) */
+  .regen { margin-top: 8px; padding: 8px 10px; border: 1px dashed var(--panel-border); border-radius: 8px; background: var(--panel); display: flex; flex-direction: column; gap: 6px; }
+  .regen-fila { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .regen label.regen-check { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 0.78rem; font-weight: 600; color: var(--text); cursor: pointer; }
+  .regen input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--amber-dim); cursor: pointer; }
+  .regen-estado { font-size: 0.72rem; color: var(--text-dim); line-height: 1.35; }
+  .regen-estado.ok { color: var(--ok); }
+  .regen-estado.err { color: var(--err); }
+  .regen-estado.activa { color: var(--amber); }
+  .regen-origen { font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; }
   .desglose-aporte { width: 100%; font-size: 0.75rem; margin-top: 6px; padding: 5px 8px; border-radius: 6px; background: var(--panel-2); border: 1px solid var(--panel-border); }
   .aporte-celda { font-size: 0.75rem; color: var(--text-dim); white-space: nowrap; }
   .aporte-celda b { color: var(--text); }
+  /* v2026-10-26.1: % ML / % nuestro en columnas separadas y ordenables (compartidas con ML) */
+  td.celda-aporte { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  td.celda-aporte.nuestro { font-weight: 700; }
+  td.celda-aporte.sobre-general { color: var(--amber); }
+  td.celda-aporte.sin-dato { color: var(--text-dim); font-weight: 400; }
   /* white-space normal: la celda de escalones es td.num (nowrap) y la nota ensanchaba la tabla */
   .nota-escalones { display: block; font-size: 0.7rem; color: var(--text-dim); margin-top: 3px; line-height: 1.3; white-space: normal; min-width: 150px; max-width: 220px; margin-left: auto; text-align: right; }
   .tabla-precios td.td-may .quitar-esc, .tabla-precios td.td-may .may-ok { white-space: normal; }
@@ -169,6 +189,20 @@
   .modal-caja h3 { color: var(--text); font-size: 0.95rem; margin: 14px 0 6px; }
   .modal-caja p { font-size: 0.85rem; color: var(--text-dim); }
   .modal-cerrar { display: flex; justify-content: flex-end; margin-top: 16px; }
+  /* Avisos y confirmaciones de la app (reemplazan los cuadros nativos "gergeele.github.io dice", ticket #17) */
+  #modalAviso, #modalPregunta { z-index: 300; }
+  .aviso-texto { white-space: pre-line; font-size: 0.88rem; color: var(--text); line-height: 1.45; }
+  /* Toast: confirmación corta que se va sola */
+  .toast { position: fixed; right: 16px; bottom: 16px; max-width: min(420px, calc(100vw - 32px)); background: var(--text); color: #FFFFFF; padding: 12px 14px; border-radius: 10px; font-size: 0.82rem; box-shadow: 0 8px 24px rgba(0,0,0,0.25); z-index: 400; opacity: 0; transform: translateY(10px); transition: opacity .2s, transform .2s; pointer-events: none; }
+  .toast.visible { opacity: 1; transform: none; }
+  /* Cola de procesos */
+  .cola-procesos { margin-top: 12px; border-top: 1px solid var(--panel-border); padding-top: 10px; }
+  .cola-procesos h4 { margin: 0 0 6px; font-size: 0.82rem; color: var(--text); }
+  .cola-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px; border: 1px solid var(--panel-border); border-radius: 8px; background: var(--panel-2); font-size: 0.78rem; margin-bottom: 6px; }
+  .cola-item .cola-pos { font-weight: 700; color: var(--amber); margin-right: 6px; }
+  .cola-item small { color: var(--text-dim); }
+  .detalle-acciones { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--panel-border); }
+  .detalle-acciones input[type="number"] { width: 80px; }
 
   table.log { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-top: 10px; }
   /* v2026-09-29.4: listas largas con altura acotada y scroll interno (encabezado fijo), así los
@@ -421,14 +455,6 @@
     .resumen-precios{display:flex;gap:12px;flex-wrap:wrap;margin:4px 0 14px;}
     .resumen-precios .kpi{background:var(--panel-2);border:1px solid var(--panel-border);border-radius:8px;padding:8px 12px;font-size:0.78rem;color:var(--text-dim);}
     .resumen-precios .kpi b{font-size:1.15rem;display:block;color:inherit;}
-    /* ---------- Corrida en segundo plano (barrita flotante) ---------- */
-    .pill-corrida{position:fixed;right:16px;bottom:16px;z-index:90;background:var(--panel);border:1px solid var(--amber);color:var(--text);border-radius:999px;padding:10px 16px;font-size:0.82rem;box-shadow:0 6px 20px rgba(0,0,0,.15);cursor:pointer;display:flex;gap:10px;align-items:center;max-width:calc(100vw - 32px);}
-    .pill-corrida:hover{border-color:var(--amber-dim);}
-    .pill-corrida.terminada{border-color:var(--ok);}
-    .pill-spinner{width:12px;height:12px;border-radius:50%;border:2px solid var(--amber-soft);border-top-color:var(--amber);animation:giro .8s linear infinite;flex-shrink:0;}
-    .pill-corrida.terminada .pill-spinner{animation:none;border-color:var(--ok);background:var(--ok);}
-    @keyframes giro{to{transform:rotate(360deg)}}
-    @media (max-width:520px){.pill-corrida{left:16px;right:16px;bottom:12px;justify-content:center;}}
     /* ---------- % aplicados: aplicar a todas ---------- */
     .pct-masivo{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--panel-2);border:1px solid var(--panel-border);border-radius:8px;padding:8px 10px;margin:8px 0;font-size:0.82rem;}
     .pct-frescura{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:0.75rem;color:var(--text-dim);margin:-4px 0 6px;}
@@ -460,7 +486,7 @@
   <!-- Acciones globales: Bajar/Subir TODAS. Corren EN EL SERVIDOR (función ml-procesos): la app solo las lanza y muestra el avance. -->
   <div class="panel" style="border-color:var(--amber-dim);" id="panelAccionesGlobales">
     <label style="margin:0; color:var(--amber); font-weight:600;">⚠️ Acciones globales</label>
-    <p style="font-size:0.8rem; color:var(--text-dim); margin:6px 0 12px;">Para actualizar precios masivamente: bajás todas las promos activas (se guarda el % de cada una), actualizás precios y después las volvés a subir con esos mismos %. <b>Corren en el servidor:</b> podés cerrar la pestaña o apagar la compu y siguen solas; el avance se ve desde cualquier usuario.</p>
+    <p style="font-size:0.8rem; color:var(--text-dim); margin:6px 0 12px;">Para actualizar precios masivamente: bajás todas las promos activas (se guarda el % de cada una), actualizás precios y después las volvés a subir con esos mismos %. <b>Todo corre en el servidor y en cola</b> (también "Subir a todas" / "Bajar de todas" de cada card): podés lanzar varias cosas seguidas, cerrar la pestaña o apagar la compu, y se van haciendo de a una en orden. El avance se ve desde cualquier usuario.</p>
     <div class="acciones-globales-botones">
       <button class="danger chico" id="btnBajarTodo">⬇️ Bajar TODAS las promociones</button>
       <button class="chico oculto" id="btnSubirTodoGuardado">⬆️ Subir TODAS (con los % guardados)</button>
@@ -733,6 +759,9 @@
     <label for="inputCampanaLink">Link de esta campaña en el panel de ML</label>
     <input type="url" id="inputCampanaLink" maxlength="2000" style="width:100%; margin-bottom:6px;" placeholder="https://vendedores.mercadolibre.com.ar/publicaciones/listado/promos?..." autocomplete="off">
     <p style="font-size:0.75rem; color:var(--text-dim); margin:0 0 10px;">Cómo sacarlo: en el panel de ML entrá a Promociones, abrí <b>esta</b> campaña y copiá la dirección del navegador. Cuando está cargado, "Ver en ML ↗" abre exactamente esa campaña (el link automático puede caer en otra de la misma tarjeta). Dejá los dos campos vacíos para volver a lo automático.</p>
+    <label for="inputCampanaNota">📝 Nota del equipo (la ven todos en la card)</label>
+    <textarea id="inputCampanaNota" maxlength="1000" rows="3" style="width:100%; margin-bottom:4px; resize:vertical;" placeholder="Ej.: no sumar las planchas de imán; revisar el % el 1° de cada mes"></textarea>
+    <div style="font-size:0.72rem; color:var(--text-dim); text-align:right; margin-bottom:8px;"><span id="contadorNotaCampana">0</span>/1000</div>
     <div id="estadoCampana" class="estado err"></div>
     <div class="modal-cerrar" style="justify-content:space-between;">
       <button class="secondary" id="btnCancelarCampana" type="button">Cancelar</button>
@@ -773,7 +802,7 @@
     <h3>De dónde salen los datos</h3>
     <p>Se consulta en vivo la API de Mercado Libre (recurso <code>seller-promotions</code>) usando el token de la app de Mercado Libre de Gráfica Límite (guardado en el backend, nunca en esta página). No hay copia local de las promociones — lo que ves es el estado real en ML en el momento de cargar la página.</p>
     <h3>Los 12 tipos de promoción</h3>
-    <p>Cada card muestra un tipo. Los que tienen borde naranja y botones los controlás vos: podés subir todas las publicaciones candidatas de una campaña con un clic. "Bajar de todas" (por card) está disponible en <b>todos</b> los tipos de promoción: saca las publicaciones solo de ESA campaña, sin tocar las demás promos. En Oferta del día y Relámpago, ML suele rechazar la baja una vez activas: la app lo intenta igual y te muestra el rechazo publicación por publicación. El resto son invitaciones de ML — se muestran para que sepas qué tenés corriendo. Las cards traen sus candidatos/activos <b>solas una única vez al abrir la app</b>; después no se recargan solas — cada una se actualiza a mano con su botón "🔄 Ver candidatos/activos" (o todas juntas con "Actualizar candidatos/activos de todas"). Así la app no dispara consultas a ML todo el tiempo. Excepción: al terminar una tanda, se refresca sola la card que tocaste (o todas, cuando termina un "Bajar TODAS" / "Subir TODAS" del servidor), para que veas los números ya actualizados.</p>
+    <p>Cada card muestra un tipo. Los que tienen borde naranja y botones los controlás vos: podés subir todas las publicaciones candidatas de una campaña con un clic. "Bajar de todas" (por card) está disponible en <b>todos</b> los tipos de promoción: saca las publicaciones solo de ESA campaña, sin tocar las demás promos. En Oferta del día y Relámpago, ML suele rechazar la baja una vez activas: la app lo intenta igual y te muestra el rechazo publicación por publicación. El resto son invitaciones de ML — se muestran para que sepas qué tenés corriendo. Las cards traen sus candidatos/activos <b>solas una única vez al abrir la app</b>; después no se recargan solas — cada una se actualiza a mano con su botón "🔄 Ver candidatos/activos" (o todas juntas con "Actualizar candidatos/activos de todas"). Así la app no dispara consultas a ML todo el tiempo. Excepción: cuando termina un proceso del servidor, se refresca sola la card que tocó (o todas, si fue un "Bajar TODAS" / "Subir TODAS"), para que veas los números ya actualizados.</p>
     <h3>¿Por qué el nombre de una campaña no coincide con lo que ves en Mercado Libre?</h3>
     <p>La API de Mercado Libre no devuelve el nombre que ve el comprador, solo un nombre interno de marketing (ej. "MK T3 AO BELLEZA Q4 2026"). Es una limitación de ML, no de la app. Con el lápiz ✏️ al lado del nombre abrís <b>"Datos de la campaña"</b> y cargás el nombre público a mano <b>una sola vez</b> (ej. "Lo mejor de todos los días"): queda guardado en la base y se usa en toda la app; el interno sigue abajo en chiquito como referencia. Si lo dejás vacío, vuelve el nombre interno.</p>
     <h3>"Ver en ML ↗" y "Solo por API"</h3>
@@ -781,16 +810,22 @@
     <p><b>1) Link cargado a mano (el más exacto).</b> El panel de ML agrupa las campañas en "tarjetas" que la API no informa, así que un link automático puede abrir <b>otra</b> campaña de la misma tarjeta (pasaba con "Precio tachado", que abría "Lo mejor de todos los días"). Para corregirlo: abrí la campaña correcta en el panel de ML, copiá la dirección del navegador, tocá el lápiz ✏️ y pegala en <b>"Link de esta campaña en el panel de ML"</b>. Queda guardado para todos y "Ver en ML" abre exactamente esa. Solo se aceptan links de mercadolibre.com.ar.</p>
     <p><b>2) Link automático.</b> Si no hay link cargado, se arma solo para los tipos cuyo formato está confirmado (Campaña propia, Campaña tradicional, Con aporte de Mercado Libre y Relámpago). En los demás tipos se muestra <b>"Solo por API"</b>: se gestiona desde esta app, o le pegás el link con el lápiz y pasa a tener "Ver en ML".</p>
     <h3>Campañas compartidas: cuánto pone ML y cuánto ponemos nosotros</h3>
-    <p>En las campañas "Con aporte de Mercado Libre" el descuento se reparte. Cada card muestra, debajo de Candidatas/Activas, el <b>promedio</b> de lo que aporta ML y lo que aportamos nosotros en las publicaciones activas; en "Ver % aplicados" está el detalle publicación por publicación (columna "Quién pone el descuento"). En esas campañas el precio lo fija ML y no se edita el %: para decidir <b>en cuáles entrar</b>, usá "Subir a todas" → escribís tu % máximo, elegís si lo comparás contra el descuento total o solo contra lo que ponés vos, y se tildan solas las que entran. En "Campaña tradicional" (Deal) sí elegís el %, dentro del rango que ML acepta para cada publicación.</p>
+    <p>En las campañas "Con aporte de Mercado Libre" el descuento se reparte. Cada card muestra, debajo de Candidatas/Activas, el <b>promedio</b> de lo que aporta ML y lo que aportamos nosotros en las publicaciones activas; en "Ver % aplicados" está el detalle publicación por publicación, en dos columnas: <b>"% ML"</b> (lo que pone Mercado Libre) y <b>"% nuestro"</b> (lo que ponemos nosotros). Las dos se ordenan con un clic en el título (primero de mayor a menor): así se ven arriba las publicaciones donde más ponemos. Si nuestro % supera la promo general, la celda queda en ámbar con ⚠ para revisarla. En esas campañas el precio lo fija ML y no se edita el %: para decidir <b>en cuáles entrar</b>, usá "Subir a todas" → escribís tu % máximo, elegís si lo comparás contra el descuento total o solo contra lo que ponés vos, y se tildan solas las que entran. En "Campaña tradicional" (Deal) sí elegís el %, dentro del rango que ML acepta para cada publicación.</p>
     <h3>Carga de las cards al abrir</h3>
     <p>Al abrir la app, las cards se consultan <b>de a 3 por vez</b> (las demás muestran "En cola..."), para no saturar a Mercado Libre. Cada consulta espera hasta 60 segundos y, si se corta, se reintenta una vez sola; si vuelve a fallar, la card muestra el error con un botón "Reintentar".</p>
     <h3>Subir a todas / Bajar de todas</h3>
-    <p>"Subir a todas" busca las publicaciones candidatas de esa campaña puntual. En las campañas donde <b>vos definís el precio</b> (Deal, Campaña propia, Oferta del día) les aplica el precio calculado con el % que definas en el momento (ver siguiente punto). En las campañas donde <b>el precio lo fija Mercado Libre</b> ("Con aporte de Mercado Libre" como "Potencia tus ventas", co-financiada, volumen, etc.) se abre una lista con el % que ML va a aplicar en cada publicación (descuento total, cuánto pone ML y cuánto ponés vos): escribís tu <b>% máximo</b>, elegís si compararlo contra el descuento total o contra lo que ponés vos, tocás "Seleccionar hasta ese %" y se suben <b>solo las tildadas</b> (podés tildar o destildar a mano). "Bajar de todas" saca las que están activas. Ambas acciones muestran un detalle publicación por publicación al terminar, con opción de reintentar si algo falló.</p>
+    <p>"Subir a todas" busca las publicaciones candidatas de esa campaña puntual. En las campañas donde <b>vos definís el precio</b> (Deal, Campaña propia, Oferta del día) les aplica el precio calculado con el % que definas en el momento (ver siguiente punto). En las campañas donde <b>el precio lo fija Mercado Libre</b> ("Con aporte de Mercado Libre" como "Potencia tus ventas", co-financiada, volumen, etc.) se abre una lista con el % que ML va a aplicar en cada publicación (descuento total, cuánto pone ML y cuánto ponés vos): escribís tu <b>% máximo</b>, elegís si compararlo contra el descuento total o contra lo que ponés vos, tocás "Seleccionar hasta ese %" y se suben <b>solo las tildadas</b> (podés tildar o destildar a mano). "Bajar de todas" saca las que están activas. <b>Las dos corren en el servidor y en cola</b> (ver "Cola de procesos"): al confirmar, la acción entra a la cola y podés seguir con otra campaña sin esperar. Al terminar, "📋 Ver detalle" muestra lo que hay que mirar y tiene los botones <b>Reintentar los errores</b>, <b>Usar el sugerido de ML</b> en las que quedaron en revisión y <b>Aplicar otro %</b> a las que quedaron en revisión.</p>
+    <h3>Cola de procesos</h3>
+    <p>Todo lo que toca muchas publicaciones (Bajar TODAS, Subir TODAS, Subir a todas / Bajar de todas de una card y la regeneración automática) <b>entra a una cola en el servidor</b> y se hace <b>de a uno, en el orden en que se pidió</b>. Así no se pisan entre sí en Mercado Libre y no tenés que esperar a que termine uno para pedir el siguiente. En "Acciones globales" ves el que está corriendo y, abajo, <b>la cola</b> con quién pidió cada cosa; cualquiera se puede sacar de la cola con ✖ antes de que arranque (no se tocó nada en ML). Una campaña se lee <b>en vivo cuando le toca el turno</b>, no cuando la pediste. Hay un máximo de 20 en cola y no se puede pedir dos veces la misma acción completa sobre la misma campaña.</p>
+    <h3>🔁 Regeneración automática (Campaña propia)</h3>
+    <p>Las Campañas propias tienen fecha de fin: cuando vencen desaparecen y hasta que alguien arma la nueva y le vuelve a subir las publicaciones, <b>no hay descuento</b>. Con el tilde <b>"🔁 Regeneración automática"</b> de la card, el servidor lo hace solo: <b>el día antes del vencimiento</b> (a las 6:05, con un reintento a las 15:05) crea la campaña siguiente, que <b>arranca justo cuando termina la actual</b> y dura <b>30 días</b>; y le copia <b>las mismas publicaciones con el mismo %</b> y el mismo <b>% meli+</b> (el precio exclusivo para miembros meli+). Queda pendiente y arranca sola a las 00:00: <b>cero horas sin descuento</b>. El último día vuelve a pasar para sumar lo que se haya agregado a la campaña actual a último momento. El nombre se actualiza solo: "05-10-2026 MENSUAL FIJA" → "05-11-2026 MENSUAL FIJA" (si el nombre no empieza con fecha, se le agrega "(dd-mm)"). La campaña nueva <b>hereda el tilde</b>, así que se renueva todos los meses. Debajo del tilde ves qué hizo la última vez (cuántas sumó, cuáles ML no ofreció). <b>"Regenerar ahora"</b> crea la siguiente en el momento (sirve si la campaña ya venció o te olvidaste de tildar). Ojo: el % se copia sobre el precio de lista ACTUAL de cada publicación; si una publicación ya no califica (pausada, sin stock), queda informada como omitida.</p>
+    <h3>📝 Notas por campaña</h3>
+    <p>Con el lápiz ✏️ de cada campaña podés dejar una <b>nota del equipo</b> (hasta 1000 caracteres): se ve en la card para todos los usuarios. Sirve para recordatorios ("no sumar las planchas de imán", "revisar el % el 1° de cada mes"). Se guarda en la base junto con el nombre público y el link.</p>
     <h3>Bajar TODAS / Subir TODAS (para actualizar precios masivo) — corren en el servidor</h3>
-    <p>Flujo típico: <b>⬇️ Bajar TODAS</b> → actualizar precios (pestaña 💲) → <b>⬆️ Subir TODAS (con los % guardados)</b>. Los dos botones <b>no trabajan en tu navegador</b>: crean un proceso que ejecuta el servidor (Supabase, función <i>ml-procesos</i>) en vueltas cada 15 segundos. Podés cerrar la pestaña, apagar la compu o abrir la app desde otro usuario: el avance se ve igual en "Acciones globales". Los pueden lanzar Stock y Gerencia; corre <b>un solo proceso a la vez</b> y, mientras corre, los botones por card quedan bloqueados para no pisarse.</p>
+    <p>Flujo típico: <b>⬇️ Bajar TODAS</b> → actualizar precios (pestaña 💲) → <b>⬆️ Subir TODAS (con los % guardados)</b>. Los dos botones <b>no trabajan en tu navegador</b>: crean un proceso que ejecuta el servidor (Supabase, función <i>ml-procesos</i>) en vueltas cada 15 segundos. Podés cerrar la pestaña, apagar la compu o abrir la app desde otro usuario: el avance se ve igual en "Acciones globales". Los pueden lanzar Stock y Gerencia; corre <b>un solo proceso a la vez</b> y lo demás espera su turno en la cola.</p>
     <p><b>Bajar TODAS:</b> el servidor lee EN VIVO todas las campañas activas de Mercado Libre (no depende de lo que tengas cargado en las cards) y además revisa una por una las publicaciones <b>pausadas</b>, porque ML no las muestra en el listado de las campañas. Antes de bajar guarda en el <b>respaldo</b> el % de Campaña propia y Deal; después saca cada publicación de todas sus promos de una sola vez. Las que ML fija el precio (co-financiadas, con aporte de ML, volumen, etc.) se bajan igual, pero se vuelven a sumar a mano desde su card. Oferta del día y Relámpago no se pueden bajar por API: se informan aparte.</p>
     <p><b>Subir TODAS (con los % guardados):</b> recorre el respaldo; si una publicación ya está activa en su campaña se da por hecha; si es candidata, se sube con su % calculado sobre el precio de lista ACTUAL y se verifica en ML el precio que quedó. Lo que sale bien se borra del respaldo; lo que ML deja <b>en revisión</b> (pide otro %) o con error queda para el próximo intento. Si ML ya no la ofrece como candidata (campaña terminada, publicación en revisión), queda como <b>omitida</b>.</p>
-    <p><b>💡 Subir las que quedaron con el precio sugerido de ML:</b> para lo que sigue en el respaldo (normalmente las "en revisión"), aplica el precio que sugiere ML, con un <b>tope de %</b> que elegís: si el sugerido implica más descuento que el tope, no se toca. <b>✋ Cancelar proceso</b> lo frena en segundos; lo ya hecho queda hecho. Al terminar, <b>📋 Ver detalle</b> lista solo lo que hay que mirar (con link a cada publicación, SKU y qué pasó) y se puede bajar en CSV; <b>🕘 Procesos anteriores</b> muestra los últimos 5 con quién los lanzó. <b>🗑️ Descartar respaldo</b> borra la cola de % guardados sin tocar Mercado Libre.</p>
+    <p><b>💡 Subir las que quedaron con el precio sugerido de ML:</b> para lo que sigue en el respaldo (normalmente las "en revisión"), aplica el precio que sugiere ML, con un <b>tope de %</b> que elegís: si el sugerido implica más descuento que el tope, no se toca. <b>✋ Cancelar proceso</b> lo frena en segundos; lo ya hecho queda hecho. Al terminar, <b>📋 Ver detalle</b> lista solo lo que hay que mirar (con link a cada publicación, SKU y qué pasó) y se puede bajar en CSV; <b>🕘 Procesos anteriores</b> muestra los últimos 8 con quién los lanzó. <b>🗑️ Descartar respaldo</b> borra la cola de % guardados sin tocar Mercado Libre.</p>
     <h3>Pestaña "Actualizar precios"</h3>
     <p>Sirve para actualizar el <b>precio de lista</b> (no el de promo) de muchas publicaciones de una. Cargás <b>SKU y precio</b> en la tabla (podés copiar las columnas de Excel y pegarlas en la primera celda: se completa sola); la tercera columna, <b>Mayorista</b>, indica si ese SKU lleva también los escalones mayoristas (ver más abajo). Como un mismo SKU suele estar en varias publicaciones, el precio se aplica a <b>todas las publicaciones activas y pausadas</b> de ese SKU (a la pausada le queda listo para cuando la reactivés; las cerradas se omiten). El flujo es en dos pasos: primero <b>Previsualizar</b> (no toca nada: trae de ML el precio actual de cada publicación y te muestra antes → después → Δ%, con un tiempo estimado mientras corre), y recién después <b>Aplicar en ML</b> (con confirmación escribiendo "APLICAR PRECIOS"). En el preview podés <b>editar el precio de cualquier fila</b> a mano antes de aplicar, y <b>clickear las tarjetas</b> de arriba (A actualizar / A revisar / Omitidas / Con problema) para filtrar la tabla por ese estado. <b>Publicaciones con variaciones</b> (ej. una tinta con 6 colores, cada color con su SKU): Mercado Libre usa un solo precio de lista y los mismos escalones para toda la publicación. Si todas las variaciones tienen el mismo precio, la app la actualiza entera (avisa "🎨 N variaciones: valen para todas"). Si cargás varios SKU de la misma publicación, tienen que tener los mismos valores: con valores distintos quedan en "Conflicto entre variaciones" y no se toca nada; con valores iguales se aplica una sola vez. Si las variaciones tienen precios distintos entre sí, quedan "a revisar" y se editan a mano en ML. Podés exportar todo a CSV. Encaja con el flujo masivo: bajás las promos, actualizás precios acá, y volvés a subir las promos.</p>
     <h3>Escalones mayoristas (precio por cantidad)</h3>
@@ -803,14 +838,13 @@
     <p><b>Promo activa tapa los escalones:</b> mientras una publicación tiene una promo más barata, Mercado Libre <b>no muestra</b> su precio por cantidad (ni en la publicación ni por API), aunque esté cargado. Por eso la app guarda un registro de los escalones que se cargan <b>desde acá</b>: en "Escalones actuales" vas a ver "Según lo cargado desde la app el dd/mm" cuando el dato sale de ese registro, o "no visible" si hay promo y no hay registro (puede que se hayan cargado desde el panel de ML). Cuando termina la promo, los escalones vuelven a aparecer solos.</p>
     <h3>Catálogo de publicaciones: cómo encuentra cada SKU</h3>
     <p>Para saber a qué publicaciones aplicar un precio, la app usa un <b>catálogo</b> guardado en la base con el SKU de cada publicación (y de cada variación). Ese catálogo <b>se actualiza solo todas las mañanas</b>, entre las 5 y las 8: recorre todas las publicaciones activas y pausadas de Mercado Libre, suma las nuevas y saca las cerradas o las que cambiaron de SKU. Si necesitás que tome algo recién publicado, tocá <b>"🔄 Actualizar catálogo ahora"</b> en esta pestaña (tarda alrededor de un minuto).</p>
-    <p>Si al previsualizar un SKU <b>no está en el catálogo</b>, la app lo <b>busca en vivo en Mercado Libre</b> y, si lo encuentra, lo usa y lo guarda para la próxima; el mensaje del preview te avisa cuáles se encontraron así. Si ni así aparece, el SKU no coincide <b>exacto</b> con el de la publicación: revisá mayúsculas, espacios y puntos contra lo cargado en ML. Un mismo SKU puede estar en varias publicaciones (por ejemplo, la misma plancha publicada varias veces): el precio se aplica a <b>todas</b>. Las publicaciones sin SKU cargado en ML no se pueden actualizar desde acá; el indicador "Sin SKU" te dice cuántas son y el botón <b>"🔎 Publicaciones sin SKU"</b> las lista con título, estado, precio y link (leídos en el momento de ML). <b>Si no las encontrás en el panel de Publicaciones de ML, son links de pago / links de envío</b> (cobros creados por fuera del carrito): no llevan SKU y no hace falta cargárselo. Si alguna está activa y ya no se usa, conviene pausarla.</p>
+    <p>Si al previsualizar un SKU <b>no está en el catálogo</b>, la app lo <b>busca en vivo en Mercado Libre</b> y, si lo encuentra, lo usa y lo guarda para la próxima; el mensaje del preview te avisa cuáles se encontraron así. El mensaje del preview muestra también el número de publicación (MLA) con link, para abrirla directo. Si ni así aparece, el SKU no coincide <b>exacto</b> con el de la publicación: revisá mayúsculas, espacios y puntos contra lo cargado en ML. Un mismo SKU puede estar en varias publicaciones (por ejemplo, la misma plancha publicada varias veces): el precio se aplica a <b>todas</b>. Las publicaciones sin SKU cargado en ML no se pueden actualizar desde acá; el indicador "Sin SKU" te dice cuántas son y el botón <b>"🔎 Publicaciones sin SKU"</b> las lista con título, estado, precio y link (leídos en el momento de ML). <b>Si no las encontrás en el panel de Publicaciones de ML, son links de pago / links de envío</b> (cobros creados por fuera del carrito): no llevan SKU y no hace falta cargárselo. Si alguna está activa y ya no se usa, conviene pausarla.</p>
     <h3>Pestaña "🎫 Tickets"</h3>
     <p>Es el buzón para reportar <b>errores, mejoras o consultas</b> de esta app. Completás tipo, prioridad, asunto y detalle, y lo enviás. Si dejás tildado "Adjuntar contexto técnico", el ticket se guarda con la app, la versión, el navegador, la pestaña en la que estabas y los últimos errores que aparecieron en la consola, así se puede reproducir el problema sin preguntarte nada. Todos los tickets de <b>todas las apps del negocio</b> (promociones, stock, dashboard, etc.) se guardan en un <b>único lugar</b> del backend (tabla <code>tickets</code> de Supabase), cada uno marcado con la app de origen. Abajo está el <b>embudo</b>: por defecto ves los abiertos de esta app, ordenados por prioridad y después por antigüedad; con "Alcance" podés ver los de todas las apps, y las tarjetas de arriba filtran por estado. Al abrir un ticket ves su <b>historial completo</b> (quién lo creó, cada cambio de estado o prioridad, comentarios y cierre): ese historial lo escribe la base de datos sola y no se puede editar ni borrar. Solo los usuarios con permiso de gestión pueden cambiar estado, prioridad y cerrar tickets (al resolver o rechazar hay que escribir la resolución); el resto puede crear y comentar. "Exportar lote para Claude" arma un markdown con todos los abiertos para resolverlos en tanda en una conversación.</p>
     <p><b>Capturas:</b> podés adjuntar hasta 3 capturas de pantalla por ticket (5 MB cada una), eligiendo el archivo o pegándola con Ctrl+V dentro del detalle. Se guardan en un espacio privado: solo las ven los usuarios habilitados de la app, al abrir el ticket (📎 en la lista indica que tiene capturas). En Gráfica Límite, la cuenta de <b>Gerencia</b> es la que gestiona (cambia estado, prioridad y escribe la resolución); Stock crea, comenta y sigue el estado y la respuesta de sus tickets.</p>
     <h3>Tablas largas</h3>
     <p>Las listas que crecen con la cantidad de publicaciones (la grilla de carga, el preview de precios, los tickets, "% aplicados", la selección de candidatas, el detalle de una tanda y las publicaciones sin SKU) tienen una <b>altura fija y se scrollean por dentro</b>, con el encabezado siempre visible. Así los botones de cada módulo quedan a mano sin bajar toda la página. Al lado de "Limpiar" se ve cuántos SKU hay cargados en la grilla.</p>
-    <h3>Seguir usando la app mientras corre una tanda</h3>
-    <p>Cuando lanzás "Subir a todas" o "Bajar de todas" desde una card, aparece la ventana de progreso. Con el botón <b>"➖ Seguir usando la app"</b> (o con Cerrar) la ventana se achica a una <b>barrita abajo a la derecha</b> que sigue mostrando el avance y el tiempo que resta; la corrida no se corta. Tocando la barrita volvés al detalle, y cuando termina se pone verde. Dos reglas: <b>no cierres ni recargues la pestaña</b> mientras corre una tanda de card (el navegador te avisa; Bajar/Subir TODAS no tienen esta limitación porque corren en el servidor), y solo puede correr <b>una tanda a la vez</b>.</p>
+    <p><b>Avisos de la app:</b> los avisos y las preguntas de confirmación se muestran en ventanas de la app (antes eran los cuadros grises del navegador que decían "gergeele.github.io dice"). Los "?" se abren siempre a la vista, aunque estén cerca del borde de una ventana.</p>
     <p><b>Aviso de versión nueva:</b> cada 5 minutos (y al volver a la pestaña) la app se fija si se publicó una versión nueva. Si la hay, aparece arriba un aviso con el botón <b>"🔄 Recargar"</b>: una pestaña abierta sigue usando la versión vieja hasta que se recarga. La versión que tenés abierta se ve siempre debajo del título de la app.</p>
     <h3>% aplicados: el mismo % a todas</h3>
     <p>En "Ver % aplicados" de una campaña con precio (Deal, Campaña propia) podés escribir un % en <b>"Aplicar X% a todas"</b> y apretar <b>Rellenar</b>: copia ese % en todas las filas sin guardar nada. Después ajustás a mano las que quieras y apretás <b>"Guardar todas las modificadas"</b>: se aplican solo las filas cuyo % cambió, por tandas y con tiempo estimado. La columna <b>Resultado</b> muestra, por publicación, si quedó aplicado o si el % quedó fuera del rango que acepta ML (con el rango válido).</p>
@@ -915,6 +949,7 @@
     <p id="detalleProcesoResumen" style="font-size:0.85rem;"></p>
     <p style="font-size:0.78rem; color:var(--text-dim); margin-top:-4px;">Se listan solo las publicaciones con algo para mirar (en revisión, error, parcial u omitida). Las que salieron bien no aparecen.</p>
     <div id="detalleProcesoTabla"></div>
+    <div id="detalleProcesoAcciones" class="detalle-acciones oculto"></div>
     <div class="modal-cerrar" style="justify-content:space-between;">
       <button class="secondary" id="btnCsvDetalleProceso">⬇️ Descargar CSV</button>
       <button id="btnCerrarDetalleProceso">Cerrar</button>
@@ -945,6 +980,8 @@
             <th data-sort="original_price" style="cursor:pointer;">Precio lista<span class="flecha-orden"></span></th>
             <th data-sort="pct" style="cursor:pointer;">% aplicado<span class="flecha-orden"></span></th>
             <th data-sort="price" style="cursor:pointer;">Precio actual<span class="flecha-orden"></span></th>
+            <th data-sort="meli_percentage" class="col-aporte oculto" style="cursor:pointer;">% ML<span class="flecha-orden"></span> <span id="helpPctMl"></span></th>
+            <th data-sort="seller_percentage" class="col-aporte oculto" style="cursor:pointer;">% nuestro<span class="flecha-orden"></span> <span id="helpPctNuestro"></span></th>
             <th id="thEditarPct">Editar %</th>
             <th>Resultado</th>
           </tr>
@@ -971,29 +1008,22 @@
 </div>
 
 <!-- ============================================================
-     MODAL: Resultado de acción en bloque
+     MODALES DE LA APP: aviso y pregunta (reemplazan alert/confirm del navegador)
      ============================================================ -->
-<div id="modalResultado" class="modal-fondo oculto">
-  <div class="modal-caja">
-    <h2 id="resultadoTitulo">Resultado</h2>
-    <p id="resultadoResumen"></p>
-    <div id="resultadoTablaWrap" class="caja-scroll modal"></div>
-
-    <div id="bloqueAplicarPctRevisar" class="oculto" style="margin-top:14px; padding-top:14px; border-top:1px solid var(--panel-border); display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-      <label style="margin:0; white-space:nowrap;">Aplicar % a las de "REVISAR":</label>
-      <input type="number" id="inputPctRevisar" min="1" max="99" step="0.1" style="width:80px;">
-      <button class="chico secondary" id="btnAplicarPctRevisar">Aplicar</button>
-    </div>
-
+<div id="modalAviso" class="modal-fondo oculto" role="alertdialog" aria-modal="true" aria-labelledby="avisoTitulo">
+  <div class="modal-caja" style="max-width:480px;">
+    <h2 id="avisoTitulo">Aviso</h2>
+    <div id="avisoTexto" class="aviso-texto"></div>
+    <div class="modal-cerrar"><button id="btnAvisoOk" type="button">Entendido</button></div>
+  </div>
+</div>
+<div id="modalPregunta" class="modal-fondo oculto" role="dialog" aria-modal="true" aria-labelledby="preguntaTitulo">
+  <div class="modal-caja" style="max-width:520px;">
+    <h2 id="preguntaTitulo">¿Confirmás?</h2>
+    <div id="preguntaTexto" class="aviso-texto"></div>
     <div class="modal-cerrar" style="justify-content:space-between;">
-      <div style="display:flex; gap:8px;">
-        <button class="secondary oculto" id="btnReintentarFallidos">Reintentar fallidos</button>
-        <button class="secondary oculto" id="btnUsarSugerido">Usar precio sugerido de ML</button>
-      </div>
-      <div style="display:flex; gap:8px;">
-        <button class="secondary oculto" id="btnMinimizarResultado" title="La corrida sigue sola; podés seguir usando la app">➖ Seguir usando la app</button>
-        <button id="btnCerrarResultado">Cerrar</button>
-      </div>
+      <button class="secondary" id="btnPreguntaNo" type="button">Cancelar</button>
+      <button id="btnPreguntaSi" type="button">Confirmar</button>
     </div>
   </div>
 </div>
@@ -1044,14 +1074,11 @@
   </div>
 </div>
 
-<!-- Barrita flotante: corrida en segundo plano (clic = volver al detalle) -->
 <div id="bannerVersion" class="banner-version oculto" role="status">
   <span id="versionNuevaTexto">Hay una versión nueva de la app.</span>
   <button class="chico" id="btnRecargarVersion">🔄 Recargar</button>
 </div>
-<div id="pillCorrida" class="pill-corrida oculto" role="button" tabindex="0" title="Tocá para ver el detalle">
-  <span class="pill-spinner"></span><span id="pillCorridaTexto"></span>
-</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <script>
 (function () {
@@ -1072,7 +1099,7 @@
 
   // --- Tickets (módulo transversal: mismo backend para todas las apps) ---
   var TICKETS_APP_ID = "grafica-promociones"; // identifica a ESTA app en el embudo común (cambiar al clonar/replicar)
-  var APP_VERSION = "2026-10-05.2";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
+  var APP_VERSION = "2026-10-26.1";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
 
   // Captura de errores recientes (se adjuntan como contexto técnico a los tickets). Buffer de 5.
   var ERRORES_RECIENTES = [];
@@ -1086,7 +1113,7 @@
   // Los 12 tipos de /seller-promotions. subir/bajar controlan si el tipo tiene
   // botones de bulk funcionales (confirmado contra doc oficial, 2026-09-01).
   var TIPOS = [
-    { codigo: "SELLER_CAMPAIGN", nombre: "Campaña propia", explicacion: "La armás y controlás vos (ej: tu promo fija mensual). Descuento fijo o flexible que vos definís.", subir: true, bajar: true },
+    { codigo: "SELLER_CAMPAIGN", nombre: "Campaña propia", explicacion: "La armás y controlás vos (ej: tu promo fija mensual). Descuento fijo o flexible que vos definís. Con \"🔁 Regeneración automática\" se crea sola la del mes siguiente, con las mismas publicaciones y %, sin horas sin descuento.", subir: true, bajar: true },
     { codigo: "DEAL", nombre: "Campaña tradicional (Deal)", explicacion: "ML te invita, vos elegís el precio final dentro del rango permitido.", subir: true, bajar: true },
     { codigo: "DOD", nombre: "Oferta del día", explicacion: "ML sugiere el precio, vos definís el tuyo dentro del rango. Ojo: una vez activa, ML suele no dejar sacarla (si la rechaza, lo ves en el detalle).", subir: true, bajar: true },
     { codigo: "MARKETPLACE_CAMPAIGN", nombre: "Campaña co-financiada", explicacion: "ML te invita y paga parte del descuento — el precio lo calcula ML solo, vos solo te sumás.", subir: true, bajar: true },
@@ -1207,16 +1234,7 @@
     confirmarTexto: document.getElementById("confirmarTexto"),
     btnCancelarAccion: document.getElementById("btnCancelarAccion"),
     btnConfirmarAccion: document.getElementById("btnConfirmarAccion"),
-    modalResultado: document.getElementById("modalResultado"),
-    resultadoTitulo: document.getElementById("resultadoTitulo"),
-    resultadoResumen: document.getElementById("resultadoResumen"),
-    resultadoTablaWrap: document.getElementById("resultadoTablaWrap"),
-    btnCerrarResultado: document.getElementById("btnCerrarResultado"),
-    btnReintentarFallidos: document.getElementById("btnReintentarFallidos"),
-    btnUsarSugerido: document.getElementById("btnUsarSugerido"),
-    bloqueAplicarPctRevisar: document.getElementById("bloqueAplicarPctRevisar"),
-    inputPctRevisar: document.getElementById("inputPctRevisar"),
-    btnAplicarPctRevisar: document.getElementById("btnAplicarPctRevisar"),
+    detalleProcesoAcciones: document.getElementById("detalleProcesoAcciones"),
   };
 
   /* ============================================================
@@ -1291,12 +1309,85 @@
     return '<span class="kpi-help" data-help="' + escapeHtml(texto) + '">?<span class="globo">' + escapeHtml(texto) + '</span></span>';
   }
 
+  // Ticket #14: el globo del "?" se ubica con position:fixed respecto de la ventana y se mantiene
+  // adentro de la pantalla. Antes era absoluto y quedaba cortado contra el borde de los modales con scroll.
+  function ubicarGlobo(help) {
+    var globo = help.querySelector(".globo");
+    if (!globo) return;
+    globo.classList.add("fijo");
+    var r = help.getBoundingClientRect();
+    var margen = 12;
+    var ancho = Math.min(260, window.innerWidth - 2 * margen);
+    globo.style.width = ancho + "px";
+    var izq = Math.max(margen, Math.min(r.left + r.width / 2 - ancho / 2, window.innerWidth - ancho - margen));
+    globo.style.left = izq + "px";
+    globo.style.top = "0px";
+    var alto = globo.offsetHeight;
+    var arriba = r.top - alto - 8;
+    globo.style.top = (arriba >= margen ? arriba : Math.min(r.bottom + 8, window.innerHeight - alto - margen)) + "px";
+  }
+  function cerrarGlobos(excepto) {
+    document.querySelectorAll(".kpi-help.abierto").forEach(function (el) { if (el !== excepto) el.classList.remove("abierto"); });
+  }
   document.addEventListener("click", function (e) {
-    var abiertos = document.querySelectorAll(".kpi-help.abierto");
     var target = e.target.closest ? e.target.closest(".kpi-help") : null;
-    abiertos.forEach(function (el) { if (el !== target) el.classList.remove("abierto"); });
-    if (target) target.classList.toggle("abierto");
+    cerrarGlobos(target);
+    if (target) {
+      target.classList.toggle("abierto");
+      if (target.classList.contains("abierto")) ubicarGlobo(target);
+      e.stopPropagation();
+    }
   });
+  // Al scrollear (página o modal) o cambiar el tamaño, el globo fijo quedaría desfasado: se cierra.
+  window.addEventListener("scroll", function () { cerrarGlobos(null); }, true);
+  window.addEventListener("resize", function () { cerrarGlobos(null); });
+
+  /* ---------- Avisos / preguntas / toast de la app (ticket #17: fuera los cuadros del navegador) ---------- */
+  var elModalAviso = document.getElementById("modalAviso");
+  function mostrarAviso(texto, titulo) {
+    document.getElementById("avisoTitulo").textContent = titulo || "Aviso";
+    document.getElementById("avisoTexto").textContent = texto;
+    elModalAviso.classList.remove("oculto");
+    document.getElementById("btnAvisoOk").focus();
+  }
+  document.getElementById("btnAvisoOk").addEventListener("click", function () { elModalAviso.classList.add("oculto"); });
+
+  var elModalPregunta = document.getElementById("modalPregunta");
+  var preguntaPendiente = null;
+  // pedirConfirmacion(texto, alConfirmar, { titulo, si, no, peligro })
+  function pedirConfirmacion(texto, alConfirmar, opciones) {
+    opciones = opciones || {};
+    preguntaPendiente = alConfirmar;
+    document.getElementById("preguntaTitulo").textContent = opciones.titulo || "¿Confirmás?";
+    document.getElementById("preguntaTexto").textContent = texto;
+    var si = document.getElementById("btnPreguntaSi");
+    si.textContent = opciones.si || "Confirmar";
+    si.className = opciones.peligro ? "danger" : "";
+    document.getElementById("btnPreguntaNo").textContent = opciones.no || "Cancelar";
+    elModalPregunta.classList.remove("oculto");
+    si.focus();
+  }
+  document.getElementById("btnPreguntaNo").addEventListener("click", function () { preguntaPendiente = null; elModalPregunta.classList.add("oculto"); });
+  document.getElementById("btnPreguntaSi").addEventListener("click", function () {
+    var fn = preguntaPendiente;
+    preguntaPendiente = null;
+    elModalPregunta.classList.add("oculto");
+    if (fn) fn();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    if (!elModalPregunta.classList.contains("oculto")) { preguntaPendiente = null; elModalPregunta.classList.add("oculto"); }
+    else if (!elModalAviso.classList.contains("oculto")) elModalAviso.classList.add("oculto");
+  });
+
+  var elToast = document.getElementById("toast");
+  var toastTimer = null;
+  function mostrarToast(texto, ms) {
+    elToast.textContent = texto;
+    elToast.classList.add("visible");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { elToast.classList.remove("visible"); }, ms || 4500);
+  }
 
   /* ============================================================
      LOGIN
@@ -1369,14 +1460,17 @@
     // Alias de nombres públicos: si falla, seguimos con los nombres internos (no bloquea el arranque).
     // v2 del endpoint devuelve también los links del panel cargados a mano (ticket #3).
     var pAlias = fetchConTimeout(URL_ALIAS, { headers: { Authorization: AUTH } })
-      .then(function (r) { return (r.data && r.data.ok) ? { alias: r.data.alias || {}, links: r.data.links || {} } : { alias: {}, links: {} }; })
-      .catch(function () { return { alias: {}, links: {} }; });
+      .then(function (r) { return (r.data && r.data.ok) ? { alias: r.data.alias || {}, links: r.data.links || {}, notas: r.data.notas || {} } : { alias: {}, links: {}, notas: {} }; })
+      .catch(function () { return { alias: {}, links: {}, notas: {} }; });
+    // Regeneración automática (tickets #18/#20). Si falla, las cards se ven igual (sin el estado de la regeneración).
+    var pRegen = cargarRegeneracion();
 
-    Promise.all([pDiag, pAlias])
+    Promise.all([pDiag, pAlias, pRegen])
       .then(function (par) {
         var res = par[0];
         aliasNombresPublicos = par[1].alias;
         linksPanelCampana = par[1].links;
+        notasCampana = par[1].notas;
         if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "no se pudo leer");
         var resultados = (res.data.data && res.data.data.results) || [];
         els.estadoCarga.textContent = "";
@@ -1431,6 +1525,7 @@
     els.gridTipos.querySelectorAll("[data-editar-alias]").forEach(function (btn) {
       btn.addEventListener("click", function () { editarAliasPromocion(btn); });
     });
+    cablearRegeneracion(els.gridTipos);
     // Auto-actualización SOLO en el primer render de la sesión: trae candidatos/activos de
     // todas las cards una vez. Después, cada card se refresca a mano con su propio botón (o con
     // "Actualizar candidatos/activos de todas"). Así no se recarga todo tras cada acción.
@@ -1514,9 +1609,14 @@
     var alias = inst.id ? aliasNombresPublicos[inst.id] : null;
     var nombre = alias || nombreInterno;
     var botonAlias = inst.id
-      ? '<button type="button" class="btn-alias" data-editar-alias="' + idSeguro + '" data-promotion-type="' + escapeHtml(tipo.codigo) + '" data-nombre-interno="' + escapeHtml(nombreInterno) + '" title="Cargar/editar el nombre público y el link de esta campaña en el panel de ML">✏️</button>'
+      ? '<button type="button" class="btn-alias" data-editar-alias="' + idSeguro + '" data-promotion-type="' + escapeHtml(tipo.codigo) + '" data-nombre-interno="' + escapeHtml(nombreInterno) + '" title="Cargar/editar el nombre público, el link del panel de ML y la nota del equipo">✏️</button>'
       : "";
     var subNombreInterno = '<div class="nombre-interno' + (alias ? "" : " oculto") + '">ML interno: ' + escapeHtml(nombreInterno) + '</div>';
+    var nota = inst.id ? notasCampana[inst.id] : null;
+    var htmlNota = '<div class="nota-campana' + (nota ? "" : " oculto") + '" data-nota title="Nota del equipo (se edita con el lápiz ✏️)">📝 ' + escapeHtml(nota || "") + "</div>";
+    var htmlRegen = (tipo.codigo === "SELLER_CAMPAIGN" && inst.id)
+      ? '<div class="regen" data-regen-de="' + idSeguro + '" data-finish="' + escapeHtml(inst.finish_date || "") + '" data-nombre-camp="' + escapeHtml(nombreInterno) + '">' + htmlRegeneracion(inst.id, inst.finish_date, nombreInterno) + "</div>"
+      : "";
     var badgeEstado = inst.status === "started" ? "started" : "pending";
     var badgeTexto = inst.status === "started" ? "Corriendo" : (inst.status || "—");
 
@@ -1548,6 +1648,8 @@
       '<span data-link-ml>' + linkML + '</span>' +
       (fechas ? '<div class="fechas">' + escapeHtml(fechas) + '</div>' : "") +
       subNombreInterno +
+      htmlNota +
+      htmlRegen +
       acciones +
     '</div>';
   }
@@ -1570,6 +1672,117 @@
     return '<span class="estado-badge" style="' + ESTILO_BADGE_LINK + ' cursor:help;" title="Este tipo de campaña no tiene un link automático al panel de ML. Si querés el acceso directo, abrí la campaña en el panel, copiá la dirección y pegala con el lápiz ✏️.">Solo por API</span>';
   }
 
+  /* ---------- 🔁 Regeneración automática de Campañas propias (tickets #18 y #20) ----------
+     El servidor (ml-procesos, cron 06:05 y 15:05) crea el día antes del vencimiento la campaña siguiente
+     (arranca cuando termina la actual, dura 30 días) y le copia publicaciones, % y % meli+ por la cola.
+     Rutas: GET/POST /regeneracion, POST /regeneracion-ahora. */
+  var REGEN_DIAS_DEFAULT = 30;
+  var AYUDA_REGEN = "Regeneración automática: el día antes de que venza esta campaña (6:05 h, con reintento a las 15:05) el servidor crea la siguiente, que arranca justo cuando termina esta y dura 30 días, y le copia las mismas publicaciones con el mismo % y el mismo % meli+. Arranca sola: no quedan horas sin descuento. El último día vuelve a pasar para sumar lo que se haya agregado a último momento. La nueva hereda el tilde, así que se renueva todos los meses. El nombre se actualiza solo (\"05-10 …\" → \"05-11 …\"). Datos: tabla ml_promos_regeneracion + API de campañas de Mercado Libre.";
+
+  function cargarRegeneracion() {
+    return fetchConTimeout(URL_PROCESOS + "/regeneracion", { headers: { Authorization: AUTH } }, 30000)
+      .then(function (r) {
+        if (!r.data || !r.data.ok) throw new Error((r.data && r.data.error) || "error " + r.status);
+        regenPorCampana = {};
+        (r.data.filas || []).forEach(function (f) { regenPorCampana[f.promotion_id] = f; });
+        regenError = null;
+      })
+      .catch(function (err) { regenError = err.message; });
+  }
+
+  function fechaDia(ms) { return new Date(ms).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" }); }
+
+  function htmlRegeneracion(promotionId, finishIso, nombre) {
+    var r = regenPorCampana[promotionId] || null;
+    var activa = !!(r && r.activa);
+    var lineas = [];
+    if (regenError) lineas.push('<div class="regen-estado err">No se pudo leer el estado de la regeneración (' + escapeHtml(regenError) + "). Recargá la página.</div>");
+    if (r && r.origen_promotion_id) {
+      var o = regenPorCampana[r.origen_promotion_id];
+      lineas.push('<div class="regen-origen">🔁 La creó la regeneración automática a partir de "' + escapeHtml((o && (aliasNombresPublicos[o.promotion_id] || o.nombre)) || r.origen_promotion_id) + '".</div>');
+    }
+    var fin = finishIso ? new Date(finishIso).getTime() : null;
+    if (r && r.nueva_promotion_id) {
+      var cls = r.ultimo_estado === "error" ? "err" : (r.ultimo_estado === "ok" ? "ok" : "activa");
+      lineas.push('<div class="regen-estado ' + cls + '">✅ Ya creó "' + escapeHtml(r.nueva_nombre || r.nueva_promotion_id) + '"' +
+        (r.nueva_creada_at ? " el " + fechaHora(r.nueva_creada_at) : "") + ". " + escapeHtml(r.ultimo_detalle || "") + "</div>");
+    } else if (r && r.ultimo_estado === "error") {
+      lineas.push('<div class="regen-estado err">⚠️ ' + escapeHtml(r.ultimo_detalle || "Falló la última pasada.") + "</div>");
+    } else if (activa) {
+      var cuando = fin ? "El " + fechaDia(fin - 86400000) + " (día antes del vencimiento) a las 6:05" : "El día antes del vencimiento";
+      lineas.push('<div class="regen-estado activa">' + cuando + " crea la siguiente por " + ((r && r.duracion_dias) || REGEN_DIAS_DEFAULT) + " días" +
+        (fin ? ", arrancando el " + fechaDia(fin + 1000) + " a las 00:00" : "") + ", con las mismas publicaciones y %.</div>");
+    } else if (r && r.ultimo_estado === "vencida") {
+      lineas.push('<div class="regen-estado">' + escapeHtml(r.ultimo_detalle || "Venció sin regenerarse.") + "</div>");
+    } else {
+      lineas.push('<div class="regen-estado">Desactivada: al vencer, esta campaña desaparece y hay que armar la nueva a mano.</div>');
+    }
+    if (r && r.configurado_por && r.configurado_at && !r.origen_promotion_id) {
+      lineas.push('<div class="regen-estado">' + (activa ? "Activada" : "Último cambio") + " por " + escapeHtml(r.configurado_por) + " · " + fechaHora(r.configurado_at) + "</div>");
+    }
+    var puedeAhora = !(r && r.nueva_promotion_id);
+    return '<div class="regen-fila">' +
+        '<label class="regen-check"><input type="checkbox" data-regen-toggle="' + escapeHtml(promotionId) + '"' + (activa ? " checked" : "") + (regenError ? " disabled" : "") + "> 🔁 Regeneración automática</label>" +
+        kpiHelp(AYUDA_REGEN) +
+        (puedeAhora ? '<button class="chico secondary" type="button" data-regen-ahora="' + escapeHtml(promotionId) + '" title="Crea la campaña siguiente ahora mismo y le copia las publicaciones y %">Regenerar ahora</button>' : "") +
+      "</div>" + lineas.join("");
+  }
+
+  function refrescarBloqueRegen(promotionId) {
+    var cont = els.gridTipos.querySelector('[data-regen-de="' + cssEscape(promotionId) + '"]');
+    if (!cont) return;
+    cont.innerHTML = htmlRegeneracion(promotionId, cont.getAttribute("data-finish"), cont.getAttribute("data-nombre-camp"));
+    cablearRegeneracion(cont);
+  }
+
+  function cablearRegeneracion(raiz) {
+    raiz.querySelectorAll("[data-regen-toggle]").forEach(function (chk) {
+      chk.addEventListener("change", function () {
+        var id = chk.getAttribute("data-regen-toggle");
+        var activar = chk.checked;
+        chk.disabled = true;
+        fetchConTimeout(URL_PROCESOS + "/regeneracion", {
+          method: "POST",
+          headers: { Authorization: AUTH, "Content-Type": "application/json" },
+          body: JSON.stringify({ promotion_id: id, activa: activar, duracion_dias: REGEN_DIAS_DEFAULT }),
+        }, 30000)
+          .then(function (res) {
+            if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error " + res.status);
+            if (res.data.fila) regenPorCampana[id] = res.data.fila;
+            mostrarToast(activar ? "🔁 Regeneración automática activada." : "Regeneración automática desactivada.");
+          })
+          .catch(function (err) { chk.checked = !activar; mostrarAviso(err.message, "No se pudo guardar"); })
+          .finally(function () { chk.disabled = false; refrescarBloqueRegen(id); });
+      });
+    });
+    raiz.querySelectorAll("[data-regen-ahora]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-regen-ahora");
+        var cont = btn.closest("[data-regen-de]");
+        var nombre = (cont && cont.getAttribute("data-nombre-camp")) || id;
+        pedirConfirmacion("Se va a crear AHORA en Mercado Libre la campaña siguiente a \"" + (aliasNombresPublicos[id] || nombre) + "\" (30 días, arranca cuando termina esta o en 5 minutos si ya venció) y se le copian las mismas publicaciones con el mismo % y % meli+.\n\nLa copia entra a la cola del servidor.", function () {
+          btn.disabled = true;
+          fetchConTimeout(URL_PROCESOS + "/regeneracion-ahora", {
+            method: "POST",
+            headers: { Authorization: AUTH, "Content-Type": "application/json" },
+            body: JSON.stringify({ promotion_id: id, duracion_dias: REGEN_DIAS_DEFAULT }),
+          }, 60000)
+            .then(function (res) {
+              if (res.data && res.data.fila) regenPorCampana[id] = res.data.fila;
+              if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error " + res.status);
+              var r = res.data.resultado || {};
+              mostrarToast(r.accion === "creada" ? "✅ Campaña nueva creada. La copia de publicaciones quedó en la cola." : (r.accion === "sincronizar" ? "✅ Sumando a la nueva lo que falta (en la cola)." : (r.detalle || "Listo.")), 6000);
+              cargarEstadoProcesos(false);
+              refrescarTrasRender = [id]; // re-render: aparece la card nueva y se recargan los números de esta
+              arrancarApp();
+            })
+            .catch(function (err) { mostrarAviso(err.message, "No se pudo regenerar"); refrescarBloqueRegen(id); })
+            .finally(function () { btn.disabled = false; });
+        }, { titulo: "¿Regenerar ahora?", si: "Crear la siguiente" });
+      });
+    });
+  }
+
   // ---------- Modal "Datos de la campaña": nombre público + link del panel ----------
   // Actualiza la card en el lugar (sin re-render), así no se pierden los conteos ya cargados.
   var campanaEditando = null; // { promotionId, promotionType, nombreInterno, btn }
@@ -1583,6 +1796,8 @@
     document.getElementById("campanaNombreInterno").textContent = campanaEditando.nombreInterno;
     document.getElementById("inputCampanaNombre").value = aliasNombresPublicos[campanaEditando.promotionId] || "";
     document.getElementById("inputCampanaLink").value = linksPanelCampana[campanaEditando.promotionId] || "";
+    document.getElementById("inputCampanaNota").value = notasCampana[campanaEditando.promotionId] || "";
+    document.getElementById("contadorNotaCampana").textContent = document.getElementById("inputCampanaNota").value.length;
     document.getElementById("estadoCampana").textContent = "";
     document.getElementById("modalCampana").classList.remove("oculto");
     document.getElementById("inputCampanaNombre").focus();
@@ -1600,6 +1815,7 @@
     var btnGuardar = document.getElementById("btnGuardarCampana");
     var nombre = document.getElementById("inputCampanaNombre").value.trim().slice(0, 150);
     var link = document.getElementById("inputCampanaLink").value.trim();
+    var nota = document.getElementById("inputCampanaNota").value.trim().slice(0, 1000);
     if (link && !LINK_PANEL_PERMITIDO.test(link)) {
       elEstado.textContent = "El link tiene que ser del panel de Mercado Libre Argentina (empieza con https://vendedores.mercadolibre.com.ar/).";
       return;
@@ -1610,12 +1826,13 @@
     fetchConTimeout(URL_ALIAS, {
       method: "POST",
       headers: { Authorization: AUTH, "Content-Type": "application/json" },
-      body: JSON.stringify({ promotion_id: ctx.promotionId, nombre_publico: nombre, link_panel: link }),
+      body: JSON.stringify({ promotion_id: ctx.promotionId, nombre_publico: nombre, link_panel: link, nota: nota }),
     })
       .then(function (res) {
         if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error " + res.status);
         if (nombre) aliasNombresPublicos[ctx.promotionId] = nombre; else delete aliasNombresPublicos[ctx.promotionId];
         if (link) linksPanelCampana[ctx.promotionId] = link; else delete linksPanelCampana[ctx.promotionId];
+        if (nota) notasCampana[ctx.promotionId] = nota; else delete notasCampana[ctx.promotionId];
         var nombreVisible = nombre || ctx.nombreInterno;
         var cont = els.gridTipos.querySelector('[data-instancia="' + cssEscape(ctx.promotionId) + '"]');
         if (cont) {
@@ -1624,6 +1841,8 @@
           cont.querySelectorAll("[data-nombre]").forEach(function (b) { b.setAttribute("data-nombre", nombreVisible); });
           var slotLink = cont.querySelector("[data-link-ml]");
           if (slotLink) slotLink.innerHTML = htmlLinkML(ctx.promotionType, ctx.promotionId);
+          var slotNota = cont.querySelector("[data-nota]");
+          if (slotNota) { slotNota.textContent = "📝 " + nota; slotNota.classList.toggle("oculto", !nota); }
         }
         cerrarModalCampana();
       })
@@ -1635,6 +1854,7 @@
   document.getElementById("btnGuardarCampana").addEventListener("click", guardarDatosCampana);
   document.getElementById("inputCampanaLink").addEventListener("keydown", function (e) { if (e.key === "Enter") guardarDatosCampana(); });
   document.getElementById("inputCampanaNombre").addEventListener("keydown", function (e) { if (e.key === "Enter") guardarDatosCampana(); });
+  document.getElementById("inputCampanaNota").addEventListener("input", function () { document.getElementById("contadorNotaCampana").textContent = this.value.length; });
 
   function cargarConteo(btnVerConteo) {
     var promotionId = btnVerConteo.getAttribute("data-promotion-id");
@@ -1755,7 +1975,6 @@
   }
 
   function abrirModalPorcentaje(promotionId, promotionType, nombre) {
-    if (hayCorridaEnCurso()) return;
     var aviso = avisoPreciosRecientes();
     var elAviso = document.getElementById("avisoPreciosRecientes");
     elAviso.textContent = aviso;
@@ -1817,8 +2036,7 @@
   var accionPendiente = null;
 
   function abrirConfirmacion(promotionId, promotionType, accion, nombre, pctConfig) {
-    if (hayCorridaEnCurso()) return;
-    accionPendiente = { promotionId: promotionId, promotionType: promotionType, accion: accion, pctConfig: pctConfig || null };
+    accionPendiente = { promotionId: promotionId, promotionType: promotionType, accion: accion, nombre: nombre, pctConfig: pctConfig || null };
     els.confirmarTitulo.textContent = accion === "subir" ? "¿Subir todas las candidatas?" : "¿Bajar todas las activas?";
 
     var texto;
@@ -1831,13 +2049,14 @@
             pctConfig.excepciones.map(function (e) { return e.sku + ": " + e.porcentaje + "%"; }).join(", ") + ")";
         }
       }
-      texto += ". Esto cambia precios reales visibles en ML.";
+      texto += ". Esto cambia precios reales visibles en ML. Entra a la cola del servidor: lee la campaña en vivo cuando le toca el turno.";
     } else {
       texto = 'Va a sacar de "' + nombre + '" a cada publicación que esté activa ahí. No se puede deshacer con un botón — habría que volver a aplicarlas a mano.';
       if (TIPOS_BAJA_RESTRINGIDA_ML.indexOf(promotionType) !== -1) {
         texto += " Aviso: Mercado Libre suele no permitir sacar este tipo de oferta una vez activa; si la rechaza, lo vas a ver publicación por publicación en el detalle (no se toca ninguna otra promo).";
       }
     }
+    if (accion !== "subir") texto += " Entra a la cola del servidor: podés cerrar la pestaña.";
     els.confirmarTexto.textContent = texto;
     els.modalConfirmar.classList.remove("oculto");
   }
@@ -1850,26 +2069,22 @@
   els.btnConfirmarAccion.addEventListener("click", function () {
     if (!accionPendiente) return;
     var a = accionPendiente;
+    accionPendiente = null;
     els.modalConfirmar.classList.add("oculto");
-    els.btnConfirmarAccion.disabled = true;
-
-    var estado = promoItemsState[a.promotionId];
-    var itemsTotal = estado ? (a.accion === "subir" ? estado.candidatos : estado.activos) : [];
-
-    if (!itemsTotal || itemsTotal.length === 0) {
-      mostrarResultadoFinal({ ok: true, log: [] }, a.accion, 0, 0, 0);
-      els.btnConfirmarAccion.disabled = false;
-      accionPendiente = null;
-      return;
+    var parametros = { promotion_id: a.promotionId, promotion_type: a.promotionType, nombre: a.nombre, accion: a.accion };
+    if (a.pctConfig) {
+      parametros.porcentaje_base = a.pctConfig.porcentaje_base;
+      if (a.pctConfig.excepciones && a.pctConfig.excepciones.length) parametros.excepciones = a.pctConfig.excepciones;
     }
-
-    ejecutarEnTandas(a, itemsTotal, { pctConfig: a.pctConfig });
+    encolarCampana(parametros, els.btnConfirmarAccion);
   });
 
-  var ultimoContextoTanda = null; // { a, itemsTotal, logAcumulado } -- para poder armar "Reintentar fallidos"
   var ultimasPromosActivas = []; // cache de la última carga de arrancarApp(), la usan las métricas
   var aliasNombresPublicos = {}; // promotion_id -> nombre público cargado a mano (tabla ml_promos_nombre_publico)
   var linksPanelCampana = {};    // promotion_id -> link real del panel de ML cargado a mano (misma tabla, columna link_panel)
+  var notasCampana = {};         // promotion_id -> nota del equipo (misma tabla, columna nota; ticket #16)
+  var regenPorCampana = {};      // promotion_id -> fila de ml_promos_regeneracion (tickets #18/#20)
+  var regenError = null;         // si no se pudo leer el estado de la regeneración
 
   els.toggleMetricas.addEventListener("click", function () {
     var abierto = !els.metricasBody.classList.contains("oculto");
@@ -1965,226 +2180,14 @@
     try { return JSON.stringify(detalle); } catch (e) { return "error desconocido"; }
   }
 
-  function ejecutarEnTandas(a, itemsTotal, opciones) {
-    opciones = opciones || {};
-    var modoPrecio = opciones.modoPrecio || null;
-    var pctConfig = opciones.pctConfig || null;
-
-    var tandas = chunk(itemsTotal, BATCH_SIZE);
-    var logAcumulado = [];
-    var exitosos = 0, errores = 0, revisar = 0, indice = 0;
-    var t0Tanda = Date.now();
-    iniciarCorrida();
-
-    els.resultadoTitulo.textContent = a.accion === "subir" ? "Subiendo a todas..." : "Bajando de todas...";
-    els.resultadoResumen.textContent = "Procesando 0/" + itemsTotal.length + " (estimado " + fmtSeg(itemsTotal.length * (a.accion === "subir" ? SEG_POR_ITEM_SUBIR_EST : 0.5)) + ")...";
-    els.resultadoTablaWrap.innerHTML = "";
-    els.btnReintentarFallidos.classList.add("oculto");
-    els.btnUsarSugerido.classList.add("oculto");
-    els.bloqueAplicarPctRevisar.classList.add("oculto");
-    els.inputPctRevisar.value = "";
-    els.modalResultado.classList.remove("oculto");
-
-    function siguienteTanda() {
-      if (indice >= tandas.length) {
-        els.resultadoTitulo.textContent = a.accion === "subir" ? "Resultado — Subir a todas" : "Resultado — Bajar de todas";
-        var resumen = itemsTotal.length + " publicaciones procesadas — " + exitosos + " OK, " + errores + " con error";
-        if (revisar > 0) resumen += ", " + revisar + " necesitan revisión (el % pedido queda fuera del rango que ML considera creíble)";
-        els.resultadoResumen.textContent = resumen + "." + (revisar > 0 ? " " + TEXTO_REGLA_7D : "");
-        renderTablaLog(logAcumulado, a.accion);
-
-        ultimoContextoTanda = { a: a, itemsTotal: itemsTotal, logAcumulado: logAcumulado };
-        els.btnReintentarFallidos.classList.toggle("oculto", errores === 0);
-        els.btnUsarSugerido.classList.toggle("oculto", revisar === 0);
-        els.bloqueAplicarPctRevisar.classList.toggle("oculto", revisar === 0);
-
-        els.btnConfirmarAccion.disabled = false;
-        accionPendiente = null;
-        finCorrida();
-        refrescarTrasRender = [a.promotionId];
-        arrancarApp();
-        return;
-      }
-
-      var tanda = tandas[indice];
-      var payload = { promotion_id: a.promotionId, promotion_type: a.promotionType, accion: a.accion, items: tanda };
-      if (modoPrecio) payload.modo_precio = modoPrecio;
-      if (pctConfig) {
-        payload.porcentaje_base = pctConfig.porcentaje_base;
-        payload.excepciones = pctConfig.excepciones;
-      }
-
-      fetchConTimeout(URL_BULK, {
-        method: "POST",
-        headers: { Authorization: AUTH, "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      }, TIMEOUT_TANDA_MS)
-        .then(function (res) {
-          if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error en tanda");
-          logAcumulado = logAcumulado.concat(res.data.log || []);
-          exitosos += res.data.exitosos || 0;
-          errores += res.data.errores || 0;
-          revisar += res.data.revisar || 0;
-          indice++;
-          var restTanda = (Date.now() - t0Tanda) / 1000 / indice * (tandas.length - indice);
-          els.resultadoResumen.textContent = "Procesando " + logAcumulado.length + "/" + itemsTotal.length + " (resta " + fmtSeg(restTanda) + ")...";
-          renderTablaLog(logAcumulado, a.accion);
-          siguienteTanda();
-        })
-        .catch(function (err) {
-          els.resultadoTitulo.textContent = "Se cortó a mitad de camino";
-          els.resultadoResumen.textContent = logAcumulado.length + "/" + itemsTotal.length + " procesadas antes del error (" + err.message + "). Podés reintentar: las que ya quedaron aplicadas/removidas no se vuelven a tocar dos veces, porque \"Ver candidatos/activos\" te va a traer el estado real actualizado.";
-          renderTablaLog(logAcumulado, a.accion);
-          els.btnConfirmarAccion.disabled = false;
-          accionPendiente = null;
-          finCorrida();
-        });
-    }
-
-    siguienteTanda();
+  /* ---------- Subir a todas / Bajar de todas de UNA campaña: van a la cola del servidor ----------
+     v2026-10-08.1 (ticket #17): antes corría en esta pestaña (una sola a la vez y con la pestaña abierta).
+     Ahora se crea un proceso 'campana' en ml-procesos: el servidor lee la campaña EN VIVO cuando le toca
+     el turno, aplica en tandas, reintenta errores pasajeros y deja el detalle en "Acciones globales".
+     parametros: { promotion_id, promotion_type, nombre, accion, item_ids?, porcentaje_base?, excepciones?, modo_precio? } */
+  function encolarCampana(parametros, boton) {
+    return crearProceso({ tipo: "campana", parametros: parametros }, boton);
   }
-
-  els.btnReintentarFallidos.addEventListener("click", function () {
-    if (!ultimoContextoTanda || hayCorridaEnCurso()) return;
-    var ctx = ultimoContextoTanda;
-    var idsFallidos = {};
-    ctx.logAcumulado.forEach(function (l) { if (l.estado === "ERROR") idsFallidos[l.item_id] = true; });
-    var itemsFallidos = ctx.itemsTotal.filter(function (it) { return idsFallidos[it.id]; });
-    if (itemsFallidos.length === 0) return;
-    ejecutarEnTandas(ctx.a, itemsFallidos, { pctConfig: ctx.a.pctConfig });
-  });
-
-  function itemsEnRevision(ctx) {
-    var ids = {};
-    ctx.logAcumulado.forEach(function (l) { if (l.estado === "REVISAR") ids[l.item_id] = true; });
-    return ctx.itemsTotal.filter(function (it) { return ids[it.id]; });
-  }
-
-  els.btnUsarSugerido.addEventListener("click", function () {
-    if (!ultimoContextoTanda || hayCorridaEnCurso()) return;
-    var ctx = ultimoContextoTanda;
-    var idsConSugerido = {};
-    ctx.logAcumulado.forEach(function (l) { if (l.estado === "REVISAR" && l.sugerido != null) idsConSugerido[l.item_id] = true; });
-    var itemsRevisar = ctx.itemsTotal.filter(function (it) { return idsConSugerido[it.id]; });
-    if (itemsRevisar.length === 0) return;
-    ejecutarEnTandas(ctx.a, itemsRevisar, { modoPrecio: "sugerido" });
-  });
-
-  els.btnAplicarPctRevisar.addEventListener("click", function () {
-    if (!ultimoContextoTanda || hayCorridaEnCurso()) return;
-    var pct = Number(els.inputPctRevisar.value);
-    if (!pct || pct <= 0 || pct >= 100) {
-      els.inputPctRevisar.style.borderColor = "var(--err)";
-      return;
-    }
-    els.inputPctRevisar.style.borderColor = "";
-    var ctx = ultimoContextoTanda;
-    var itemsRevisar = itemsEnRevision(ctx);
-    if (itemsRevisar.length === 0) return;
-    ejecutarEnTandas(ctx.a, itemsRevisar, { pctConfig: { porcentaje_base: pct, excepciones: [] } });
-  });
-
-  function renderTablaLog(log, accion) {
-    var filas = log.map(function (l) {
-      var extra = "";
-      if (l.estado === "ERROR") {
-        extra = '<span style="color:var(--err); font-size:0.72rem;">' + escapeHtml(textoError(l.detalle)) + '</span>';
-      } else if (l.estado === "REVISAR") {
-        var partes = [];
-        if (l.porcentaje_pedido != null) partes.push(l.porcentaje_pedido + "% pedido → $" + l.precio_pedido);
-        if (l.porcentaje_minimo != null || l.porcentaje_maximo != null) {
-          var rango = "rango válido: ";
-          rango += l.porcentaje_minimo != null ? l.porcentaje_minimo + "%" : "sin mínimo";
-          rango += " a ";
-          rango += l.porcentaje_maximo != null ? l.porcentaje_maximo + "%" : "sin máximo";
-          partes.push(rango);
-        }
-        if (l.sugerido) partes.push("sugerido ML $" + l.sugerido);
-        extra = '<span style="color:var(--amber); font-size:0.72rem;">' + escapeHtml(partes.join(" · ")) + '</span>';
-      } else if (l.estado === "PARCIAL") {
-        var txtParc = (l.offers_bajados != null ? l.offers_bajados + " bajada(s), pero: " : "") + textoError(l.detalle);
-        extra = '<span style="color:var(--amber); font-size:0.72rem;">' + escapeHtml(txtParc) + '</span>';
-      } else if (l.estado === "SIN_OFERTAS") {
-        extra = '<span style="color:var(--text-dim); font-size:0.72rem;">No tenía promos activas para bajar.</span>';
-      } else if (l.estado === "REMOVIDO" && l.offers_bajados != null) {
-        extra = '<span style="color:var(--text-dim); font-size:0.72rem;">' + l.offers_bajados + ' promo(s) bajada(s)</span>';
-      } else if (accion === "subir" && l.precio_aplicado) {
-        extra = "$" + l.precio_aplicado + (l.porcentaje != null ? " (" + l.porcentaje + "%)" : "");
-      }
-      return "<tr><td>" + escapeHtml(l.item_id) + "</td><td>" + escapeHtml(l.sku || "—") + "</td>" +
-        "<td><span class='tag-log " + escapeHtml(l.estado) + "'>" + escapeHtml(l.estado) + "</span></td><td>" + extra + "</td></tr>";
-    }).join("");
-    els.resultadoTablaWrap.innerHTML = '<table class="log"><thead><tr><th>Item</th><th>SKU</th><th>Estado</th><th></th></tr></thead><tbody>' + filas + '</tbody></table>';
-  }
-
-  function mostrarResultadoFinal(data, accion, total, exitosos, errores) {
-    els.resultadoTitulo.textContent = accion === "subir" ? "Resultado — Subir a todas" : "Resultado — Bajar de todas";
-    els.resultadoResumen.textContent = total === 0 ? "No había nada para procesar." : (total + " publicaciones procesadas — " + exitosos + " OK, " + errores + " con error.");
-    els.btnReintentarFallidos.classList.add("oculto");
-    els.btnUsarSugerido.classList.add("oculto");
-    els.bloqueAplicarPctRevisar.classList.add("oculto");
-    renderTablaLog((data && data.log) || [], accion);
-    els.modalResultado.classList.remove("oculto");
-  }
-
-  /* ---------- Corrida en segundo plano: minimizar el modal de resultado ----------
-     Los motores (subir/bajar por card, Bajar TODAS, Subir TODAS) escriben su avance en
-     #resultadoResumen. Mientras corren, el modal se puede minimizar a una barrita flotante
-     que espeja ese avance, y se puede seguir usando el resto de la app. Solo puede haber
-     UNA corrida viva a la vez (comparten el mismo modal). La pestaña tiene que quedar abierta. */
-  var corridaEnCurso = false;
-  var corridaMinimizada = false;
-  var elPill = document.getElementById("pillCorrida");
-  var elPillTexto = document.getElementById("pillCorridaTexto");
-  var btnMinimizarResultado = document.getElementById("btnMinimizarResultado");
-
-  function refrescarPill() {
-    if (!corridaMinimizada) return;
-    elPillTexto.textContent = corridaEnCurso
-      ? els.resultadoTitulo.textContent + " " + els.resultadoResumen.textContent
-      : "✅ Terminó — tocá para ver el detalle";
-    elPill.classList.toggle("terminada", !corridaEnCurso);
-  }
-  new MutationObserver(refrescarPill).observe(els.resultadoResumen, { childList: true, characterData: true, subtree: true });
-
-  function iniciarCorrida() {
-    corridaEnCurso = true;
-    btnMinimizarResultado.classList.remove("oculto");
-  }
-  function finCorrida() {
-    corridaEnCurso = false;
-    btnMinimizarResultado.classList.add("oculto");
-    refrescarPill();
-  }
-  function minimizarResultado() {
-    corridaMinimizada = true;
-    els.modalResultado.classList.add("oculto");
-    elPill.classList.remove("oculto");
-    refrescarPill();
-  }
-  function restaurarResultado() {
-    corridaMinimizada = false;
-    elPill.classList.add("oculto");
-    els.modalResultado.classList.remove("oculto");
-  }
-  // Devuelve true (y avisa) si ya hay una corrida viva: no se puede lanzar otra en paralelo.
-  function hayCorridaEnCurso() {
-    if (hayProcesoServidor()) return true; // Bajar/Subir TODAS corriendo en el servidor
-    if (!corridaEnCurso) return false;
-    alert("Hay una corrida en curso (" + els.resultadoResumen.textContent + ").\nEsperá a que termine para lanzar otra.");
-    return true;
-  }
-  btnMinimizarResultado.addEventListener("click", minimizarResultado);
-  elPill.addEventListener("click", restaurarResultado);
-  elPill.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); restaurarResultado(); } });
-  els.btnCerrarResultado.addEventListener("click", function () {
-    if (corridaEnCurso) { minimizarResultado(); return; } // cerrar a mitad de corrida = minimizar: la corrida NO se corta
-    els.modalResultado.classList.add("oculto");
-  });
-  window.addEventListener("beforeunload", function (e) {
-    if (!corridaEnCurso) return;
-    e.preventDefault(); e.returnValue = ""; // el navegador pregunta antes de cerrar/recargar la pestaña
-  });
 
   /* ============================================================
      MODAL: Subir a todas — elegir candidatas por % máximo
@@ -2223,7 +2226,6 @@
   function fmtPct(v) { return v == null ? "—" : v + "%"; }
 
   function abrirModalSeleccionSubir(promotionId, promotionType, nombre, yaRefrescado) {
-    if (hayCorridaEnCurso()) return;
     selContexto = { promotionId: promotionId, promotionType: promotionType, nombre: nombre };
     document.getElementById("selNombreCampana").textContent = nombre;
     var estadoEl = document.getElementById("selEstado");
@@ -2345,16 +2347,17 @@
   document.getElementById("btnSelNinguna").addEventListener("click", function () { selMarcadas = {}; renderSeleccion(); });
   document.getElementById("btnSelCancelar").addEventListener("click", function () { selContexto = null; document.getElementById("modalSeleccionSubir").classList.add("oculto"); });
   document.getElementById("btnSelConfirmar").addEventListener("click", function () {
-    if (!selContexto || hayCorridaEnCurso()) return;
-    var items = selFilas.filter(function (f) { return selMarcadas[f.id]; }).map(function (f) { return f.item; });
-    if (items.length === 0) return;
+    if (!selContexto) return;
+    var ids = selFilas.filter(function (f) { return selMarcadas[f.id]; }).map(function (f) { return f.id; });
+    if (ids.length === 0) return;
     var max = selPctMax();
-    if (!confirm("Vas a sumar " + items.length + " publicación(es) a \"" + selContexto.nombre + "\" con el precio que fija Mercado Libre" +
-      (max != null ? " (tu máximo: " + max + "%)" : "") + ". Esto cambia precios reales visibles en ML.\n\n¿Continuar?")) return;
-    var a = { promotionId: selContexto.promotionId, promotionType: selContexto.promotionType, accion: "subir", pctConfig: null };
-    document.getElementById("modalSeleccionSubir").classList.add("oculto");
-    selContexto = null;
-    ejecutarEnTandas(a, items, {});
+    var ctx = selContexto;
+    pedirConfirmacion("Vas a sumar " + ids.length + " publicación(es) a \"" + ctx.nombre + "\" con el precio que fija Mercado Libre" +
+      (max != null ? " (tu máximo: " + max + "%)" : "") + ". Esto cambia precios reales visibles en ML.\n\nEntra a la cola del servidor: podés cerrar la pestaña.", function () {
+      document.getElementById("modalSeleccionSubir").classList.add("oculto");
+      selContexto = null;
+      encolarCampana({ promotion_id: ctx.promotionId, promotion_type: ctx.promotionType, nombre: ctx.nombre, accion: "subir", item_ids: ids });
+    }, { titulo: "¿Sumar las seleccionadas?", si: "Sumar " + ids.length });
   });
 
   /* ============================================================
@@ -2458,11 +2461,13 @@
     var filas = activos.map(function (it) {
       var pct = pctActualDe(it);
       return { id: it.id, original_price: it.original_price, price: it.price, min_discounted_price: it.min_discounted_price, max_discounted_price: it.max_discounted_price, pct: pct,
-               meli_percentage: it.meli_percentage, seller_percentage: it.seller_percentage };
+               meli_percentage: numOrNullPct(it.meli_percentage), seller_percentage: numOrNullPct(it.seller_percentage) };
     });
 
     filas.sort(function (a, b) {
       var va = a[campo], vb = b[campo];
+      // Sin dato (null) siempre al final, en los dos sentidos.
+      if (va == null || vb == null) return (va == null) - (vb == null);
       if (typeof va === "string") { va = va.toLowerCase(); vb = vb.toLowerCase(); }
       if (va < vb) return asc ? -1 : 1;
       if (va > vb) return asc ? 1 : -1;
@@ -2471,7 +2476,16 @@
 
     var editable = pctAplicadosContexto && TIPOS_NECESITAN_PRECIO.indexOf(pctAplicadosContexto.promotionType) !== -1;
     var hayAporte = filas.some(function (f) { return f.meli_percentage != null || f.seller_percentage != null; });
-    document.getElementById("thEditarPct").textContent = editable ? "Editar %" : (hayAporte ? "Quién pone el descuento" : "Editar %");
+    // v2026-10-26.1: en las compartidas con ML, "Quién pone el descuento" se separa en 2 columnas ordenables.
+    var modoAporte = !editable && hayAporte;
+    document.querySelectorAll("#tablaPctAplicados th.col-aporte").forEach(function (th) { th.classList.toggle("oculto", !modoAporte); });
+    var thEditar = document.getElementById("thEditarPct");
+    thEditar.textContent = editable ? "Editar %" : "Quién pone el descuento";
+    thEditar.classList.toggle("oculto", modoAporte);
+    if (modoAporte) { // el "?" se arma acá: pctPromoGeneral puede haberse actualizado desde la base
+      document.getElementById("helpPctMl").innerHTML = kpiHelp("Parte del descuento que pone Mercado Libre en esta publicación (meli_percentage), como % del precio de lista. Lo informa ML por publicación al leer la campaña. Clic en el título de la columna para ordenar.");
+      document.getElementById("helpPctNuestro").innerHTML = kpiHelp("Parte del descuento que ponemos nosotros (sale de nuestro margen), como % del precio de lista. Dato de ML por publicación (seller_percentage). % aplicado ≈ % ML + % nuestro. En ámbar con ⚠ si supera la promo general (hoy " + pctPromoGeneral + " %): conviene revisarla. Clic en el título para ordenar de mayor a menor.");
+    }
 
     els.tablaPctAplicadosBody.innerHTML = filas.map(function (f) {
       return "<tr data-fila-item='" + escapeHtml(f.id) + "'>" +
@@ -2479,7 +2493,9 @@
         "<td>$" + f.original_price + "</td>" +
         "<td class='celda-pct'>" + f.pct + "%</td>" +
         "<td class='celda-precio'>$" + f.price + "</td>" +
-        "<td style='display:flex; gap:6px; align-items:center;'>" +
+        (modoAporte
+          ? celdaAporte(f.meli_percentage, false) + celdaAporte(f.seller_percentage, true)
+          : "<td style='display:flex; gap:6px; align-items:center;'>" +
           (editable
             ? "<input type='number' class='input-editar-pct' value='" + (pctEditados[f.id] != null ? pctEditados[f.id] : f.pct) + "' min='1' max='99' step='0.1' style='width:70px;'>" +
               "<button class='chico secondary btn-guardar-pct'>Guardar</button>"
@@ -2487,7 +2503,7 @@
                 // Ticket #6: en compartidas se ve cuánto pone cada uno (el % no se edita: lo fija ML).
                 ? "<span class='aporte-celda' title='Reparto del descuento informado por ML para esta publicación'>ML <b>" + (Number(f.meli_percentage) || 0) + "%</b> · nosotros <b>" + (Number(f.seller_percentage) || 0) + "%</b></span>"
                 : "<span style='color:var(--text-dim); font-size:0.75rem;'>gestiona ML</span>")) +
-        "</td>" +
+          "</td>") +
         "<td class='celda-res'>" + celdaResultadoPct(f.id) + "</td>" +
       "</tr>";
     }).join("");
@@ -2513,6 +2529,22 @@
     });
   }
 
+  // v2026-10-26.1: % de aporte (ML / nuestro) como número o null si ML no lo informa.
+  function numOrNullPct(v) {
+    if (v === null || v === undefined || v === "") return null;
+    var n = Number(v);
+    return isFinite(n) ? n : null;
+  }
+  function fmtPctAporte(n) { return (Math.round(n * 10) / 10).toString().replace(".", ",") + "%"; }
+  // Celda de % ML o % nuestro. El nuestro se marca en ámbar si supera la promo general (posible error a revisar).
+  function celdaAporte(n, esNuestro) {
+    if (n == null) return "<td class='celda-aporte sin-dato' title='ML no informa el reparto para esta publicación'>—</td>";
+    var sobre = esNuestro && pctPromoGeneral > 0 && n > pctPromoGeneral + 0.05;
+    return "<td class='celda-aporte" + (esNuestro ? " nuestro" : "") + (sobre ? " sobre-general" : "") + "'" +
+      (sobre ? " title='Ponemos más que la promo general (" + fmtPctAporte(pctPromoGeneral) + "): revisar'" : "") + ">" +
+      fmtPctAporte(n) + (sobre ? " ⚠" : "") + "</td>";
+  }
+
   function actualizarFlechasOrden() {
     document.querySelectorAll("#tablaPctAplicados th[data-sort]").forEach(function (t) {
       var esActivo = t.getAttribute("data-sort") === pctAplicadosOrden.campo;
@@ -2523,12 +2555,14 @@
   }
 
   document.querySelectorAll("#tablaPctAplicados th[data-sort]").forEach(function (th) {
-    th.addEventListener("click", function () {
+    th.addEventListener("click", function (e) {
+      if (e.target.closest && e.target.closest(".kpi-help")) return; // el "?" abre la ayuda, no ordena
       var campo = th.getAttribute("data-sort");
       if (pctAplicadosOrden.campo === campo) {
         pctAplicadosOrden.asc = !pctAplicadosOrden.asc;
       } else {
-        pctAplicadosOrden = { campo: campo, asc: true };
+        // Los % arrancan de mayor a menor: lo primero que se ve es lo que más descuento tiene.
+        pctAplicadosOrden = { campo: campo, asc: ["pct", "meli_percentage", "seller_percentage"].indexOf(campo) === -1 };
       }
       actualizarFlechasOrden();
       var estado = pctAplicadosContexto ? promoItemsState[pctAplicadosContexto.promotionId] : null;
@@ -2580,17 +2614,17 @@
         } else if (log0.estado === "REVISAR") {
           btn.textContent = "Guardar";
           btn.disabled = false;
-          alert("Ese % queda fuera de rango. Válido entre " + (log0.porcentaje_minimo != null ? log0.porcentaje_minimo : "?") + "% y " + (log0.porcentaje_maximo != null ? log0.porcentaje_maximo : "?") + "%. Sugerido ML: $" + log0.sugerido);
+          mostrarAviso("Ese % queda fuera del rango que acepta ML para esta publicación. Válido entre " + (log0.porcentaje_minimo != null ? log0.porcentaje_minimo : "?") + "% y " + (log0.porcentaje_maximo != null ? log0.porcentaje_maximo : "?") + "%." + (log0.sugerido ? " Sugerido de ML: $" + log0.sugerido + "." : ""), "No se aplicó");
         } else {
           btn.textContent = "Guardar";
           btn.disabled = false;
-          alert("Error: " + textoError(log0.detalle));
+          mostrarAviso(textoError(log0.detalle), "Mercado Libre rechazó el cambio");
         }
       })
       .catch(function (err) {
         btn.textContent = "Guardar";
         btn.disabled = false;
-        alert("Error: " + err.message);
+        mostrarAviso(err.message, "No se pudo guardar");
       });
   }
 
@@ -2633,8 +2667,11 @@
     if (invalidas > 0) { els.pctAplicadosEstado.textContent = invalidas + " fila(s) con % inválido (tiene que ser entre 1 y 99). Corregilas antes de guardar."; els.pctAplicadosEstado.className = "estado err"; return; }
     if (items.length === 0) { els.pctAplicadosEstado.textContent = "No hay cambios para guardar (ningún % distinto al actual)."; els.pctAplicadosEstado.className = "estado"; return; }
     var aviso7d = avisoPreciosRecientes();
-    if (!confirm("Se va a cambiar el % de " + items.length + " publicación(es) en esta campaña. Esto cambia precios reales en ML." + (aviso7d ? "\n\n" + aviso7d : "") + "\n\n¿Continuar?")) return;
+    pedirConfirmacion("Se va a cambiar el % de " + items.length + " publicación(es) en esta campaña. Esto cambia precios reales en ML." + (aviso7d ? "\n\n" + aviso7d : ""), ejecutarGuardadoMasivo,
+      { titulo: "¿Guardar los % modificados?", si: "Guardar " + items.length });
+    return;
 
+    function ejecutarGuardadoMasivo() {
     pctMasivoEnCurso = true;
     btnGuardarTodosPct.disabled = true; btnRellenarPct.disabled = true;
     var tandas = chunk(items, BATCH_SIZE), ti = 0, proc = 0, ok = 0, rev = 0, err = 0, t0 = Date.now();
@@ -2678,10 +2715,15 @@
         .catch(function (e) { terminar("Se cortó: " + e.message + ". Lo aplicado ya quedó; volvé a apretar \"Guardar\" para las que faltan.", true); });
     }
     sig();
+    }
   });
 
   els.btnCerrarPctAplicados.addEventListener("click", function () {
-    if (pctMasivoEnCurso && !confirm("Se está guardando en bloque. Si cerrás, sigue en segundo plano pero no vas a ver el resultado. ¿Cerrar igual?")) return;
+    if (pctMasivoEnCurso) {
+      pedirConfirmacion("Se está guardando en bloque. Si cerrás, sigue en segundo plano pero no vas a ver el resultado.", function () { els.modalPctAplicados.classList.add("oculto"); },
+        { titulo: "¿Cerrar igual?", si: "Cerrar" });
+      return;
+    }
     els.modalPctAplicados.classList.add("oculto");
   });
 
@@ -2692,10 +2734,11 @@
      función ml-procesos (Supabase) y muestra el avance. El servidor lo ejecuta en
      vueltas de ~1 minuto disparadas cada 15 s: se puede cerrar la pestaña, apagar
      la compu o abrir la app desde otro lado (Stock o Gerencia) y se ve lo mismo.
-       POST /crear {tipo:"bajar_todo"|"subir_todo", modo?:"sugerido", pct_maximo?}
-       GET  /estado[?detalle=1]    POST /cancelar {id}
-     Para sumar un proceso nuevo (ej. "bajar solo una campaña"): agregarlo en
-     TEXTOS_PROCESO + un botón que llame crearProceso({...}).
+       POST /crear {tipo:"bajar_todo"|"subir_todo"|"campana", modo?:"sugerido", pct_maximo?, parametros?}
+       GET  /estado[?detalle=1]  (proceso activo o último + cola)    POST /cancelar {id}
+     08/10 (ticket #17): COLA. Todo se encola y el servidor lo hace de a uno en orden; también
+     "Subir a todas" / "Bajar de todas" de cada card (tipo 'campana') y la regeneración ('regenerar').
+     Para sumar un proceso nuevo: agregar su texto en textosProceso() + un botón que llame crearProceso({...}).
      ============================================================ */
   var URL_PROCESOS = FN_BASE + "/ml-procesos";
   var POLL_ACTIVO_MS = 5000;          // avance mientras corre (pestaña a la vista)
@@ -2711,6 +2754,7 @@
     subir_sugerido: { titulo: "💡 Subir con el precio sugerido de ML", corto: "Subir con sugerido" },
   };
   var ESTADOS_PROCESO = {
+    en_cola: { txt: "En cola", cls: "dim" },
     preparando: { txt: "Preparando", cls: "activo" },
     en_curso: { txt: "En curso", cls: "activo" },
     terminado: { txt: "Terminado", cls: "ok" },
@@ -2724,10 +2768,35 @@
 
   var procesoActual = null;           // última respuesta de /estado
   var procesoActivoServidor = false;  // hay un proceso preparando / en curso
+  var procesoVigilado = null;         // el último activo que vimos: al cambiar, se refresca lo que tocó
   var pollProcesoId = null;
   var ultimoProblemas = null;         // detalle del último proceso (para el modal y el CSV)
 
   function claveTexto(p) { return p.tipo === "subir_todo" && p.modo === "sugerido" ? "subir_sugerido" : p.tipo; }
+  // Título y nombre corto de un proceso (incluye la campaña en los de tipo 'campana' / 'regenerar').
+  function textosProceso(p) {
+    var par = (p && p.parametros) || {};
+    if (p.tipo === "campana") {
+      var nombre = par.nombre || par.promotion_id || "campaña";
+      var extra = par.cantidad_items ? " (" + par.cantidad_items + " elegidas)" : "";
+      var como = par.modo_precio === "sugerido" ? " con el sugerido de ML" : (par.porcentaje_base != null && par.accion === "subir" ? " al " + par.porcentaje_base + "%" : "");
+      return par.accion === "bajar"
+        ? { titulo: "⬇️ Bajar de todas · " + nombre + extra, corto: "Bajar de " + nombre + extra }
+        : { titulo: "⬆️ Subir a todas · " + nombre + como + extra, corto: "Subir a " + nombre + como + extra };
+    }
+    if (p.tipo === "regenerar") {
+      var dest = par.nombre_destino || par.destino_id || "campaña nueva";
+      return { titulo: "🔁 Regeneración · " + dest + (par.motivo === "sincronizar" ? " (sumando lo nuevo)" : ""), corto: "Regeneración → " + dest };
+    }
+    return TEXTOS_PROCESO[claveTexto(p)] || { titulo: p.tipo, corto: p.tipo };
+  }
+  // Qué cards refrescar cuando termina un proceso.
+  function cardsTocadasPor(p) {
+    var par = (p && p.parametros) || {};
+    if (p.tipo === "campana" && par.promotion_id) return [par.promotion_id];
+    if (p.tipo === "regenerar") return [par.origen_id, par.destino_id].filter(Boolean);
+    return "todas";
+  }
   function fechaHora(iso) {
     if (!iso) return "";
     var d = new Date(iso);
@@ -2747,20 +2816,21 @@
     return fetchConTimeout(URL_PROCESOS + "/estado" + (conDetalle ? "?detalle=1" : ""), { headers: { Authorization: AUTH } }, 30000)
       .then(function (res) {
         if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error " + res.status);
-        var estabaActivo = procesoActivoServidor;
         procesoActual = res.data;
         var p = res.data.proceso;
         procesoActivoServidor = !!(p && (p.estado === "preparando" || p.estado === "en_curso"));
+        var hayCola = (res.data.cola || []).length > 0;
         if (res.data.problemas) ultimoProblemas = { procesoId: p && p.id, filas: res.data.problemas };
         renderAccionesGlobales();
-        if (procesoActivoServidor) {
-          programarPoll(document.hidden ? POLL_OCULTO_MS : POLL_ACTIVO_MS);
-        } else if (estabaActivo) {
-          // Terminó mientras mirábamos: detalle de problemas + refrescar las cards (cambió todo en ML).
-          cargarEstadoProcesos(true);
-          refrescarTrasRender = "todas";
+        // Terminó el que vigilábamos (o ya arrancó el siguiente de la cola): refrescar lo que tocó.
+        if (procesoVigilado && (!procesoActivoServidor || !p || p.id !== procesoVigilado.id)) {
+          var objetivo = cardsTocadasPor(procesoVigilado);
+          if (!procesoActivoServidor) cargarEstadoProcesos(true);
+          refrescarTrasRender = objetivo;
           arrancarApp();
         }
+        procesoVigilado = procesoActivoServidor ? p : null;
+        if (procesoActivoServidor || hayCola) programarPoll(document.hidden ? POLL_OCULTO_MS : POLL_ACTIVO_MS);
         return res.data;
       })
       .catch(function (err) {
@@ -2773,7 +2843,7 @@
   function cargarEstadoSnapshot() { return cargarEstadoProcesos(false); }
 
   document.addEventListener("visibilitychange", function () {
-    if (!document.hidden && procesoActivoServidor) cargarEstadoProcesos(false);
+    if (!document.hidden && (procesoActivoServidor || (procesoActual && (procesoActual.cola || []).length))) cargarEstadoProcesos(false);
   });
 
   // --- Render del panel ---------------------------------------------------------------------
@@ -2782,14 +2852,12 @@
     var respaldo = d.respaldo_total || 0;
     var activo = procesoActivoServidor;
 
-    els.btnBajarTodo.disabled = activo;
+    // Con la cola ya no se bloquean: lo que se lance espera su turno. Solo "Descartar respaldo" espera.
     els.btnSubirTodoGuardado.classList.toggle("oculto", respaldo === 0);
     els.btnSubirSugerido.classList.toggle("oculto", respaldo === 0);
     els.btnDescartarSnapshot.classList.toggle("oculto", respaldo === 0);
-    els.btnSubirTodoGuardado.disabled = activo;
-    els.btnSubirSugerido.disabled = activo;
     els.btnDescartarSnapshot.disabled = activo;
-    els.btnBajarTodo.title = activo ? "Hay un proceso corriendo en el servidor: esperá a que termine o cancelalo." : "";
+    els.btnBajarTodo.title = activo ? "Hay un proceso corriendo: si lo lanzás, queda en la cola y arranca cuando termine." : "";
 
     if (respaldo > 0) {
       els.estadoSnapshot.innerHTML = "<b>" + respaldo + "</b> publicaciones en el respaldo esperando volver a subirse. " +
@@ -2804,56 +2872,105 @@
 
   function renderPanelProceso(d) {
     var p = d.proceso;
-    if (!p) { els.procesoPanel.classList.add("oculto"); return; }
+    var cola = d.cola || [];
+    if (!p && !cola.length) { els.procesoPanel.classList.add("oculto"); return; }
     els.procesoPanel.classList.remove("oculto");
+    var html = p ? htmlProceso(d, p) : '<div class="proceso-fase">No hay ningún proceso corriendo. Lo que está en la cola arranca en unos segundos.</div>';
+    html += htmlCola(cola);
+    els.procesoPanel.innerHTML = html;
+
+    var bCancel = document.getElementById("btnCancelarProceso");
+    if (bCancel && p) bCancel.addEventListener("click", function () { cancelarProceso(p.id, false); });
+    els.procesoPanel.querySelectorAll("[data-sacar-cola]").forEach(function (b) {
+      b.addEventListener("click", function () { cancelarProceso(Number(b.getAttribute("data-sacar-cola")), true); });
+    });
+    var bDet = document.getElementById("btnDetalleProceso");
+    if (bDet) bDet.addEventListener("click", abrirDetalleProceso);
+    var bHist = document.getElementById("btnHistorialProcesos");
+    if (bHist) bHist.addEventListener("click", function () {
+      var cont = document.getElementById("historialProcesos");
+      cont.classList.toggle("oculto");
+      cont.innerHTML = (d.ultimos || []).map(function (u) {
+        var e = ESTADOS_PROCESO[u.estado] || { txt: u.estado, cls: "dim" };
+        var cc = (u.resumen && u.resumen.conteos) || {};
+        var partes = u.resumen && u.resumen.sacado_de_la_cola ? "se sacó de la cola sin arrancar" : ["ok", "revisar", "error", "parcial", "omitida", "ya_estaba", "cancelada"].filter(function (k) { return cc[k]; })
+          .map(function (k) { return ESTADOS_ITEM[k] + ": " + cc[k]; }).join(" · ");
+        return '<div class="tipo-fila"><span>#' + u.id + " " + escapeHtml(textosProceso(u).corto) +
+          ' <span class="chip-estado ' + e.cls + '">' + escapeHtml(e.txt) + "</span><br><small>" + escapeHtml(u.creado_por || "") + " · " + fechaHora(u.creado_at) + "</small></span>" +
+          '<span style="text-align:right;font-size:0.75rem;color:var(--text-dim);">' + escapeHtml(partes || "—") + "</span></div>";
+      }).join("");
+    });
+  }
+
+  // Lista de lo que espera turno (cada uno se puede sacar antes de que arranque).
+  function htmlCola(cola) {
+    if (!cola.length) return "";
+    return '<div class="cola-procesos"><h4>⏳ En cola (' + cola.length + ") " + kpiHelp("Procesos que esperan su turno. El servidor los hace de a uno, en este orden, apenas termina el que está corriendo. Cada campaña se lee en vivo recién cuando le toca. Con ✖ se saca de la cola antes de que arranque (no se toca nada en Mercado Libre).") + "</h4>" +
+      cola.map(function (q, i) {
+        return '<div class="cola-item"><span><span class="cola-pos">' + (i + 1) + ".</span>" + escapeHtml(textosProceso(q).titulo) +
+          (q.modo === "sugerido" && q.pct_maximo ? " · tope " + q.pct_maximo + "%" : "") +
+          "<br><small>Pedido por " + escapeHtml(q.creado_por || "?") + " · " + fechaHora(q.creado_at) + "</small></span>" +
+          '<button class="chico secondary" type="button" data-sacar-cola="' + q.id + '" title="Sacar de la cola">✖</button></div>';
+      }).join("") + "</div>";
+  }
+
+  function htmlProceso(d, p) {
     var activo = procesoActivoServidor;
-    var tx = TEXTOS_PROCESO[claveTexto(p)] || { titulo: p.tipo };
+    var par = p.parametros || {};
+    var tx = textosProceso(p);
     var est = ESTADOS_PROCESO[p.estado] || { txt: p.estado, cls: "dim" };
     var c = d.conteos || {};
     var total = d.total_cola || 0;
     var hechas = Math.max(0, total - (d.pendientes || 0));
     var pct = total > 0 ? Math.round(hechas / total * 100) : 0;
+    var esSubir = p.tipo === "subir_todo" || p.tipo === "regenerar" || (p.tipo === "campana" && par.accion === "subir");
 
     // Línea de fase (en preparación todavía no hay cola completa).
     var fase = "";
     if (p.estado === "preparando") {
       var ap = p.avance_preparacion || {};
-      if (p.fase === "promos" || p.fase === "snapshot") fase = "Leyendo qué campañas hay que recorrer…";
+      if (p.tipo === "campana") fase = "Leyendo la campaña en Mercado Libre (las grandes tardan ~1 minuto)…";
+      else if (p.tipo === "regenerar") fase = "Leyendo la campaña actual y la nueva en Mercado Libre…";
+      else if (p.fase === "promos" || p.fase === "snapshot") fase = "Leyendo qué campañas hay que recorrer…";
       else if (p.fase === "listar") fase = "Leyendo las campañas en Mercado Libre" + (ap.campanas_total ? " (" + ap.campanas_hechas + "/" + ap.campanas_total + ")" : "") + "… las grandes tardan ~1 minuto.";
       else if (p.fase === "pausadas") fase = "Revisando publicaciones pausadas (ML no las muestra en las campañas)" + (ap.por_consultar ? " (" + ap.consultadas + "/" + ap.por_consultar + ")" : "") + "…";
       else if (p.fase === "verificar") fase = "Consultando una por una las que no aparecen en su campaña" + (ap.por_consultar ? " (" + ap.consultadas + "/" + ap.por_consultar + ")" : "") + "…";
-      fase += " Ya van " + total + " publicaciones en la cola.";
+      if (p.tipo === "bajar_todo" || p.tipo === "subir_todo") fase += " Ya van " + total + " publicaciones en la cola.";
     } else if (p.estado === "en_curso") {
       fase = "Trabajando en Mercado Libre: " + hechas + " de " + total + " publicaciones" + (d.por_minuto ? " (" + d.por_minuto + " por minuto)" : "") + ".";
     } else if (p.terminado_at) {
-      var dur = p.iniciado_at ? (new Date(p.terminado_at) - new Date(p.creado_at)) / 1000 : null;
+      var dur = p.iniciado_at ? (new Date(p.terminado_at) - new Date(p.iniciado_at)) / 1000 : null;
       fase = "Cerró el " + fechaHora(p.terminado_at) + (dur ? " · duró " + fmtSeg(dur) : "") + ".";
     }
 
     var errores = (c.error || 0) + (c.parcial || 0);
     var noBajablesTotal = (p.no_bajables || []).reduce(function (a, n) { return a + (Number(n.items) || 0); }, 0);
+    var ayudaProcesadas = p.tipo === "campana"
+      ? "Publicaciones ya trabajadas sobre el total. La lista la arma el servidor leyendo la campaña EN VIVO cuando le toca el turno: " + (par.accion === "subir" ? "las candidatas" + (par.cantidad_items ? " que elegiste" : "") : "las activas" + (par.cantidad_items ? " que elegiste" : "")) + "."
+      : p.tipo === "regenerar"
+        ? "Publicaciones activas en la campaña que vence, que se copian a la nueva con el mismo % y el mismo % meli+. La lista se lee en vivo de Mercado Libre."
+        : "Publicaciones ya trabajadas sobre el total de la cola. La cola la arma el servidor leyendo EN VIVO Mercado Libre: en Bajar TODAS, todas las publicaciones con alguna promo activa (incluidas las pausadas); en Subir TODAS, las del respaldo.";
     var kpis =
-      statBox(hechas + "/" + total, "Procesadas", total === 0,
-        "Publicaciones ya trabajadas sobre el total de la cola. La cola la arma el servidor leyendo EN VIVO Mercado Libre: en Bajar TODAS, todas las publicaciones con alguna promo activa (incluidas las pausadas); en Subir TODAS, las del respaldo.") +
-      statBox(c.ok || 0, p.tipo === "bajar_todo" ? "Bajadas OK" : "Subidas OK", !c.ok,
-        p.tipo === "bajar_todo"
-          ? "Publicaciones que ML confirmó que salieron de sus promociones (o que ya no tenían ninguna activa)."
-          : "Publicaciones que volvieron a su campaña. El servidor calcula el precio con el % guardado sobre el precio de lista ACTUAL y después relee en ML el precio que quedó.") +
-      (p.tipo === "subir_todo"
+      statBox(hechas + "/" + total, "Procesadas", total === 0, ayudaProcesadas) +
+      statBox(c.ok || 0, esSubir ? "Subidas OK" : "Bajadas OK", !c.ok,
+        esSubir
+          ? "Publicaciones que quedaron en la campaña. El servidor calcula el precio con el % sobre el precio de lista ACTUAL y después relee en ML el precio que quedó." + (p.tipo === "regenerar" ? " Incluye las que quedaron con el % normal pero no con el meli+ (esas figuran también como parciales)." : "")
+          : "Publicaciones que ML confirmó que salieron de " + (p.tipo === "campana" ? "esta campaña." : "sus promociones (o que ya no tenían ninguna activa).")) +
+      (esSubir
         ? statBox(c.revisar || 0, "En revisión", !c.revisar,
-          "ML no aceptó el % guardado: pide otro rango (en general un % mayor, por la regla de los ~7 días: mide el descuento contra el precio más bajo de la última semana). No se tocó nada en ML y siguen en el respaldo. En el detalle ves el % mínimo que pide ML y su precio sugerido.")
+          "ML no aceptó el %: pide otro rango (en general un % mayor, por la regla de los ~7 días: mide el descuento contra el precio más bajo de la última semana). No se tocó nada en ML. En el detalle ves el % mínimo que pide ML y su precio sugerido" + (p.tipo === "campana" ? ", y botones para usar el sugerido o aplicar otro %." : "."))
         : statBox(c.parcial || 0, "Parciales", !c.parcial,
           "Publicaciones que salieron de algunas promos pero no de todas: casi siempre porque también estaban en una Oferta del día o Relámpago, que ML no deja bajar por API.")) +
       statBox(errores + (c.omitida || 0), "Errores / omitidas", !(errores + (c.omitida || 0)),
-        "Error: ML rechazó el pedido (el motivo está en el detalle; los errores pasajeros, como 409 o 429, se reintentan solos hasta 3 veces). Omitida: la publicación ya no figura como candidata de su campaña o ML no la deja consultar (por ejemplo, en revisión); sigue en el respaldo.") +
+        "Error: ML rechazó el pedido (el motivo está en el detalle; los errores pasajeros, como 409 o 429, se reintentan solos hasta 3 veces). Parcial: se aplicó el descuento normal pero no el meli+. Omitida: la publicación ya no figura en la campaña o ML no la deja consultar (por ejemplo, en revisión o pausada).") +
       (activo
         ? statBox(d.eta_seg != null ? fmtSeg(d.eta_seg) : "—", "Tiempo restante", d.eta_seg == null,
           "Estimación: publicaciones pendientes ÷ velocidad real desde que arrancó (por minuto). Mientras prepara la cola no hay estimación. Subir tarda más que bajar porque verifica cada precio en ML.")
-        : (p.tipo === "subir_todo"
-          ? statBox(c.ya_estaba || 0, "Ya estaban", !c.ya_estaba,
-            "Publicaciones del respaldo que al momento de subir ya estaban activas en su campaña (por ejemplo, se subieron a mano). Se dan por hechas y salen del respaldo.")
-          : statBox(noBajablesTotal, "No bajables", !noBajablesTotal,
-            "Publicaciones en Oferta del día o Relámpago: ML no deja sacarlas por API, así que el proceso no las toca. Se gestionan desde el panel de Mercado Libre. Sale del listado en vivo de esas campañas.")));
+        : (p.tipo === "bajar_todo"
+          ? statBox(noBajablesTotal, "No bajables", !noBajablesTotal,
+            "Publicaciones en Oferta del día o Relámpago: ML no deja sacarlas por API, así que el proceso no las toca. Se gestionan desde el panel de Mercado Libre. Sale del listado en vivo de esas campañas.")
+          : statBox(c.ya_estaba || 0, "Ya estaban", !c.ya_estaba,
+            "Publicaciones que al momento de subir ya estaban activas en la campaña (por ejemplo, se subieron a mano). Se dan por hechas.")));
 
     var html =
       '<div class="proceso-cab"><div class="proceso-titulo">' + escapeHtml(tx.titulo) +
@@ -2880,6 +2997,12 @@
     if (p.estado === "terminado" && p.tipo === "subir_todo" && (c.revisar || 0) > 0) {
       html += '<div class="proceso-nota">Quedaron ' + c.revisar + " en revisión: podés esperar unos días (la regla de 7 días se va corriendo) o usar \"💡 Subir las que quedaron con el precio sugerido de ML\". " + escapeHtml(TEXTO_REGLA_7D) + "</div>";
     }
+    if (p.estado === "terminado" && p.tipo === "campana" && ((c.revisar || 0) + (c.error || 0)) > 0) {
+      html += '<div class="proceso-nota">Quedaron ' + ((c.revisar || 0) + (c.error || 0)) + " para mirar: en <b>📋 Ver detalle</b> podés reintentar los errores, usar el sugerido de ML o aplicar otro % a las que quedaron en revisión.</div>";
+    }
+    if (p.estado === "terminado" && p.tipo === "regenerar") {
+      html += '<div class="proceso-nota ok">La campaña "' + escapeHtml(par.nombre_destino || "") + '" quedó armada y arranca sola cuando termina la actual. Lo que ML no ofreció en la nueva figura en el detalle.</div>';
+    }
 
     html += '<div class="proceso-acciones">' +
       (activo ? '<button class="chico secondary" id="btnCancelarProceso"' + (p.cancelar ? " disabled" : "") + ">" + (p.cancelar ? "Cancelando…" : "✋ Cancelar proceso") + "</button>" : "") +
@@ -2887,27 +3010,7 @@
       ((d.ultimos || []).length > 1 ? '<button class="chico secondary" id="btnHistorialProcesos">🕘 Procesos anteriores</button>' : "") +
       "</div>" +
       '<div id="historialProcesos" class="oculto proceso-historial"></div>';
-
-    els.procesoPanel.innerHTML = html;
-
-    var bCancel = document.getElementById("btnCancelarProceso");
-    if (bCancel) bCancel.addEventListener("click", function () { cancelarProceso(p.id); });
-    var bDet = document.getElementById("btnDetalleProceso");
-    if (bDet) bDet.addEventListener("click", abrirDetalleProceso);
-    var bHist = document.getElementById("btnHistorialProcesos");
-    if (bHist) bHist.addEventListener("click", function () {
-      var cont = document.getElementById("historialProcesos");
-      cont.classList.toggle("oculto");
-      cont.innerHTML = (d.ultimos || []).map(function (u) {
-        var e = ESTADOS_PROCESO[u.estado] || { txt: u.estado, cls: "dim" };
-        var cc = (u.resumen && u.resumen.conteos) || {};
-        var partes = ["ok", "revisar", "error", "parcial", "omitida", "ya_estaba", "cancelada"].filter(function (k) { return cc[k]; })
-          .map(function (k) { return ESTADOS_ITEM[k] + ": " + cc[k]; }).join(" · ");
-        return '<div class="tipo-fila"><span>#' + u.id + " " + escapeHtml((TEXTOS_PROCESO[claveTexto(u)] || { corto: u.tipo }).corto) +
-          ' <span class="chip-estado ' + e.cls + '">' + escapeHtml(e.txt) + "</span><br><small>" + escapeHtml(u.creado_por || "") + " · " + fechaHora(u.creado_at) + "</small></span>" +
-          '<span style="text-align:right;font-size:0.75rem;color:var(--text-dim);">' + escapeHtml(partes || "—") + "</span></div>";
-      }).join("");
-    });
+    return html;
   }
 
   // --- Crear / cancelar ---------------------------------------------------------------------
@@ -2919,31 +3022,41 @@
       body: JSON.stringify(body),
     }, 30000)
       .then(function (res) {
-        if (res.status === 409) { alert(res.data && res.data.error || "Ya hay un proceso en curso."); return; }
+        if (res.status === 409) { mostrarAviso((res.data && res.data.error) || "Ya está en la cola.", "No se agregó"); return; }
         if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error " + res.status);
-        procesoActivoServidor = true;
-        els.panelAccionesGlobales.scrollIntoView({ behavior: "smooth", block: "start" });
+        var delante = res.data.en_cola_delante || 0;
+        mostrarToast(delante
+          ? "✅ Quedó en la cola del servidor (" + delante + " antes). Podés seguir con otra cosa o cerrar la pestaña."
+          : "✅ Lanzado en el servidor: arranca en unos segundos. Podés cerrar la pestaña.", 6000);
+        if (!delante) els.panelAccionesGlobales.scrollIntoView({ behavior: "smooth", block: "start" });
       })
-      .catch(function (err) { alert("No se pudo lanzar el proceso: " + err.message + ". No se tocó nada en Mercado Libre."); })
+      .catch(function (err) { mostrarAviso("No se pudo lanzar el proceso: " + err.message + ". No se tocó nada en Mercado Libre.", "Error"); })
       .finally(function () { if (boton) boton.disabled = false; cargarEstadoProcesos(false); });
   }
 
-  function cancelarProceso(id) {
-    if (!confirm("¿Cancelar el proceso?\n\nSe frena en los próximos segundos. Lo que ya se hizo en Mercado Libre queda hecho (no se deshace).\nSi era un Bajar TODAS, las publicaciones que no llegó a bajar siguen con su promo.")) return;
-    fetchConTimeout(URL_PROCESOS + "/cancelar", {
-      method: "POST",
-      headers: { Authorization: AUTH, "Content-Type": "application/json" },
-      body: JSON.stringify({ id: id }),
-    }, 30000)
-      .then(function (res) { if (!res.data || !res.data.ok) alert((res.data && res.data.error) || "No se pudo cancelar."); })
-      .catch(function (err) { alert("No se pudo cancelar: " + err.message); })
-      .finally(function () { cargarEstadoProcesos(false); });
+  function cancelarProceso(id, enCola) {
+    var texto = enCola
+      ? "Se saca de la cola antes de arrancar. No se tocó nada en Mercado Libre."
+      : "Se frena en los próximos segundos. Lo que ya se hizo en Mercado Libre queda hecho (no se deshace).\nSi era un Bajar TODAS, las publicaciones que no llegó a bajar siguen con su promo.";
+    pedirConfirmacion(texto, function () {
+      fetchConTimeout(URL_PROCESOS + "/cancelar", {
+        method: "POST",
+        headers: { Authorization: AUTH, "Content-Type": "application/json" },
+        body: JSON.stringify({ id: id }),
+      }, 30000)
+        .then(function (res) {
+          if (!res.data || !res.data.ok) mostrarAviso((res.data && res.data.error) || "No se pudo cancelar.", "Error");
+          else if (enCola) mostrarToast("Se sacó de la cola.");
+        })
+        .catch(function (err) { mostrarAviso("No se pudo cancelar: " + err.message, "Error"); })
+        .finally(function () { cargarEstadoProcesos(false); });
+    }, { titulo: enCola ? "¿Sacar de la cola?" : "¿Cancelar el proceso?", si: enCola ? "Sacar de la cola" : "Cancelar proceso", no: "Volver", peligro: true });
   }
 
-  // Bloquea acciones por card mientras corre un proceso global (se pisarían en ML).
+  // "Descartar respaldo" no se puede mientras un proceso usa el respaldo.
   function hayProcesoServidor() {
     if (!procesoActivoServidor) return false;
-    alert("Hay un proceso masivo corriendo en el servidor (" + ((procesoActual && procesoActual.proceso && (TEXTOS_PROCESO[claveTexto(procesoActual.proceso)] || {}).corto) || "Bajar/Subir TODAS") + "). Esperá a que termine o cancelalo desde \"Acciones globales\".");
+    mostrarAviso("Hay un proceso corriendo en el servidor. Esperá a que termine o cancelalo desde \"Acciones globales\".", "Esperá un momento");
     return true;
   }
 
@@ -2955,7 +3068,6 @@
   }
 
   els.btnBajarTodo.addEventListener("click", function () {
-    if (hayCorridaEnCurso()) return;
     var reaplic = [], resumar = [], noBaj = [];
     ultimasPromosActivas.forEach(function (p) {
       var nombre = (p.id && aliasNombresPublicos[p.id]) || p.name || p.id;
@@ -2989,17 +3101,16 @@
 
   // --- Subir TODAS con % guardados -----------------------------------------------------------
   els.btnSubirTodoGuardado.addEventListener("click", function () {
-    if (hayCorridaEnCurso()) return;
     var n = (procesoActual && procesoActual.respaldo_total) || 0;
     var aviso7d = avisoPreciosRecientes();
-    if (!confirm("Se van a volver a subir las " + n + " publicaciones del respaldo, cada una con el % que tenía guardado (calculado sobre el precio de lista ACTUAL)." +
-      (aviso7d ? "\n\n" + aviso7d : "") + "\n\nCorre en el servidor: podés cerrar la pestaña. ¿Continuar?")) return;
-    crearProceso({ tipo: "subir_todo" }, els.btnSubirTodoGuardado);
+    pedirConfirmacion("Se van a volver a subir las " + n + " publicaciones del respaldo, cada una con el % que tenía guardado (calculado sobre el precio de lista ACTUAL)." +
+      (aviso7d ? "\n\n" + aviso7d : "") + "\n\nCorre en el servidor (en cola): podés cerrar la pestaña.", function () {
+      crearProceso({ tipo: "subir_todo" }, els.btnSubirTodoGuardado);
+    }, { titulo: "¿Subir TODAS con los % guardados?", si: "Subir TODAS" });
   });
 
   // --- Subir las que quedaron con el precio sugerido de ML ------------------------------------
   els.btnSubirSugerido.addEventListener("click", function () {
-    if (hayCorridaEnCurso()) return;
     els.inputTopeSugerido.value = PCT_MAXIMO_SUGERIDO_DEFAULT;
     els.sugeridoCantidad.textContent = (procesoActual && procesoActual.respaldo_total) || 0;
     els.estadoTopeSugerido.textContent = "";
@@ -3031,15 +3142,17 @@
     var d = procesoActual;
     if (!d || !d.proceso) return;
     var p = d.proceso;
-    els.detalleProcesoTitulo.textContent = "#" + p.id + " · " + (TEXTOS_PROCESO[claveTexto(p)] || { titulo: p.tipo }).titulo;
+    els.detalleProcesoTitulo.textContent = "#" + p.id + " · " + textosProceso(p).titulo;
     var c = d.conteos || {};
     els.detalleProcesoResumen.textContent = Object.keys(ESTADOS_ITEM).filter(function (k) { return c[k]; })
       .map(function (k) { return ESTADOS_ITEM[k] + ": " + c[k]; }).join(" · ") + (p.creado_por ? " — lanzado por " + p.creado_por + " el " + fechaHora(p.creado_at) : "");
     els.detalleProcesoTabla.innerHTML = '<div class="estado">Cargando detalle…</div>';
+    els.detalleProcesoAcciones.classList.add("oculto");
     els.modalDetalleProceso.classList.remove("oculto");
     var usarCache = ultimoProblemas && ultimoProblemas.procesoId === p.id;
     (usarCache ? Promise.resolve() : cargarEstadoProcesos(true)).then(function () {
       var filas = (ultimoProblemas && ultimoProblemas.filas) || [];
+      renderAccionesDetalle(p, filas);
       if (!filas.length) { els.detalleProcesoTabla.innerHTML = '<div class="estado ok">Sin problemas: todo salió bien. ✔</div>'; return; }
       els.detalleProcesoTabla.innerHTML = '<div class="caja-scroll modal"><table class="tabla-proceso"><thead><tr><th>Estado</th><th>Publicación</th><th>SKU</th><th>Campaña</th><th class="num">% guardado</th><th>Qué pasó</th></tr></thead><tbody>' +
         filas.map(function (f) {
@@ -3050,9 +3163,57 @@
     });
   }
   els.btnCerrarDetalleProceso.addEventListener("click", function () { els.modalDetalleProceso.classList.add("oculto"); });
+
+  // Seguimiento de un "Subir a todas" / "Bajar de todas" de campaña (antes estaba en la ventana de resultado
+  // de la pestaña): cada botón encola un proceso nuevo SOLO con esas publicaciones.
+  function renderAccionesDetalle(p, filas) {
+    var cont = els.detalleProcesoAcciones;
+    var par = p.parametros || {};
+    cont.innerHTML = "";
+    if (p.tipo !== "campana" || p.estado === "en_curso" || p.estado === "preparando") { cont.classList.add("oculto"); return; }
+    var conError = filas.filter(function (f) { return f.estado === "error"; }).map(function (f) { return f.item_id; });
+    var enRevision = filas.filter(function (f) { return f.estado === "revisar"; }).map(function (f) { return f.item_id; });
+    var conPrecio = TIPOS_NECESITAN_PRECIO.indexOf(par.promotion_type) !== -1;
+    var base = { promotion_id: par.promotion_id, promotion_type: par.promotion_type, nombre: par.nombre, accion: par.accion };
+    var partes = [];
+    if (conError.length) partes.push('<button class="chico secondary" type="button" id="btnDetReintentar">🔁 Reintentar los ' + conError.length + " con error</button>");
+    if (par.accion === "subir" && conPrecio && enRevision.length) {
+      partes.push('<button class="chico secondary" type="button" id="btnDetSugerido">💡 Usar el sugerido de ML en las ' + enRevision.length + " en revisión</button>");
+      partes.push('<span style="font-size:0.8rem;">Aplicar</span><input type="number" id="inputDetPct" min="1" max="99" step="0.1" placeholder="%"><span style="font-size:0.8rem;">% a las en revisión</span><button class="chico secondary" type="button" id="btnDetPct">Aplicar</button>');
+    }
+    if (!partes.length) { cont.classList.add("oculto"); return; }
+    cont.innerHTML = '<span style="font-size:0.8rem; font-weight:600;">Seguir:</span> ' + partes.join(" ") +
+      kpiHelp("Cada botón agrega a la cola un proceso nuevo SOLO con esas publicaciones. Reintentar usa el mismo % que antes. El sugerido de ML no tiene tope: revisá el detalle antes. 'Aplicar X%' usa ese % para todas las que quedaron en revisión.");
+    cont.classList.remove("oculto");
+    var cerrarYEncolar = function (extra) {
+      els.modalDetalleProceso.classList.add("oculto");
+      encolarCampana(Object.assign({}, base, extra));
+    };
+    var b1 = document.getElementById("btnDetReintentar");
+    if (b1) b1.addEventListener("click", function () {
+      var extra = { item_ids: conError, motivo: "reintento" };
+      if (par.porcentaje_base != null) extra.porcentaje_base = par.porcentaje_base;
+      if (par.excepciones) extra.excepciones = par.excepciones;
+      if (par.modo_precio) extra.modo_precio = par.modo_precio;
+      cerrarYEncolar(extra);
+    });
+    var b2 = document.getElementById("btnDetSugerido");
+    if (b2) b2.addEventListener("click", function () {
+      pedirConfirmacion("Se van a subir " + enRevision.length + " publicaciones con el precio que sugiere Mercado Libre (sin tope de %). Revisá el detalle antes: el sugerido puede implicar un descuento grande.", function () {
+        cerrarYEncolar({ item_ids: enRevision, modo_precio: "sugerido", motivo: "sugerido" });
+      }, { titulo: "¿Usar el sugerido de ML?", si: "Usar sugerido" });
+    });
+    var b3 = document.getElementById("btnDetPct");
+    if (b3) b3.addEventListener("click", function () {
+      var inp = document.getElementById("inputDetPct");
+      var pct = Number(String(inp.value).replace(",", "."));
+      if (!pct || pct <= 0 || pct >= 100) { inp.style.borderColor = "var(--err)"; return; }
+      cerrarYEncolar({ item_ids: enRevision, porcentaje_base: pct, motivo: "otro %" });
+    });
+  }
   els.btnCsvDetalleProceso.addEventListener("click", function () {
     var filas = (ultimoProblemas && ultimoProblemas.filas) || [];
-    if (!filas.length) { alert("No hay filas para descargar."); return; }
+    if (!filas.length) { mostrarAviso("No hay filas para descargar."); return; }
     var esc = function (v) { var s = String(v == null ? "" : v); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
     var lineas = [["estado", "item_id", "sku", "campaña", "porcentaje_guardado", "que_paso"].join(";")].concat(filas.map(function (f) {
       return [ESTADOS_ITEM[f.estado] || f.estado, f.item_id, f.sku, f.promotion_id, f.porcentaje, textoProblema(f)].map(esc).join(";");
@@ -3077,38 +3238,48 @@
         var filas = res.data.filas || [];
         if (filas.length === 0) { cargarEstadoProcesos(false); return; }
         var fecha = filas[0].creado_at ? new Date(filas[0].creado_at).toLocaleDateString("es-AR") : "?";
-        if (!confirm("Vas a descartar el respaldo de " + filas.length + " publicaciones (guardado el " + fecha + ").\n\nNo se toca nada en Mercado Libre, pero después ya NO vas a poder usar \"Subir TODAS (con los % guardados)\" para esas publicaciones. ¿Continuar?")) return;
-
-        var ids = filas.map(function (f) { return f.id; });
-        var tandas = chunk(ids, TANDA_BORRADO_SNAPSHOT), ti = 0, t0 = Date.now();
-        els.estadoSnapshot.className = "estado";
-        return new Promise(function (resolve, reject) {
-          function sig() {
-            if (ti >= tandas.length) { resolve(ids.length); return; }
-            var hechos = Math.min(ti * TANDA_BORRADO_SNAPSHOT, ids.length);
-            var resta = ti > 0 ? " (resta " + fmtSeg((Date.now() - t0) / 1000 / ti * (tandas.length - ti)) + ")" : "";
-            els.estadoSnapshot.textContent = "Descartando " + hechos + "/" + ids.length + resta + "...";
-            fetchConTimeout(URL_SNAPSHOT + "?ids=" + tandas[ti].join(","), { method: "DELETE", headers: { Authorization: AUTH } })
-              .then(function (r) {
-                if (!r.data || !r.data.ok) throw new Error((r.data && r.data.error) || "error borrando");
-                ti++; sig();
-              })
-              .catch(reject);
-          }
-          sig();
-        }).then(function (total) {
-          els.estadoSnapshot.textContent = "Respaldo descartado (" + total + " filas). Queda limpio.";
-          els.estadoSnapshot.className = "estado ok";
-          setTimeout(function () { cargarEstadoProcesos(false); }, 2500);
-        });
+        pedirConfirmacion("Vas a descartar el respaldo de " + filas.length + " publicaciones (guardado el " + fecha + ").\n\nNo se toca nada en Mercado Libre, pero después ya NO vas a poder usar \"Subir TODAS (con los % guardados)\" para esas publicaciones.", function () {
+          btn.disabled = true;
+          descartarFilasRespaldo(filas)
+            .catch(errorDescartar)
+            .finally(function () { btn.disabled = false; });
+        }, { titulo: "¿Descartar el respaldo?", si: "Descartar", peligro: true });
       })
-      .catch(function (err) {
-        els.estadoSnapshot.textContent = "No se pudo descartar: " + err.message + ". Lo que ya se borró queda borrado; reintentá para terminar.";
-        els.estadoSnapshot.className = "estado err";
-        setTimeout(function () { cargarEstadoProcesos(false); }, 5000);
-      })
+      .catch(errorDescartar)
       .finally(function () { btn.disabled = false; });
   });
+
+  function errorDescartar(err) {
+    els.estadoSnapshot.textContent = "No se pudo descartar: " + err.message + ". Lo que ya se borró queda borrado; reintentá para terminar.";
+    els.estadoSnapshot.className = "estado err";
+    setTimeout(function () { cargarEstadoProcesos(false); }, 5000);
+  }
+
+  // Borra el respaldo en tandas (no toca ML) mostrando el avance.
+  function descartarFilasRespaldo(filas) {
+    var ids = filas.map(function (f) { return f.id; });
+    var tandas = chunk(ids, TANDA_BORRADO_SNAPSHOT), ti = 0, t0 = Date.now();
+    els.estadoSnapshot.className = "estado";
+    return new Promise(function (resolve, reject) {
+      function sig() {
+        if (ti >= tandas.length) { resolve(ids.length); return; }
+        var hechos = Math.min(ti * TANDA_BORRADO_SNAPSHOT, ids.length);
+        var resta = ti > 0 ? " (resta " + fmtSeg((Date.now() - t0) / 1000 / ti * (tandas.length - ti)) + ")" : "";
+        els.estadoSnapshot.textContent = "Descartando " + hechos + "/" + ids.length + resta + "...";
+        fetchConTimeout(URL_SNAPSHOT + "?ids=" + tandas[ti].join(","), { method: "DELETE", headers: { Authorization: AUTH } })
+          .then(function (r) {
+            if (!r.data || !r.data.ok) throw new Error((r.data && r.data.error) || "error borrando");
+            ti++; sig();
+          })
+          .catch(reject);
+      }
+      sig();
+    }).then(function (total) {
+      els.estadoSnapshot.textContent = "Respaldo descartado (" + total + " filas). Queda limpio.";
+      els.estadoSnapshot.className = "estado ok";
+      setTimeout(function () { cargarEstadoProcesos(false); }, 2500);
+    });
+  }
 
   /* ============================================================
      AVISO DE VERSIÓN NUEVA
@@ -3132,8 +3303,7 @@
       .catch(function () { /* sin red: se reintenta en el próximo ciclo */ });
   }
   els.btnRecargarVersion.addEventListener("click", function () {
-    if (corridaEnCurso && !confirm("Hay una tanda corriendo en esta pestaña: si recargás se corta. ¿Recargar igual?")) return;
-    location.reload();
+    location.reload(); // los procesos corren en el servidor: recargar no corta nada
   });
   setInterval(chequearVersionNueva, CHEQUEO_VERSION_MS);
   setTimeout(chequearVersionNueva, 60000);
@@ -3675,6 +3845,50 @@
     return "~" + m + "m" + (r ? (" " + r + "s") : "");
   }
 
+  // v2026-10-14.1: cada tanda de "Actualizar precios" (preview y aplicar) se reintenta sola ante errores
+  // pasajeros (red caída, "Failed to fetch", timeout, 5xx/429 del servidor). Antes, un solo 502 cortaba
+  // todo y había que arrancar de cero. Si se agotan los reintentos, queda el botón "Continuar".
+  var ESPERAS_REINTENTO_TANDA_MS = [3000, 8000, 15000]; // espera antes de cada reintento (3 reintentos)
+
+  function esErrorPasajero(err) {
+    if (err && typeof err.pasajero === "boolean") return err.pasajero;
+    var msg = String((err && err.message) || "");
+    return (err instanceof TypeError) || /^timeout$|failed to fetch|networkerror|network error|load failed/i.test(msg);
+  }
+
+  // POST a ml-precios-bulk con reintentos. alReintentar(nroReintento, esperaMs, err) sirve para mostrar el aviso.
+  function postPreciosConReintento(body, alReintentar) {
+    var intento = 0;
+    function uno() {
+      return fetchConTimeout(URL_PRECIOS, {
+        method: "POST",
+        headers: { Authorization: AUTH, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }, TIMEOUT_TANDA_MS)
+        .then(function (res) {
+          if (res.data && res.data.ok) return res;
+          var e = new Error((res.data && res.data.error) || ("error del servidor (" + res.status + ")"));
+          e.pasajero = !res.data || res.status >= 500 || res.status === 429;
+          throw e;
+        })
+        .catch(function (err) {
+          if (!esErrorPasajero(err) || intento >= ESPERAS_REINTENTO_TANDA_MS.length) throw err;
+          var espera = ESPERAS_REINTENTO_TANDA_MS[intento++];
+          if (alReintentar) alReintentar(intento, espera, err);
+          return new Promise(function (r) { setTimeout(r, espera); }).then(uno);
+        });
+    }
+    return uno();
+  }
+
+  // Muestra el corte con un botón "Continuar desde donde quedó" (retoma la tanda que falló, no arranca de cero).
+  function mostrarCorteConContinuar(est, texto, textoBoton, alContinuar) {
+    est.innerHTML = escapeHtml(texto) + ' <button type="button" class="chico" data-continuar-tanda>▶ ' + escapeHtml(textoBoton) + '</button>';
+    est.className = "estado err";
+    var b = est.querySelector("[data-continuar-tanda]");
+    if (b) b.addEventListener("click", function () { b.disabled = true; alContinuar(); });
+  }
+
   function previsualizarPrecios() {
     var est = document.getElementById("estadoPrecios");
     var parsed = leerGrillaEntrada();
@@ -3716,8 +3930,14 @@
           filasPreviewPrecios.push({ sku: p.sku || "(vacío)", item_id: null, title: null, estado: estErr, detalle: p.error });
         });
         document.getElementById("btnPreviewPrecios").disabled = false;
-        est.textContent = "Preview listo en " + fmtSeg((Date.now() - t0) / 1000) + ". Revisá y editá lo que haga falta antes de aplicar." +
-          (skusEnVivo.length ? " (" + skusEnVivo.length + " SKU no estaba" + (skusEnVivo.length === 1 ? "" : "n") + " en el catálogo y se encontr" + (skusEnVivo.length === 1 ? "ó" : "aron") + " en vivo en ML: " + skusEnVivo.slice(0, 5).join(", ") + (skusEnVivo.length > 5 ? "…" : "") + ")" : "");
+        // Ticket #19: junto a cada SKU encontrado en vivo va su MLA con link (para abrirla directo).
+        var htmlEnVivo = skusEnVivo.slice(0, 5).map(function (sku) {
+          var mlas = [];
+          filasPreviewPrecios.forEach(function (f) { if (f.sku === sku && f.item_id && mlas.indexOf(f.item_id) === -1) mlas.push(f.item_id); });
+          return escapeHtml(sku) + (mlas.length ? " → " + mlas.map(linkItemML).join(", ") : "");
+        }).join(" · ");
+        est.innerHTML = "Preview listo en " + escapeHtml(fmtSeg((Date.now() - t0) / 1000)) + ". Revisá y editá lo que haga falta antes de aplicar." +
+          (skusEnVivo.length ? " (" + skusEnVivo.length + " SKU no estaba" + (skusEnVivo.length === 1 ? "" : "n") + " en el catálogo y se encontr" + (skusEnVivo.length === 1 ? "ó" : "aron") + " en vivo en ML: " + htmlEnVivo + (skusEnVivo.length > 5 ? "…" : "") + ")" : "");
         est.className = "estado ok";
         renderResumenPrecios();
         renderTablaPrecios();
@@ -3725,13 +3945,10 @@
         return;
       }
       var tanda = tandas[ti];
-      fetchConTimeout(URL_PRECIOS, {
-        method: "POST",
-        headers: { Authorization: AUTH, "Content-Type": "application/json" },
-        body: JSON.stringify({ accion: "preview", skus: tanda }),
-      }, TIMEOUT_TANDA_MS)
+      postPreciosConReintento({ accion: "preview", skus: tanda }, function (n, espera) {
+        est.textContent = "Previsualizando " + proc + "/" + skus.length + " SKUs — falló la conexión, reintento " + n + "/" + ESPERAS_REINTENTO_TANDA_MS.length + " en " + Math.round(espera / 1000) + "s...";
+      })
         .then(function (res) {
-          if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error en el preview");
           if (Array.isArray(res.data.skus_encontrados_en_vivo)) skusEnVivo = skusEnVivo.concat(res.data.skus_encontrados_en_vivo);
           if (typeof res.data.pct_promo_general === "number") pctPromoPreview = res.data.pct_promo_general;
           (res.data.filas || []).forEach(function (f) {
@@ -3751,9 +3968,14 @@
           sig();
         })
         .catch(function (err) {
-          est.textContent = "Se cortó el preview: " + err.message + " (revisá y reintentá)."; est.className = "estado err";
           document.getElementById("btnPreviewPrecios").disabled = false;
           renderResumenPrecios(); renderTablaPrecios();
+          // Lo ya previsualizado se conserva: "Continuar" retoma desde la tanda que falló.
+          mostrarCorteConContinuar(est, "Se cortó el preview en " + proc + "/" + skus.length + " SKUs: " + err.message + ".", "Continuar desde " + proc + "/" + skus.length, function () {
+            document.getElementById("btnPreviewPrecios").disabled = true;
+            est.textContent = "Retomando el preview desde " + proc + "/" + skus.length + "..."; est.className = "estado";
+            sig();
+          });
         });
     }
     sig();
@@ -4075,7 +4297,7 @@
   document.getElementById("btnExportarPrecios").addEventListener("click", function () {
     var esResultado = !!filasResultadoPrecios;
     var filas = esResultado ? filasResultadoPrecios : filasPreviewPrecios;
-    if (!filas || filas.length === 0) { alert("No hay nada para exportar todavía."); return; }
+    if (!filas || filas.length === 0) { mostrarAviso("No hay nada para exportar todavía."); return; }
     var cab = ["sku", "item_id", "titulo", "estado", "precio_antes", esResultado ? "precio_despues" : "precio_nuevo", "pct_dif",
       esResultado ? "escalones_antes" : "escalones_actuales", esResultado ? "escalones_despues" : "escalones_nuevos", "precio_con_promo_general", "promo_vigente", "escalones_confirmados", "quitar_escalones", "aviso_escalones", "detalle"];
     var txtEsc = function (l) { return l == null ? "" : l.map(function (e) { return e.min_unidades + "u:" + e.monto + (e.pct_promo != null ? " (" + fmtPctMenos(e.pct_promo) + " s/promo)" : ""); }).join(" | "); };
@@ -4161,13 +4383,12 @@
         return;
       }
       var tanda = tandas[ti];
-      fetchConTimeout(URL_PRECIOS, {
-        method: "POST",
-        headers: { Authorization: AUTH, "Content-Type": "application/json" },
-        body: JSON.stringify({ accion: "aplicar", items: tanda }),
-      }, TIMEOUT_TANDA_MS)
+      // Reintentar es seguro: poner el mismo precio / los mismos escalones dos veces deja el mismo resultado
+      // (y el servidor no reescribe un precio que ya es igual).
+      postPreciosConReintento({ accion: "aplicar", items: tanda }, function (n, espera) {
+        est.textContent = "Aplicando " + proc + "/" + ok.length + " — falló la conexión, reintento " + n + "/" + ESPERAS_REINTENTO_TANDA_MS.length + " en " + Math.round(espera / 1000) + "s...";
+      })
         .then(function (res) {
-          if (!res.data || !res.data.ok) throw new Error((res.data && res.data.error) || "error aplicando");
           logAcum = logAcum.concat(res.data.log || []);
           aplicados += res.data.aplicados || 0;
           errores += res.data.errores || 0;
@@ -4180,9 +4401,13 @@
         .catch(function (err) {
           filasResultadoPrecios = logAcum;
           registrarPreciosAplicados(logAcum);
-          est.textContent = "Se cortó: " + err.message + " (" + proc + "/" + ok.length + " hechos). Podés previsualizar de nuevo para ver el estado real."; est.className = "estado err";
           document.getElementById("btnPreviewPrecios").disabled = false;
           renderResumenPrecios(); renderTablaPrecios();
+          mostrarCorteConContinuar(est, "Se cortó: " + err.message + " (" + proc + "/" + ok.length + " hechos).", "Continuar aplicando desde " + proc + "/" + ok.length, function () {
+            document.getElementById("btnPreviewPrecios").disabled = true;
+            est.textContent = "Retomando desde " + proc + "/" + ok.length + "..."; est.className = "estado";
+            sig();
+          });
         });
     }
     sig();
