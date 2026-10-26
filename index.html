@@ -164,7 +164,44 @@
   td.celda-aporte { white-space: nowrap; font-variant-numeric: tabular-nums; }
   td.celda-aporte.nuestro { font-weight: 700; }
   td.celda-aporte.sobre-general { color: var(--amber); }
+  td.celda-aporte.sobre-tope { color: var(--err); }
   td.celda-aporte.sin-dato { color: var(--text-dim); font-weight: 400; }
+  /* v2026-10-26.2: Notificaciones · control de descuentos · auditoría */
+  .notif-badge { display: inline-block; min-width: 18px; padding: 1px 6px; margin-left: 4px; border-radius: 999px; background: var(--err); color: #fff; font-size: 0.7rem; font-weight: 700; line-height: 1.4; text-align: center; }
+  .notif-badge.alerta { background: var(--amber); }
+  .nt-cabecera { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .nt-titulo { font-weight: 700; color: var(--text); font-size: 0.95rem; }
+  .nt-sub { font-size: 0.78rem; color: var(--text-dim); margin: 0 0 10px; }
+  .nt-filtros { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0; }
+  .nt-filtros select, .nt-filtros input { width: auto; flex: 1 1 170px; margin: 0; }
+  .nt-acciones { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .nt-lista { display: flex; flex-direction: column; gap: 8px; max-height: 62vh; }
+  .nt-card { border: 1px solid var(--panel-border); border-left: 4px solid var(--text-dim); border-radius: 8px; padding: 10px 12px; background: var(--panel); }
+  .nt-card.critica { border-left-color: var(--err); }
+  .nt-card.alerta { border-left-color: var(--amber); }
+  .nt-card.info { border-left-color: #3B82F6; }
+  .nt-card.no-leida { background: var(--panel-2); }
+  .nt-card.resuelta { opacity: 0.72; }
+  .nt-card-titulo { font-weight: 600; font-size: 0.88rem; line-height: 1.35; }
+  .nt-card-detalle { font-size: 0.8rem; color: var(--text-dim); margin-top: 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .nt-card-meta { font-size: 0.72rem; color: var(--text-dim); margin-top: 6px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .nt-card-acciones { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
+  .nt-card-acciones textarea { flex: 1 1 220px; min-height: 38px; margin: 0; font-size: 0.8rem; }
+  .nt-sev { font-size: 0.66rem; font-weight: 700; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.02em; }
+  .nt-sev.critica { background: #FDECEA; color: var(--err); }
+  .nt-sev.alerta { background: var(--amber-soft); color: var(--amber); }
+  .nt-sev.info { background: #E8F0FE; color: #1D4ED8; }
+  .nt-vacio { font-size: 0.85rem; color: var(--text-dim); padding: 18px; text-align: center; border: 1px dashed var(--panel-border); border-radius: 8px; }
+  .ctl-exc { font-size: 0.8rem; border: 1px solid var(--panel-border); border-radius: 8px; padding: 8px 10px; margin-top: 6px; display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+  .ctl-exc small { color: var(--text-dim); display: block; margin-top: 2px; }
+  .ctl-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: 12px; }
+  .ctl-form > div { min-width: 0; }
+  .ctl-form input { margin: 0; width: 100%; box-sizing: border-box; }
+  .ctl-form button { width: auto; justify-self: start; }
+  @media (min-width: 760px) {
+    .ctl-form { grid-template-columns: minmax(0, 170px) minmax(0, 1fr) minmax(0, 2fr) minmax(0, 100px) max-content; align-items: end; }
+    .ctl-form.ctl-tope { grid-template-columns: minmax(0, 170px) max-content; }
+  }
   /* white-space normal: la celda de escalones es td.num (nowrap) y la nota ensanchaba la tabla */
   .nota-escalones { display: block; font-size: 0.7rem; color: var(--text-dim); margin-top: 3px; line-height: 1.3; white-space: normal; min-width: 150px; max-width: 220px; margin-left: auto; text-align: right; }
   .tabla-precios td.td-may .quitar-esc, .tabla-precios td.td-may .may-ok { white-space: normal; }
@@ -480,6 +517,7 @@
     <button class="tab-btn activa" id="tabPromos">🏷️ Promociones</button>
     <button class="tab-btn" id="tabPrecios">💲 Actualizar precios</button>
     <button class="tab-btn" id="tabTickets">🎫 Tickets</button>
+    <button class="tab-btn" id="tabNotif">🔔 Notificaciones <span class="notif-badge oculto" id="notifBadge">0</span></button>
   </nav>
 
   <div id="vistaPromos">
@@ -670,6 +708,46 @@
       <div class="caja-scroll"><table class="tabla-precios tk-tabla" id="tablaTickets"></table></div>
     </div>
   </div>
+
+  <!-- ============================================================
+       VISTA: Notificaciones · control de descuentos · auditoría diaria (función ml-control) — v2026-10-26.2
+       ============================================================ -->
+  <div id="vistaNotif" class="oculto">
+    <div class="panel" id="panelNotificaciones">
+      <div class="nt-cabecera"><span class="nt-titulo">🔔 Notificaciones</span></div>
+      <p class="nt-sub">Avisos automáticos del sistema: promos retiradas por superar el tope, descuentos frenados, listas dudosas y lo que encuentra la auditoría diaria. Revisalas, corregí lo que haga falta y marcalas como resueltas.</p>
+      <div class="resumen-precios" id="ntResumen"><div class="kpi">Cargando…</div></div>
+      <div class="nt-filtros">
+        <select id="ntFiltroEstado" aria-label="Estado"><option value="abiertas">Abiertas</option><option value="todas">Todas (incluye resueltas)</option></select>
+        <select id="ntFiltroSev" aria-label="Severidad"><option value="">Todas las severidades</option><option value="critica">🔴 Críticas</option><option value="alerta">🟠 Alertas</option><option value="info">🔵 Informativas</option></select>
+        <input type="search" id="ntBuscar" placeholder="Buscar MLA, campaña o texto…" aria-label="Buscar">
+        <button class="chico secondary" id="btnNtRefrescar" type="button">🔄 Actualizar</button>
+        <button class="chico secondary" id="btnNtLeerTodas" type="button">✓ Marcar las visibles como leídas</button>
+      </div>
+      <div id="ntEstado" class="estado"></div>
+      <div id="ntLista" class="nt-lista caja-scroll"></div>
+    </div>
+
+    <div class="panel" id="panelControl">
+      <div class="nt-cabecera"><span class="nt-titulo">🛡️ Control de descuentos</span></div>
+      <p class="nt-sub">Ningún proceso de la app puede aplicar más que el <b>tope</b> sobre lo que ponemos nosotros. Si una promo queda por encima después de aplicarla, se <b>retira sola</b> y aparece en Notificaciones. Las campañas exceptuadas por Gerencia no tienen tope.</p>
+      <div class="resumen-precios" id="ctlResumen"><div class="kpi">Cargando…</div></div>
+      <div id="ctlExcepciones"></div>
+      <div id="ctlEditor" class="oculto"></div>
+      <div id="ctlEstado" class="estado"></div>
+    </div>
+
+    <div class="panel" id="panelAuditoria">
+      <div class="nt-cabecera"><span class="nt-titulo">🔎 Auditoría diaria de %</span></div>
+      <p class="nt-sub">Todos los días de 6:00 a 8:00 (antes de la jornada) el servidor revisa en vivo todas las publicaciones y sus promos (sin tocar nada en ML) y deja los hallazgos en Notificaciones.</p>
+      <div class="resumen-precios" id="audResumen"><div class="kpi">Cargando…</div></div>
+      <div class="nt-acciones">
+        <button class="chico secondary" id="btnAudCorrer" type="button">▶ Correr la auditoría ahora</button>
+        <button class="chico secondary oculto" id="btnAudContinuar" type="button">⏩ Continuar ahora</button>
+      </div>
+      <div id="audEstado" class="estado"></div>
+    </div>
+  </div>
 </div>
 
 <!-- ============================================================
@@ -810,7 +888,18 @@
     <p><b>1) Link cargado a mano (el más exacto).</b> El panel de ML agrupa las campañas en "tarjetas" que la API no informa, así que un link automático puede abrir <b>otra</b> campaña de la misma tarjeta (pasaba con "Precio tachado", que abría "Lo mejor de todos los días"). Para corregirlo: abrí la campaña correcta en el panel de ML, copiá la dirección del navegador, tocá el lápiz ✏️ y pegala en <b>"Link de esta campaña en el panel de ML"</b>. Queda guardado para todos y "Ver en ML" abre exactamente esa. Solo se aceptan links de mercadolibre.com.ar.</p>
     <p><b>2) Link automático.</b> Si no hay link cargado, se arma solo para los tipos cuyo formato está confirmado (Campaña propia, Campaña tradicional, Con aporte de Mercado Libre y Relámpago). En los demás tipos se muestra <b>"Solo por API"</b>: se gestiona desde esta app, o le pegás el link con el lápiz y pasa a tener "Ver en ML".</p>
     <h3>Campañas compartidas: cuánto pone ML y cuánto ponemos nosotros</h3>
-    <p>En las campañas "Con aporte de Mercado Libre" el descuento se reparte. Cada card muestra, debajo de Candidatas/Activas, el <b>promedio</b> de lo que aporta ML y lo que aportamos nosotros en las publicaciones activas; en "Ver % aplicados" está el detalle publicación por publicación, en dos columnas: <b>"% ML"</b> (lo que pone Mercado Libre) y <b>"% nuestro"</b> (lo que ponemos nosotros). Las dos se ordenan con un clic en el título (primero de mayor a menor): así se ven arriba las publicaciones donde más ponemos. Si nuestro % supera la promo general, la celda queda en ámbar con ⚠ para revisarla. En esas campañas el precio lo fija ML y no se edita el %: para decidir <b>en cuáles entrar</b>, usá "Subir a todas" → escribís tu % máximo, elegís si lo comparás contra el descuento total o solo contra lo que ponés vos, y se tildan solas las que entran. En "Campaña tradicional" (Deal) sí elegís el %, dentro del rango que ML acepta para cada publicación.</p>
+    <p>En las campañas "Con aporte de Mercado Libre" el descuento se reparte. Cada card muestra, debajo de Candidatas/Activas, el <b>promedio</b> de lo que aporta ML y lo que aportamos nosotros en las publicaciones activas; en "Ver % aplicados" está el detalle publicación por publicación, en dos columnas: <b>"% ML"</b> (lo que pone Mercado Libre) y <b>"% nuestro"</b> (lo que ponemos nosotros). Las dos se ordenan con un clic en el título (primero de mayor a menor): así se ven arriba las publicaciones donde más ponemos. Si nuestro % supera la promo general, la celda queda en ámbar con ⚠; si supera el tope de descuentos, en rojo con ⛔. En esas campañas el precio lo fija ML y no se edita el %: para decidir <b>en cuáles entrar</b>, usá "Subir a todas" → escribís tu % máximo, elegís si lo comparás contra el descuento total o solo contra lo que ponés vos, y se tildan solas las que entran. En "Campaña tradicional" (Deal) sí elegís el %, dentro del rango que ML acepta para cada publicación.</p>
+    <h3>🔔 Notificaciones y control de descuentos (desde el 26/10)</h3>
+    <p>Nace del caso MLA736059547: un Deal se calculó sobre un precio que ya tenía otra promo y la publicación vendió 12 días al 66,6 % de descuento. Desde esta versión cada descuento pasa por un <b>doble chequeo en el servidor</b>:</p>
+    <p><b>0) Todo falla cerrado.</b> Si un dato no se puede leer o calcular, no se aplica nada. Si es un corte momentáneo de ML, se reintenta solo (no queda en revisar).<br>
+    <b>1) Lista real de dos fuentes.</b> Antes de aplicar, el servidor lee el precio de lista en dos lugares distintos de ML. Si no coinciden, no aplica nada en esa publicación y avisa (lista dudosa).<br>
+    <b>2) Tope sobre nuestra parte.</b> Ninguna acción puede poner más que el tope (hoy 11 %) de lo que ponemos <b>nosotros</b>. En las compartidas con ML cuenta solo nuestra parte; si ML no informa el reparto, se toma todo el descuento como nuestro. Lo que pasa el tope queda en <b>REVISAR</b> ("Frenado por el tope") y no se manda. Gerencia puede exceptuar campañas puntuales (ej. una liquidación de stock), con motivo, <b>% máximo propio</b> y registro de quién la aprobó. Las Ofertas del día y Relámpago no se pueden exceptuar.<br>
+    <b>3) Control después de aplicar.</b> Se relee lo que quedó en ML y se calcula el % real contra la lista real. Si la promo quedó por encima del tope, <b>se retira sola</b> y aparece como crítica en Notificaciones. Si quedó otro precio dentro del tope, queda en ERROR para revisar.<br>
+    <b>3b) Precio meli+.</b> También tiene que quedar dentro del tope; si no, se retira la promo.<br>
+    <b>3c) Cambio de lista.</b> Al subir la lista desde "Actualizar precios", las promos de precio fijo (Deal, Campaña propia, Oferta del día) aumentan su % real: después de cada cambio se controlan y las que pasen su tope se retiran solas. El preview avisa antes.<br>
+    <b>4) Respaldo de Bajar TODAS.</b> Si una publicación tenía un % por encima del tope, queda marcada y Subir TODAS no lo vuelve a aplicar.<br>
+    <b>5) Registro.</b> Cada alta o baja guarda quién la hizo, desde qué IP y navegador, con qué lista y qué quedó en ML.</p>
+    <p>La pestaña <b>🔔 Notificaciones</b> junta todos los avisos (con un contador en la pestaña que se actualiza cada 2 minutos), el <b>control de descuentos</b> (tope y excepciones; solo Gerencia los cambia) y la <b>auditoría diaria</b>: todos los días de 6:00 a 8:00, antes de la jornada, el servidor revisa en vivo todas las publicaciones y sus promos y avisa lo que esté fuera de tope, calculado sobre una lista vieja o con la lista dudosa. La auditoría <b>no toca nada en ML</b>; los avisos que dejan de aparecer se resuelven solos. Cada aviso se marca como leído (✓) y Gerencia lo cierra con "Resolver" dejando qué se hizo.</p>
     <h3>Carga de las cards al abrir</h3>
     <p>Al abrir la app, las cards se consultan <b>de a 3 por vez</b> (las demás muestran "En cola..."), para no saturar a Mercado Libre. Cada consulta espera hasta 60 segundos y, si se corta, se reintenta una vez sola; si vuelve a fallar, la card muestra el error con un botón "Reintentar".</p>
     <h3>Subir a todas / Bajar de todas</h3>
@@ -1099,7 +1188,7 @@
 
   // --- Tickets (módulo transversal: mismo backend para todas las apps) ---
   var TICKETS_APP_ID = "grafica-promociones"; // identifica a ESTA app en el embudo común (cambiar al clonar/replicar)
-  var APP_VERSION = "2026-10-26.1";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
+  var APP_VERSION = "2026-10-26.2";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
 
   // Captura de errores recientes (se adjuntan como contexto técnico a los tickets). Buffer de 5.
   var ERRORES_RECIENTES = [];
@@ -1162,8 +1251,8 @@
   var promoItemsState = {}; // promotion_id -> { candidatos: [...], activos: [...] }, lo llena "Ver candidatos/activos"
   var BATCH_SIZE = 12; // por debajo de MAX_ITEMS_POR_TANDA (15) del servidor, con margen
   var MAX_EDAD_DATOS_CAMPANA_MS = 3 * 60 * 1000; // % aplicados: si los datos de la campaña tienen más de 3 min, se recargan de ML
-  var SEG_POR_ITEM_SUBIR_EST = 1.2; // subir con precio: POST + verificación contra ML por publicación
-  var TIMEOUT_TANDA_MS = 60000; // las tandas de bulk tardan más (el server verifica cada precio contra ML)
+  var SEG_POR_ITEM_SUBIR_EST = 3; // subir con precio: doble lectura de la lista + POST + verificación y control del tope (v2026-10-26.2)
+  var TIMEOUT_TANDA_MS = 130000; // v2026-10-26.2: el server corta a los 100 s y devuelve lo que falte como "temporal"
 
   var els = {
     gate: document.getElementById("gate"),
@@ -1464,6 +1553,7 @@
       .catch(function () { return { alias: {}, links: {}, notas: {} }; });
     // Regeneración automática (tickets #18/#20). Si falla, las cards se ven igual (sin el estado de la regeneración).
     var pRegen = cargarRegeneracion();
+    notifIniciar(); // v2026-10-26.2: contador de notificaciones + tope de descuentos (no bloquea el arranque)
 
     Promise.all([pDiag, pAlias, pRegen])
       .then(function (par) {
@@ -2025,6 +2115,12 @@
     }
     var excepciones = leerExcepciones();
     var p = pctPendiente;
+    // v2026-10-26.2: tope de descuentos (también lo controla el servidor).
+    var sobreTope = [pctBase].concat(excepciones.map(function (e) { return e.porcentaje; })).filter(function (x) { return superaTopeFront(p.promotionId, x); });
+    if (sobreTope.length) {
+      els.estadoPorcentaje.textContent = "Supera el tope de descuentos (" + ntPct(topeFront()) + " sobre nuestra parte): " + sobreTope.join("%, ") + "%. Bajalo o pedí a Gerencia que exceptúe la campaña.";
+      return;
+    }
     els.modalPorcentaje.classList.add("oculto");
     pctPendiente = null;
     abrirConfirmacion(p.promotionId, p.promotionType, "subir", p.nombre, { porcentaje_base: pctBase, excepciones: excepciones });
@@ -2179,6 +2275,305 @@
     if (detalle.cause) return Array.isArray(detalle.cause) ? detalle.cause.join("; ") : String(detalle.cause);
     try { return JSON.stringify(detalle); } catch (e) { return "error desconocido"; }
   }
+
+  /* ============================================================
+     NOTIFICACIONES · CONTROL DE DESCUENTOS · AUDITORÍA DIARIA — v2026-10-26.2
+     Backend: función ml-control. Rutas: GET notificaciones | POST notificaciones-leer / notificaciones-resolver
+              GET/POST config (tope sobre nuestra parte + excepciones; editar solo Gerencia)
+              GET auditoria | POST auditoria-correr / auditoria-continuar
+     Para sumar un tipo de aviso nuevo: el servidor lo crea con app_notificar(); acá se muestra solo.
+     ============================================================ */
+  var URL_CONTROL = FN_BASE + "/ml-control";
+  var NOTIF_REFRESCO_MS = 2 * 60 * 1000;     // el contador de la pestaña se actualiza cada 2 min
+  var controlConfig = null;                  // { tope_nuestro_pct, excepciones[], puede_editar }
+  var notifDatos = { items: [], conteos: null, cargado: false };
+  var notifTimer = null;
+  var auditoriaAvanzando = false;
+  var NT_ETIQUETA_SEV = { critica: "Crítica", alerta: "Alerta", info: "Info" };
+
+  function controlPedir(ruta, body) {
+    var op = body === undefined ? { headers: { Authorization: AUTH } }
+      : { method: "POST", headers: { Authorization: AUTH, "Content-Type": "application/json" }, body: JSON.stringify(body) };
+    return fetchConTimeout(URL_CONTROL + "/" + ruta, op, 120000).then(function (r) {
+      if (!r.data || !r.data.ok) throw new Error((r.data && r.data.error) || ("error del servidor (" + r.status + ")"));
+      return r.data;
+    });
+  }
+  function ntSetEstado(id, txt, esError) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = txt || "";
+    el.className = "estado" + (esError ? " err" : "");
+  }
+  function ntFecha(iso) {
+    if (!iso) return "—";
+    var d = new Date(iso);
+    return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" }) + " " + d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+  }
+  function ntPct(n) { return n == null ? "—" : (Math.round(Number(n) * 10) / 10).toString().replace(".", ",") + " %"; }
+  function kpiNt(help, label, valor) { return '<div class="kpi">' + kpiHelp(help) + " " + label + " <b>" + valor + "</b></div>"; }
+
+  // --- Tope (lo usan también "% aplicados" y "Subir a todas" para avisar antes de mandar) ---
+  function topeFront() { return controlConfig && Number(controlConfig.tope_nuestro_pct) > 0 ? Number(controlConfig.tope_nuestro_pct) : null; }
+  function campanaExceptuada(promotionId) {
+    return !!(controlConfig && (controlConfig.excepciones || []).some(function (e) { return e.promotion_id === promotionId; }));
+  }
+  function superaTopeFront(promotionId, pct) {
+    var t = topeFront();
+    if (t == null) return false;
+    var exc = controlConfig && (controlConfig.excepciones || []).filter(function (e) { return e.promotion_id === promotionId; })[0];
+    if (exc) t = Number(exc.max_pct) > 0 ? Number(exc.max_pct) : 25; // la excepción tiene su propio máximo
+    return Number(pct) > t + 0.05;
+  }
+
+  function notifIniciar() {
+    cargarControlConfig();
+    refrescarBadge();
+    if (notifTimer) clearInterval(notifTimer);
+    notifTimer = setInterval(function () { if (AUTH && !document.hidden) refrescarBadge(); }, NOTIF_REFRESCO_MS);
+  }
+  function notifAlEntrar() {
+    cargarNotificaciones();
+    cargarControlConfig();
+    cargarAuditoria();
+  }
+
+  // --- Contador en la pestaña ---
+  function refrescarBadge() {
+    if (!AUTH) return;
+    controlPedir("notificaciones?limite=1").then(function (d) { pintarBadge(d.conteos); }).catch(function () { /* el contador no es crítico */ });
+  }
+  function pintarBadge(c) {
+    var b = document.getElementById("notifBadge");
+    if (!b || !c) return;
+    var n = c.abiertas || 0;
+    b.textContent = n > 99 ? "99+" : String(n);
+    b.classList.toggle("oculto", n === 0);
+    b.classList.toggle("alerta", !c.criticas);
+    b.title = n + " abiertas (" + (c.criticas || 0) + " críticas, " + (c.no_leidas || 0) + " sin leer)";
+  }
+
+  // --- Lista de notificaciones ---
+  function cargarNotificaciones() {
+    var estado = document.getElementById("ntFiltroEstado").value;
+    ntSetEstado("ntEstado", "Cargando notificaciones…");
+    return controlPedir("notificaciones?estado=" + encodeURIComponent(estado) + "&limite=300").then(function (d) {
+      notifDatos = { items: d.items || [], conteos: d.conteos, cargado: true };
+      pintarBadge(d.conteos);
+      ntSetEstado("ntEstado", "");
+      renderNotificaciones();
+    }).catch(function (e) {
+      ntSetEstado("ntEstado", "No se pudieron leer las notificaciones: " + e.message + ". Probá con 🔄 Actualizar.", true);
+      if (!notifDatos.cargado) document.getElementById("ntLista").innerHTML = "";
+    });
+  }
+  function notifFiltradas() {
+    var sev = document.getElementById("ntFiltroSev").value;
+    var q = document.getElementById("ntBuscar").value.trim().toLowerCase();
+    return notifDatos.items.filter(function (n) {
+      if (sev && n.severidad !== sev) return false;
+      if (!q) return true;
+      return [n.titulo, n.detalle, n.item_id, n.promotion_id, n.tipo].join(" ").toLowerCase().indexOf(q) !== -1;
+    });
+  }
+  function renderNotificaciones() {
+    var c = notifDatos.conteos || { abiertas: 0, criticas: 0, alertas: 0, no_leidas: 0 };
+    document.getElementById("ntResumen").innerHTML =
+      kpiNt("Notificaciones sin resolver. Cada aviso queda abierto hasta que alguien de Gerencia lo marca como resuelto (o la auditoría deja de detectarlo). Fuente: tabla app_notificaciones, que llenan las funciones de promociones y la auditoría diaria.", "Abiertas", c.abiertas) +
+      kpiNt("Abiertas de severidad crítica: una promo por encima del tope (retirada sola o detectada por la auditoría) o algo que no se pudo retirar. Atenderlas primero.", "Críticas", c.criticas) +
+      kpiNt("Abiertas de severidad alerta: descuentos frenados antes de aplicarse, listas de precio que no coinciden entre las dos fuentes de ML o promos calculadas sobre una lista vieja.", "Alertas", c.alertas) +
+      kpiNt("Abiertas que nadie marcó como leídas todavía. Al abrir y leer una, marcala con ✓ para que el resto sepa que ya se vio.", "Sin leer", c.no_leidas);
+    var lista = notifFiltradas();
+    var el = document.getElementById("ntLista");
+    if (!lista.length) {
+      el.innerHTML = '<div class="nt-vacio">' + (notifDatos.items.length ? "Ninguna notificación coincide con el filtro." : "No hay notificaciones " + (document.getElementById("ntFiltroEstado").value === "abiertas" ? "abiertas. Todo en orden ✓" : "todavía.")) + "</div>";
+      return;
+    }
+    var esAdmin = !!(controlConfig && controlConfig.puede_editar);
+    el.innerHTML = lista.map(function (n) {
+      var sev = NT_ETIQUETA_SEV[n.severidad] ? n.severidad : "info";
+      var clases = "nt-card " + sev + (n.estado === "resuelta" ? " resuelta" : (n.leida_at ? "" : " no-leida"));
+      var meta = '<span class="nt-sev ' + sev + '">' + NT_ETIQUETA_SEV[sev] + "</span>" +
+        "<span>🕘 " + ntFecha(n.ultima_vez) + (n.veces > 1 ? " · " + n.veces + " veces" : "") + "</span>" +
+        (n.item_id ? '<a href="https://articulo.mercadolibre.com.ar/' + escapeHtml(String(n.item_id).replace(/^MLA/, "MLA-")) + '" target="_blank" rel="noopener">' + escapeHtml(n.item_id) + " ↗</a>" : "") +
+        (n.promotion_id ? "<span>Campaña " + escapeHtml(n.promotion_id) + "</span>" : "") +
+        (n.estado === "resuelta" ? "<span>✔ Resuelta por " + escapeHtml(n.resuelta_por || "?") + " el " + ntFecha(n.resuelta_at) + (n.nota_resolucion ? ": " + escapeHtml(n.nota_resolucion) : "") + "</span>"
+          : (n.leida_at ? "<span>👁 Leída por " + escapeHtml(n.leida_por || "?") + "</span>" : ""));
+      var acciones = n.estado === "resuelta" ? "" :
+        '<div class="nt-card-acciones">' +
+          (n.leida_at ? "" : '<button class="chico secondary" type="button" data-nt-leer="' + n.id + '">✓ Leída</button>') +
+          (esAdmin ? '<button class="chico secondary" type="button" data-nt-resolver="' + n.id + '">Resolver…</button>' : "") +
+        "</div>";
+      return '<div class="' + clases + '" data-nt-id="' + n.id + '">' +
+        '<div class="nt-card-titulo">' + escapeHtml(n.titulo) + "</div>" +
+        (n.detalle ? '<div class="nt-card-detalle">' + escapeHtml(n.detalle) + "</div>" : "") +
+        '<div class="nt-card-meta">' + meta + "</div>" + acciones + "</div>";
+    }).join("");
+  }
+  function marcarLeidas(ids) {
+    if (!ids.length) return Promise.resolve();
+    return controlPedir("notificaciones-leer", { ids: ids }).then(function () {
+      var ahora = new Date().toISOString();
+      notifDatos.items.forEach(function (n) { if (ids.indexOf(n.id) !== -1 && !n.leida_at) { n.leida_at = ahora; n.leida_por = USUARIO_EMAIL; } });
+      if (notifDatos.conteos) notifDatos.conteos.no_leidas = notifDatos.items.filter(function (n) { return n.estado === "abierta" && !n.leida_at; }).length;
+      renderNotificaciones();
+      pintarBadge(notifDatos.conteos);
+    }).catch(function (e) { mostrarAviso(e.message, "No se pudo marcar como leída"); });
+  }
+  document.getElementById("ntLista").addEventListener("click", function (e) {
+    var bLeer = e.target.closest("[data-nt-leer]");
+    if (bLeer) { marcarLeidas([Number(bLeer.getAttribute("data-nt-leer"))]); return; }
+    var bRes = e.target.closest("[data-nt-resolver]");
+    if (bRes) {
+      var cont = bRes.parentNode;
+      if (cont.querySelector("textarea")) return;
+      var id = Number(bRes.getAttribute("data-nt-resolver"));
+      cont.insertAdjacentHTML("beforeend", '<textarea maxlength="500" placeholder="¿Qué se hizo? (opcional)"></textarea><button class="chico" type="button" data-nt-confirmar="' + id + '">Marcar resuelta</button>');
+      cont.querySelector("textarea").focus();
+      return;
+    }
+    var bConf = e.target.closest("[data-nt-confirmar]");
+    if (bConf) {
+      var idc = Number(bConf.getAttribute("data-nt-confirmar"));
+      var nota = bConf.parentNode.querySelector("textarea").value.trim();
+      bConf.disabled = true;
+      controlPedir("notificaciones-resolver", { id: idc, nota: nota || null })
+        .then(function () { mostrarToast("Notificación resuelta ✓"); return cargarNotificaciones(); })
+        .catch(function (err) { bConf.disabled = false; mostrarAviso(err.message, "No se pudo resolver"); });
+    }
+  });
+  ["ntFiltroSev", "ntBuscar"].forEach(function (id) { document.getElementById(id).addEventListener("input", renderNotificaciones); });
+  document.getElementById("ntFiltroEstado").addEventListener("change", cargarNotificaciones);
+  document.getElementById("btnNtRefrescar").addEventListener("click", function () { cargarNotificaciones(); cargarAuditoria(); });
+  document.getElementById("btnNtLeerTodas").addEventListener("click", function () {
+    var ids = notifFiltradas().filter(function (n) { return n.estado === "abierta" && !n.leida_at; }).map(function (n) { return n.id; });
+    if (!ids.length) { mostrarToast("No hay notificaciones sin leer en la lista."); return; }
+    marcarLeidas(ids.slice(0, 300));
+  });
+
+  // --- Control de descuentos (tope + excepciones) ---
+  function cargarControlConfig() {
+    return controlPedir("config").then(function (d) { controlConfig = d; renderControl(); return d; })
+      .catch(function (e) { ntSetEstado("ctlEstado", "No se pudo leer el control de descuentos: " + e.message + ". El servidor igual lo aplica.", true); });
+  }
+  function renderControl() {
+    if (!controlConfig) return;
+    var exc = controlConfig.excepciones || [];
+    document.getElementById("ctlResumen").innerHTML =
+      kpiNt("Máximo de descuento que podemos poner NOSOTROS en una promo, como % del precio de lista real. En las campañas compartidas con ML cuenta solo nuestra parte (lo que pone ML no suma); si ML no informa el reparto, se toma todo el descuento como nuestro. Lo controla el servidor antes de aplicar y vuelve a controlarlo después leyendo lo que quedó en ML: si pasa, la promo se retira sola. Lo define Gerencia (app_config.promos_control).", "Tope sobre nuestra parte", ntPct(controlConfig.tope_nuestro_pct)) +
+      kpiNt("Campañas aprobadas por Gerencia que pueden pasar el tope general (por ejemplo, una liquidación de stock), cada una con su propio % máximo, que también se controla. La excepción vale solo para ese tipo de campaña; las Ofertas del día y Relámpago nunca se exceptúan. Si una de estas se regenera sola, la nueva hereda la excepción.", "Campañas exceptuadas", exc.length) +
+      kpiNt("Última modificación del tope o de las excepciones. Cada cambio deja una notificación informativa con el antes y el después.", "Último cambio", controlConfig.actualizado_at ? ntFecha(controlConfig.actualizado_at) + " · " + escapeHtml(controlConfig.actualizado_por || "") : "—");
+    var puede = !!controlConfig.puede_editar;
+    document.getElementById("ctlExcepciones").innerHTML = exc.map(function (e) {
+      return '<div class="ctl-exc"><div><b>' + escapeHtml(e.nombre || e.promotion_id) + "</b> · " + escapeHtml(e.promotion_id) +
+        "<small>Máximo " + ntPct(e.max_pct != null ? e.max_pct : 25) + (e.tipo ? " · " + escapeHtml(e.tipo) : "") + " — " + escapeHtml(e.motivo || "") + (e.aprobado_por ? " — aprobada por " + escapeHtml(e.aprobado_por) + (e.aprobado_at ? " el " + ntFecha(e.aprobado_at) : "") : "") + (e.heredada_de ? " (heredada de " + escapeHtml(e.heredada_de) + ")" : "") + "</small></div>" +
+        (puede ? '<button class="chico secondary" type="button" data-ctl-quitar="' + escapeHtml(e.promotion_id) + '">Quitar</button>' : "") + "</div>";
+    }).join("");
+    var ed = document.getElementById("ctlEditor");
+    ed.classList.toggle("oculto", !puede);
+    if (!puede) return;
+    ed.innerHTML =
+      '<div class="ctl-form ctl-tope"><div><label for="ctlTope">Tope (%)</label><input type="number" id="ctlTope" min="1" max="50" step="0.5" value="' + escapeHtml(controlConfig.tope_nuestro_pct) + '"></div>' +
+      '<button class="chico" type="button" id="btnCtlTope">Guardar tope</button></div>' +
+      '<div class="ctl-form"><div><label for="ctlExcId">ID de campaña</label><input type="text" id="ctlExcId" placeholder="C-MLA1692277" maxlength="40"></div>' +
+      '<div><label for="ctlExcNombre">Nombre</label><input type="text" id="ctlExcNombre" placeholder="05-10 stock antiguo full" maxlength="120"></div>' +
+      '<div><label for="ctlExcMotivo">Motivo (obligatorio)</label><input type="text" id="ctlExcMotivo" placeholder="Por qué puede pasar el tope" maxlength="300"></div>' +
+      '<div><label for="ctlExcMax">% máximo</label><input type="number" id="ctlExcMax" min="1" max="60" step="0.5" placeholder="25"></div>' +
+      '<button class="chico secondary" type="button" id="btnCtlExc">➕ Agregar excepción</button></div>';
+    document.getElementById("btnCtlTope").addEventListener("click", function () {
+      var t = Number(String(document.getElementById("ctlTope").value).replace(",", "."));
+      if (!(t >= 1 && t <= 50)) { ntSetEstado("ctlEstado", "El tope tiene que estar entre 1 % y 50 %.", true); return; }
+      pedirConfirmacion("El tope pasa de " + ntPct(controlConfig.tope_nuestro_pct) + " a " + ntPct(t) + ". Vale para todo lo que se aplique desde ahora (las promos ya cargadas no se tocan; la auditoría las va a comparar contra el nuevo tope).", function () {
+        guardarControl({ tope_nuestro_pct: t });
+      }, { titulo: "¿Cambiar el tope?", si: "Cambiar tope" });
+    });
+    document.getElementById("btnCtlExc").addEventListener("click", function () {
+      var id = document.getElementById("ctlExcId").value.trim().toUpperCase();
+      var nombre = document.getElementById("ctlExcNombre").value.trim();
+      var motivo = document.getElementById("ctlExcMotivo").value.trim();
+      var maxPct = Number(String(document.getElementById("ctlExcMax").value).replace(",", "."));
+      if (!/^[A-Z0-9-]{2,40}$/.test(id)) { ntSetEstado("ctlEstado", "Poné el ID de la campaña tal como aparece en la card (ej. C-MLA1692277).", true); return; }
+      if (motivo.length < 5) { ntSetEstado("ctlEstado", "Escribí el motivo de la excepción.", true); return; }
+      if (!(maxPct > 0 && maxPct <= 60)) { ntSetEstado("ctlEstado", "Poné el % máximo que puede tener esa campaña (entre 1 y 60).", true); return; }
+      if (campanaExceptuada(id)) { ntSetEstado("ctlEstado", "Esa campaña ya está exceptuada.", true); return; }
+      var lista = (controlConfig.excepciones || []).map(function (e) { return { promotion_id: e.promotion_id }; });
+      lista.push({ promotion_id: id, nombre: nombre || id, motivo: motivo, max_pct: maxPct });
+      pedirConfirmacion("La campaña " + id + " va a poder superar el tope general de " + ntPct(controlConfig.tope_nuestro_pct) + ", con un máximo de " + ntPct(maxPct) + ". El servidor toma el tipo de campaña de Mercado Libre (las Ofertas del día y Relámpago no se pueden exceptuar). Queda registrado quién la aprobó y por qué.", function () {
+        guardarControl({ excepciones: lista });
+      }, { titulo: "¿Exceptuar esta campaña del tope?", si: "Exceptuar", peligro: true });
+    });
+  }
+  document.getElementById("ctlExcepciones").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-ctl-quitar]");
+    if (!b) return;
+    var id = b.getAttribute("data-ctl-quitar");
+    pedirConfirmacion("La campaña " + id + " vuelve a tener tope: lo que se le aplique desde ahora no puede pasar " + ntPct(controlConfig.tope_nuestro_pct) + ", y la auditoría va a marcar sus publicaciones que lo superen.", function () {
+      guardarControl({ excepciones: (controlConfig.excepciones || []).filter(function (x) { return x.promotion_id !== id; }).map(function (x) { return { promotion_id: x.promotion_id }; }) });
+    }, { titulo: "¿Quitar la excepción?", si: "Quitar excepción", peligro: true });
+  });
+  function guardarControl(cambios) {
+    ntSetEstado("ctlEstado", "Guardando…");
+    controlPedir("config", cambios).then(function (d) {
+      controlConfig = d;
+      renderControl();
+      ntSetEstado("ctlEstado", "Guardado ✓");
+      mostrarToast("Control de descuentos actualizado ✓");
+    }).catch(function (e) { ntSetEstado("ctlEstado", "No se pudo guardar: " + e.message, true); });
+  }
+
+  // --- Auditoría diaria ---
+  function cargarAuditoria() {
+    return controlPedir("auditoria").then(function (d) { renderAuditoria(d.corrida); })
+      .catch(function (e) { ntSetEstado("audEstado", "No se pudo leer la auditoría: " + e.message, true); });
+  }
+  function renderAuditoria(c) {
+    var r = (c && c.resumen) || {};
+    var estadoTxt = !c ? "Todavía no corrió" : (c.estado === "corriendo" ? "En curso " + (c.avance_pct || 0) + " % (" + c.cursor + "/" + c.total + ")" : (c.estado === "terminada" ? "Terminada " + ntFecha(c.terminada_at) : "Con error"));
+    document.getElementById("audResumen").innerHTML =
+      kpiNt("Estado de la auditoría del día. Arranca sola a las 6:00 (después de que se actualiza el catálogo, antes de la jornada) y avanza cada 2 minutos hasta terminar; también se puede lanzar a mano. No modifica nada en Mercado Libre.", "Última", estadoTxt) +
+      kpiNt("Publicaciones del catálogo (activas y pausadas) que se revisaron en vivo: precio de lista real (dos fuentes) y todas sus promos activas o pendientes.", "Revisadas", c ? (r.publicaciones != null ? r.publicaciones : c.cursor) : "—") +
+      kpiNt("Promos donde lo que ponemos nosotros supera el tope (sin contar campañas exceptuadas). Cada una genera una notificación crítica. La auditoría no las saca: las corrige Gerencia.", "Fuera de tope", r.sobre_tope != null ? r.sobre_tope : "—") +
+      kpiNt("Promos que quedaron con un precio fijo calculado sobre una lista anterior (por ejemplo, se subió la lista y la promo no se recalculó): el descuento real hoy es distinto del que se cargó.", "Con lista vieja", r.listas_viejas != null ? r.listas_viejas : "—") +
+      kpiNt("Publicaciones donde las dos fuentes del precio de lista de ML (/prices e /items) no coinciden. Mientras pase, la app no les aplica promos.", "Listas dudosas", r.listas_dudosas != null ? r.listas_dudosas : "—");
+    var esAdminAud = !!(controlConfig && controlConfig.puede_editar);
+    document.getElementById("btnAudCorrer").classList.toggle("oculto", !esAdminAud);
+    document.getElementById("btnAudContinuar").classList.toggle("oculto", !esAdminAud || !(c && c.estado === "corriendo") || auditoriaAvanzando);
+    ntSetEstado("audEstado", c && c.ultimo_error ? "Último error: " + c.ultimo_error : "", !!(c && c.ultimo_error));
+  }
+  function avanzarAuditoria() {
+    if (auditoriaAvanzando) return;
+    auditoriaAvanzando = true;
+    var vueltas = 0;
+    (function paso() {
+      ntSetEstado("audEstado", "Auditando en el servidor… (podés seguir usando la app)");
+      controlPedir("auditoria-continuar", {}).then(function (d) {
+        vueltas++;
+        return cargarAuditoria().then(function () {
+          if (d.terminada) {
+            auditoriaAvanzando = false;
+            ntSetEstado("audEstado", "Auditoría terminada ✓");
+            cargarNotificaciones();
+            return;
+          }
+          if (d.avance && vueltas < 60) { setTimeout(paso, 1500); return; }
+          auditoriaAvanzando = false;
+          ntSetEstado("audEstado", d.nada ? String(d.nada) : "");
+          cargarAuditoria();
+        });
+      }).catch(function (e) {
+        auditoriaAvanzando = false;
+        ntSetEstado("audEstado", "Se cortó: " + e.message + ". Lo revisado queda guardado; apretá ⏩ Continuar ahora.", true);
+        cargarAuditoria();
+      });
+    })();
+  }
+  document.getElementById("btnAudCorrer").addEventListener("click", function () {
+    pedirConfirmacion("Revisa en vivo todas las publicaciones y sus promos (unos 5 minutos; no modifica nada en Mercado Libre). Si ya había una de hoy, la vuelve a hacer de cero.", function () {
+      controlPedir("auditoria-correr", {}).then(function (d) { renderAuditoria(d.corrida); avanzarAuditoria(); })
+        .catch(function (e) { ntSetEstado("audEstado", "No se pudo arrancar: " + e.message, true); });
+    }, { titulo: "¿Correr la auditoría ahora?", si: "Correr auditoría" });
+  });
+  document.getElementById("btnAudContinuar").addEventListener("click", avanzarAuditoria);
 
   /* ---------- Subir a todas / Bajar de todas de UNA campaña: van a la cola del servidor ----------
      v2026-10-08.1 (ticket #17): antes corría en esta pestaña (una sola a la vez y con la pestaña abierta).
@@ -2384,7 +2779,13 @@
   }
   // Traduce una línea del log de ml-promos-bulk al resultado que se muestra por fila.
   function resultadoDesdeLog(l) {
-    if (l.estado === "APLICADO") return { tipo: "ok", txt: "✓ " + l.porcentaje + "% ($" + l.precio_aplicado + ")" + (l.verificado === false ? " · sin confirmar en ML todavía" : " · verificado en ML") };
+    if (l.estado === "APLICADO") return { tipo: "ok", txt: "✓ " + l.porcentaje + "% ($" + l.precio_aplicado + ")" + (l.verificado === false ? " · sin confirmar en ML todavía" : " · verificado en ML") + (l.aviso_lista ? " · " + l.aviso_lista : "") };
+    // v2026-10-26.2: motivos nuevos del control de descuentos (servidor ml-promos-bulk v21)
+    if (l.estado === "RETIRADA_AUTO") return { tipo: "err", txt: "Retirada automáticamente: " + textoError(l.detalle) };
+    if (l.estado === "REVISAR" && l.motivo === "sobre_tope") return { tipo: "warn", txt: "Frenado por el tope: " + textoError(l.detalle) };
+    if (l.estado === "REVISAR" && l.motivo === "lista_dudosa") return { tipo: "warn", txt: "No se aplicó (lista dudosa): " + textoError(l.detalle) };
+    if (l.motivo === "sin_verificar") return { tipo: "warn", txt: "Aplicado sin confirmar: " + textoError(l.detalle) };
+    if (l.estado === "REVISAR" && (l.motivo === "precio_invalido" || l.motivo === "sin_reparto")) return { tipo: "warn", txt: "No se aplicó: " + textoError(l.detalle) };
     if (l.estado === "REVISAR") {
       return { tipo: "warn", txt: "Fuera de rango: válido " + (l.porcentaje_minimo != null ? l.porcentaje_minimo + "%" : "?") + " a " +
         (l.porcentaje_maximo != null ? l.porcentaje_maximo + "%" : "?") + (l.sugerido ? " · sugerido $" + l.sugerido : "") };
@@ -2484,7 +2885,7 @@
     thEditar.classList.toggle("oculto", modoAporte);
     if (modoAporte) { // el "?" se arma acá: pctPromoGeneral puede haberse actualizado desde la base
       document.getElementById("helpPctMl").innerHTML = kpiHelp("Parte del descuento que pone Mercado Libre en esta publicación (meli_percentage), como % del precio de lista. Lo informa ML por publicación al leer la campaña. Clic en el título de la columna para ordenar.");
-      document.getElementById("helpPctNuestro").innerHTML = kpiHelp("Parte del descuento que ponemos nosotros (sale de nuestro margen), como % del precio de lista. Dato de ML por publicación (seller_percentage). % aplicado ≈ % ML + % nuestro. En ámbar con ⚠ si supera la promo general (hoy " + pctPromoGeneral + " %): conviene revisarla. Clic en el título para ordenar de mayor a menor.");
+      document.getElementById("helpPctNuestro").innerHTML = kpiHelp("Parte del descuento que ponemos nosotros (sale de nuestro margen), como % del precio de lista. Dato de ML por publicación (seller_percentage). % aplicado ≈ % ML + % nuestro. En ámbar con ⚠ si supera la promo general (hoy " + pctPromoGeneral + " %) y en rojo con ⛔ si supera el tope de descuentos" + (topeFront() ? " (" + topeFront() + " %)" : "") + ". Clic en el título para ordenar de mayor a menor.");
     }
 
     els.tablaPctAplicadosBody.innerHTML = filas.map(function (f) {
@@ -2539,10 +2940,13 @@
   // Celda de % ML o % nuestro. El nuestro se marca en ámbar si supera la promo general (posible error a revisar).
   function celdaAporte(n, esNuestro) {
     if (n == null) return "<td class='celda-aporte sin-dato' title='ML no informa el reparto para esta publicación'>—</td>";
-    var sobre = esNuestro && pctPromoGeneral > 0 && n > pctPromoGeneral + 0.05;
-    return "<td class='celda-aporte" + (esNuestro ? " nuestro" : "") + (sobre ? " sobre-general" : "") + "'" +
-      (sobre ? " title='Ponemos más que la promo general (" + fmtPctAporte(pctPromoGeneral) + "): revisar'" : "") + ">" +
-      fmtPctAporte(n) + (sobre ? " ⚠" : "") + "</td>";
+    // v2026-10-26.2: rojo ⛔ si supera el tope de descuentos; ámbar ⚠ si supera la promo general.
+    var tope = esNuestro && pctAplicadosContexto && superaTopeFront(pctAplicadosContexto.promotionId, n);
+    var sobre = !tope && esNuestro && pctPromoGeneral > 0 && n > pctPromoGeneral + 0.05;
+    var titulo = tope ? "Supera el tope de descuentos (" + ntPct(topeFront()) + "): revisarla" : (sobre ? "Ponemos más que la promo general (" + fmtPctAporte(pctPromoGeneral) + "), dentro del tope" : "");
+    return "<td class='celda-aporte" + (esNuestro ? " nuestro" : "") + (tope ? " sobre-tope" : (sobre ? " sobre-general" : "")) + "'" +
+      (titulo ? " title='" + escapeHtml(titulo) + "'" : "") + ">" +
+      fmtPctAporte(n) + (tope ? " ⛔" : (sobre ? " ⚠" : "")) + "</td>";
   }
 
   function actualizarFlechasOrden() {
@@ -2574,6 +2978,12 @@
     if (!pctAplicadosContexto || !filaData) return;
     if (!nuevoPct || nuevoPct <= 0 || nuevoPct >= 100) {
       tr.querySelector(".input-editar-pct").style.borderColor = "var(--err)";
+      return;
+    }
+    // v2026-10-26.2: aviso antes de mandar (el servidor lo vuelve a controlar igual).
+    if (superaTopeFront(pctAplicadosContexto.promotionId, nuevoPct)) {
+      tr.querySelector(".input-editar-pct").style.borderColor = "var(--err)";
+      mostrarAviso(nuevoPct + " % supera el tope de descuentos (" + ntPct(topeFront()) + " sobre nuestra parte). Si esta campaña tiene que pasarlo, Gerencia la puede exceptuar en 🔔 Notificaciones → Control de descuentos.", "Supera el tope");
       return;
     }
     tr.querySelector(".input-editar-pct").style.borderColor = "";
@@ -2611,6 +3021,25 @@
           tr.querySelector(".celda-res").innerHTML = celdaResultadoPct(itemId);
           btn.textContent = "Guardado ✓";
           setTimeout(function () { btn.textContent = "Guardar"; btn.disabled = false; }, 1500);
+        } else if (log0.estado === "REVISAR" && (log0.motivo === "sobre_tope" || log0.motivo === "lista_dudosa")) {
+          btn.textContent = "Guardar";
+          btn.disabled = false;
+          pctResultadoPorItem[itemId] = resultadoDesdeLog(log0);
+          tr.querySelector(".celda-res").innerHTML = celdaResultadoPct(itemId);
+          mostrarAviso(textoError(log0.detalle), log0.motivo === "sobre_tope" ? "Frenado por el tope de descuentos" : "No se aplicó: la lista no es confiable");
+        } else if (log0.motivo === "sin_verificar") {
+          btn.textContent = "Guardar";
+          btn.disabled = false;
+          pctResultadoPorItem[itemId] = { tipo: "warn", txt: "ML lo aceptó pero no se pudo confirmar todavía: tocá 🔄 Actualizar desde ML en un minuto." };
+          tr.querySelector(".celda-res").innerHTML = celdaResultadoPct(itemId);
+          mostrarAviso(textoError(log0.detalle), "Aplicado, sin confirmar");
+        } else if (log0.estado === "RETIRADA_AUTO") {
+          btn.textContent = "Guardar";
+          btn.disabled = false;
+          pctResultadoPorItem[itemId] = resultadoDesdeLog(log0);
+          tr.querySelector(".celda-res").innerHTML = celdaResultadoPct(itemId);
+          mostrarAviso(textoError(log0.detalle), "Se retiró automáticamente");
+          refrescarBadge();
         } else if (log0.estado === "REVISAR") {
           btn.textContent = "Guardar";
           btn.disabled = false;
@@ -2674,7 +3103,7 @@
     function ejecutarGuardadoMasivo() {
     pctMasivoEnCurso = true;
     btnGuardarTodosPct.disabled = true; btnRellenarPct.disabled = true;
-    var tandas = chunk(items, BATCH_SIZE), ti = 0, proc = 0, ok = 0, rev = 0, err = 0, t0 = Date.now();
+    var tandas = chunk(items, BATCH_SIZE), ti = 0, proc = 0, ok = 0, rev = 0, err = 0, topes = 0, controles = 0, t0 = Date.now();
     els.pctAplicadosEstado.className = "estado";
     els.pctAplicadosEstado.textContent = "Guardando 0/" + items.length + " (estimado " + fmtSeg(items.length * SEG_POR_ITEM_SUBIR_EST) + ")...";
 
@@ -2682,7 +3111,7 @@
       pctMasivoEnCurso = false;
       btnGuardarTodosPct.disabled = false; btnRellenarPct.disabled = false;
       renderTablaPctAplicados(estado.activos);
-      els.pctAplicadosEstado.textContent = proc + "/" + items.length + " procesadas — " + ok + " OK, " + rev + " fuera de rango, " + err + " con error." +
+      els.pctAplicadosEstado.textContent = proc + "/" + items.length + " procesadas — " + ok + " OK, " + rev + " fuera de rango, " + (topes ? topes + " frenadas o retiradas por el tope de descuentos (ver 🔔 Notificaciones), " : "") + (controles ? controles + " sin aplicar por un control (lista dudosa o precio inválido), " : "") + err + " con error." +
         (rev > 0 ? " Mirá la columna Resultado para el rango válido de cada una. " + TEXTO_REGLA_7D : "") + (msgExtra ? " " + msgExtra : "");
       els.pctAplicadosEstado.className = (esError || err > 0) ? "estado err" : (rev > 0 ? "estado" : "estado ok");
     }
@@ -2702,7 +3131,9 @@
               ok++;
               delete pctEditados[l.item_id];
               estado.activos = estado.activos.map(function (it) { return it.id === l.item_id ? Object.assign({}, it, { price: l.precio_aplicado, original_price: l.precio_original || it.original_price }) : it; });
-            } else if (l.estado === "REVISAR") { rev++; } else {
+            } else if ((l.estado === "REVISAR" && l.motivo === "sobre_tope") || l.estado === "RETIRADA_AUTO") { topes++; }
+            else if (l.estado === "REVISAR" && l.motivo && l.motivo !== "fuera_de_rango") { controles++; }
+            else if (l.estado === "REVISAR") { rev++; } else {
               err++;
               if (l.precio_ml != null) estado.activos = estado.activos.map(function (it) { return it.id === l.item_id ? Object.assign({}, it, { price: l.precio_ml, original_price: l.precio_original || it.original_price }) : it; });
             }
@@ -3199,7 +3630,7 @@
     });
     var b2 = document.getElementById("btnDetSugerido");
     if (b2) b2.addEventListener("click", function () {
-      pedirConfirmacion("Se van a subir " + enRevision.length + " publicaciones con el precio que sugiere Mercado Libre (sin tope de %). Revisá el detalle antes: el sugerido puede implicar un descuento grande.", function () {
+      pedirConfirmacion("Se van a subir " + enRevision.length + " publicaciones con el precio que sugiere Mercado Libre. Las que con el sugerido superen el tope de descuentos" + (topeFront() ? " (" + ntPct(topeFront()) + ")" : "") + " no se aplican: quedan en revisar.", function () {
         cerrarYEncolar({ item_ids: enRevision, modo_precio: "sugerido", motivo: "sugerido" });
       }, { titulo: "¿Usar el sugerido de ML?", si: "Usar sugerido" });
     });
@@ -3327,6 +3758,7 @@
     promos:  { vista: "vistaPromos",  tab: "tabPromos" },
     precios: { vista: "vistaPrecios", tab: "tabPrecios" },
     tickets: { vista: "vistaTickets", tab: "tabTickets" },
+    notif:   { vista: "vistaNotif",   tab: "tabNotif" },     // v2026-10-26.2
   };
   var vistaActual = "promos";
   function mostrarVista(cual) {
@@ -3337,6 +3769,7 @@
       document.getElementById(VISTAS[k].tab).classList.toggle("activa", k === cual);
     });
     if (cual === "tickets") ticketsAlEntrar();
+    if (cual === "notif") notifAlEntrar();
     if (cual === "precios") { catalogoAlEntrar(); escalonesAlEntrar(); }
   }
   Object.keys(VISTAS).forEach(function (k) {
@@ -4162,8 +4595,9 @@
         ? '<a href="https://articulo.mercadolibre.com.ar/' + escapeHtml(String(f.item_id).replace("MLA", "MLA-")) + '" target="_blank" rel="noopener" style="color:var(--amber);text-decoration:none;">' + escapeHtml(f.item_id) + "</a>" + (f.title ? '<div style="color:var(--text-dim);font-size:0.72rem;">' + escapeHtml(String(f.title).slice(0, 60)) + "</div>" : "")
         : (f.title ? '<span style="color:var(--text-dim);">' + escapeHtml(String(f.title).slice(0, 60)) + "</span>" : "—");
       var detalle = f.detalle ? '<div style="color:var(--text-dim);font-size:0.7rem;">' + escapeHtml(textoError(f.detalle)) + "</div>" : "";
-      var aviso = f.aviso_mayorista ? '<div class="aviso-may">⚠️ ' + escapeHtml(f.aviso_mayorista) + "</div>" : "";
-      var filaCls = (f.warning_grande || f.aviso_mayorista) ? ' class="fila-warning"' : "";
+      var aviso = (f.aviso_mayorista ? '<div class="aviso-may">⚠️ ' + escapeHtml(f.aviso_mayorista) + "</div>" : "") +
+        (f.aviso_promos ? '<div class="aviso-may">🛡️ ' + escapeHtml(f.aviso_promos) + "</div>" : ""); // v2026-10-26.2: control de promos tras cambiar la lista
+      var filaCls = (f.warning_grande || f.aviso_mayorista || f.aviso_promos) ? ' class="fila-warning"' : "";
       var editable = filaEditablePrecio(f);
       var sinCambio = '<span class="sin-cambio">sin cambio</span>';
 
