@@ -511,6 +511,48 @@
     .sin-sku-activa{color:var(--amber);font-weight:700;}
     .sin-sku-titulo{max-width:280px;white-space:normal;}
     .aviso-7d{font-size:0.78rem;color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-dim);border-radius:8px;padding:10px 12px;margin:0 0 12px;}
+    /* -------------------- SKU excluidos de promociones (v2026-11-24.1) -------------------- */
+    .ex-head{display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;}
+    .ex-head:focus-visible{outline:2px solid var(--amber);outline-offset:4px;border-radius:6px;}
+    .ex-titulo{margin:0;color:var(--amber);font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1;min-width:0;}
+    .ex-chip{font-size:0.7rem;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--panel-2);color:var(--text-dim);border:1px solid var(--panel-border);white-space:nowrap;}
+    .ex-chip.activo{background:var(--err-soft);color:var(--err);border-color:#F2C4C0;}
+    .ex-form{display:grid;grid-template-columns:1fr;gap:12px;margin:12px 0 4px;}
+    @media (min-width:720px){.ex-form{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);}}
+    .ex-col{display:flex;flex-direction:column;gap:6px;min-width:0;}
+    .ex-col textarea{width:100%;min-height:96px;resize:vertical;font-family:ui-monospace,Consolas,monospace;font-size:0.82rem;}
+    .ex-col input[type=text]{width:100%;}
+    .ex-acciones{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+    .ex-barra-sup{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 8px;}
+    .ex-buscar{width:100%;max-width:280px;}
+    table.ex-tabla td{vertical-align:top;}
+    .ex-sku{font-weight:700;color:var(--text);word-break:break-word;}
+    .ex-motivo{color:var(--text-dim);max-width:260px;white-space:normal;}
+    .ex-pubs{font-size:0.75rem;min-width:180px;}
+    .ex-pubs summary{cursor:pointer;color:var(--amber-dim);font-weight:600;}
+    .ex-pubs div{margin-top:3px;}
+    .ex-arrastra{color:var(--amber-dim);font-size:0.72rem;margin-top:3px;}
+    .ex-meta{font-size:0.72rem;color:var(--text-dim);white-space:nowrap;}
+    .ex-tag{display:inline-block;font-size:0.66rem;font-weight:700;padding:1px 6px;border-radius:4px;background:var(--err-soft);color:var(--err);margin-left:4px;vertical-align:middle;white-space:nowrap;}
+    .ex-ok{color:var(--ok);} .ex-warn{color:var(--amber-dim);} .ex-err{color:var(--err);}
+    .ex-prev-sku{border:1px solid var(--panel-border);border-radius:10px;padding:10px 12px;margin:8px;background:var(--panel-2);}
+    .ex-prev-sku h4{margin:0 0 6px;font-size:0.88rem;color:var(--text);display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+    .ex-prev-pub{font-size:0.78rem;padding:6px 0;border-top:1px dashed var(--panel-border);}
+    .ex-prev-pub:first-of-type{border-top:none;}
+    .ex-barra{height:8px;background:var(--panel-2);border:1px solid var(--panel-border);border-radius:6px;overflow:hidden;margin:10px 0 4px;}
+    .ex-barra > div{height:100%;background:var(--amber);width:0;transition:width .3s;}
+    .tag-log.EXCLUIDO{background:var(--err-soft);color:var(--err);}
+    #tablaSel tr.sel-excluida td{color:var(--text-dim);background:var(--panel-2);}
+    @media (max-width:560px){
+      #exResumen,#exPrevResumen,#exResultado .resumen-precios{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+      table.ex-tabla thead{display:none;}
+      table.ex-tabla tr{display:block;padding:10px 8px;border-bottom:1px solid var(--panel-border);}
+      table.ex-tabla td{display:block;border:none;padding:2px 0;}
+      table.ex-tabla td.ex-motivo{max-width:none;}
+      table.ex-tabla td.ex-meta{white-space:normal;}
+      table.ex-tabla td:last-child{padding-top:6px;}
+      .ex-barra-sup .ex-buscar{max-width:none;}
+    }
   </style>
 
   <nav class="tabs-nav">
@@ -533,6 +575,48 @@
     </div>
     <div id="estadoSnapshot" class="estado"></div>
     <div id="procesoPanel" class="proceso-panel oculto"></div>
+  </div>
+
+  <!-- SKU excluidos de promociones (v2026-11-24.1). Backend: función ml-promos-excluidos; el bloqueo de altas lo hace ml-promos-bulk v23. -->
+  <div class="panel" id="panelExcluidos">
+    <div class="ex-head" id="toggleExcluidos" role="button" tabindex="0" aria-expanded="true" aria-controls="excluidosBody">
+      <span class="ex-titulo">🚫 SKU excluidos de promociones <span class="ex-chip" id="exChip">…</span></span>
+      <span id="toggleExcluidosIcono" style="color:var(--text-dim);">▾</span>
+    </div>
+    <p class="tk-ayuda" style="margin:6px 0 0;">Los SKU de esta lista <b>no entran en ninguna promoción</b> de Mercado Libre. El servidor frena cualquier alta (también Subir TODAS y la regeneración automática) y, si alguien los suma desde el panel de ML, el barrido los saca.</p>
+    <div id="excluidosBody" style="margin-top:12px;">
+      <div class="resumen-precios" id="exResumen"><div class="kpi">Cargando la lista…</div></div>
+      <div class="ex-form">
+        <div class="ex-col">
+          <label for="exSkus" style="margin:0;">SKU a excluir: uno por renglón (podés pegar una columna de Excel)</label>
+          <textarea id="exSkus" spellcheck="false" placeholder="128 x2 - I A 0.35mm 61cm x 4 mt&#10;OPP TRANSP. X 20HJS"></textarea>
+          <span id="exContador" class="contador-filas"></span>
+        </div>
+        <div class="ex-col">
+          <label for="exMotivo" style="margin:0;">Motivo (obligatorio: queda guardado junto al SKU)</label>
+          <input type="text" id="exMotivo" maxlength="300" placeholder="Ej.: margen chico, precio pactado con un cliente">
+          <div class="ex-acciones" style="margin-top:4px;">
+            <button class="chico" id="btnExRevisar" type="button">🔍 Revisar antes de excluir</button>
+          </div>
+          <p class="tk-ayuda" style="margin:0;">Primero te muestra las publicaciones de cada SKU y de qué promos se van a sacar. No se toca nada hasta que confirmes.</p>
+        </div>
+      </div>
+      <div id="estadoExcluidos" class="estado"></div>
+      <div class="ex-barra-sup">
+        <input type="search" id="exBuscar" class="ex-buscar" placeholder="Buscar SKU o motivo…" aria-label="Buscar en la lista de SKU excluidos">
+        <span class="ex-acciones">
+          <button class="chico secondary" id="btnExBarrer" type="button" title="Revisa ahora todas las publicaciones de los SKU excluidos y las saca de cualquier promo">🧹 Barrer ahora</button>
+          <button class="chico secondary" id="btnExRecargar" type="button">🔄 Recargar</button>
+        </span>
+      </div>
+      <div class="caja-scroll baja">
+        <table class="log ex-tabla" id="tablaExcluidos">
+          <thead><tr><th>SKU</th><th>Motivo</th><th>Publicaciones</th><th>Agregado</th><th></th></tr></thead>
+          <tbody id="tablaExcluidosBody"><tr><td colspan="5" style="color:var(--text-dim);">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+      <details class="ayuda-plegable" style="margin-top:10px;"><summary>Historial de cambios de la lista</summary><div id="exHistorial" style="font-size:0.78rem;"></div></details>
+    </div>
   </div>
 
   <!-- Métricas de las ofertas -->
@@ -871,6 +955,27 @@
 </div>
 
 <!-- ============================================================
+     MODAL: revisar y confirmar SKU a excluir (v2026-11-24.1)
+     ============================================================ -->
+<div id="modalExcluir" class="modal-fondo oculto">
+  <div class="modal-caja" style="max-width:820px;">
+    <h2 id="exModalTitulo">🚫 Revisar SKU a excluir</h2>
+    <div class="resumen-precios" id="exPrevResumen"></div>
+    <div id="exPrevAviso"></div>
+    <div class="caja-scroll modal" id="exPrevLista"></div>
+    <div id="exProgreso" class="oculto">
+      <div class="ex-barra"><div id="exBarra"></div></div>
+      <div id="exProgresoTxt" class="estado" style="margin-top:4px;"></div>
+    </div>
+    <div id="exResultado"></div>
+    <div class="modal-cerrar" style="justify-content:space-between;">
+      <button class="secondary" id="btnExCancelar" type="button">Cancelar</button>
+      <button class="danger" id="btnExConfirmar" type="button" disabled>Excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
      MODAL: Funcionamiento de la app
      ============================================================ -->
 <div id="modalFuncionamiento" class="modal-fondo oculto">
@@ -900,6 +1005,15 @@
     <b>4) Respaldo de Bajar TODAS.</b> Si una publicación tenía un % por encima del tope, queda marcada y Subir TODAS no lo vuelve a aplicar.<br>
     <b>5) Registro.</b> Cada alta o baja guarda quién la hizo, desde qué IP y navegador, con qué lista y qué quedó en ML.</p>
     <p>La pestaña <b>🔔 Notificaciones</b> junta todos los avisos (con un contador en la pestaña que se actualiza cada 2 minutos), el <b>control de descuentos</b> (tope y excepciones; solo Gerencia los cambia) y la <b>auditoría diaria</b>: todos los días de 6:00 a 8:00, antes de la jornada, el servidor revisa en vivo todas las publicaciones y sus promos y avisa lo que esté fuera de tope, calculado sobre una lista vieja o con la lista dudosa. La auditoría <b>no toca nada en ML</b>; los avisos que dejan de aparecer se resuelven solos. Cada aviso se marca como leído (✓) y Gerencia lo cierra con "Resolver" dejando qué se hizo.</p>
+    <h3>🚫 SKU excluidos de promociones (desde el 24/11)</h3>
+    <p>Es el panel que está debajo de "Acciones globales". Un SKU de la lista <b>no entra en ninguna promoción</b>: Campaña propia, Deal, Oferta del día, compartidas con ML, cupones, todas.</p>
+    <p><b>Cómo se usa:</b> pegás uno o varios SKU (uno por renglón), escribís el motivo y tocás <b>🔍 Revisar antes de excluir</b>. La app te muestra, SKU por SKU, sus publicaciones, en qué promos están hoy y qué otros SKU arrastra. Si confirmás, el SKU queda en la lista y cada publicación sale de <b>todas</b> sus promos; la app verifica en Mercado Libre que haya salido. Lo pueden hacer Gerencia y Stock. Todo queda en el historial: quién, cuándo y por qué.</p>
+    <p><b>Publicaciones con variaciones:</b> ML aplica la promo a la publicación entera, no por variación. Si el SKU excluido es una variación, <b>sale la publicación completa</b>, y con ella los otros SKU de esa publicación. En la revisión aparecen como "También tiene…".</p>
+    <p><b>Quién lo controla:</b> el servidor, no tu navegador. Frena cualquier alta de una publicación con SKU excluido: Subir a todas, Sumar seleccionadas, Subir TODAS, el sugerido de ML, "% aplicados" y la regeneración automática. En los resultados figura como <b>"Excluida"</b> y no cuenta como error. Si alguien la suma desde el panel de ML o entra por otro lado, el <b>barrido automático</b> (7:23, 10:23, 13:23, 16:23 y 19:23) la saca y deja un aviso en 🔔 Notificaciones. "🧹 Barrer ahora" lo corre en el momento.</p>
+    <p><b>Lo que la app no puede sacar:</b> la Oferta del día y la Relámpago activas, porque ML no lo permite por API. En ese caso queda un aviso crítico en Notificaciones para sacarla a mano desde el panel de ML.</p>
+    <p><b>Quitar un SKU de la lista</b> lo vuelve a habilitar, pero <b>no lo sube solo</b> a ninguna promo. La regeneración tampoco lo suma, porque copia solo lo que ya está en la campaña actual. Si lo querés en la mensual, usá "Subir a todas" en la card.</p>
+    <p>Los SKU se comparan sin importar mayúsculas ni espacios de más. Si una publicación todavía no está en el catálogo (por ejemplo, porque se creó hoy), la app la busca en vivo en Mercado Libre.</p>
+
     <h3>Carga de las cards al abrir</h3>
     <p>Al abrir la app, las cards se consultan <b>de a 3 por vez</b> (las demás muestran "En cola..."), para no saturar a Mercado Libre. Cada consulta espera hasta 60 segundos y, si se corta, se reintenta una vez sola; si vuelve a fallar, la card muestra el error con un botón "Reintentar".</p>
     <h3>Subir a todas / Bajar de todas</h3>
@@ -907,7 +1021,7 @@
     <h3>Cola de procesos</h3>
     <p>Todo lo que toca muchas publicaciones (Bajar TODAS, Subir TODAS, Subir a todas / Bajar de todas de una card y la regeneración automática) <b>entra a una cola en el servidor</b> y se hace <b>de a uno, en el orden en que se pidió</b>. Así no se pisan entre sí en Mercado Libre y no tenés que esperar a que termine uno para pedir el siguiente. En "Acciones globales" ves el que está corriendo y, abajo, <b>la cola</b> con quién pidió cada cosa; cualquiera se puede sacar de la cola con ✖ antes de que arranque (no se tocó nada en ML). Una campaña se lee <b>en vivo cuando le toca el turno</b>, no cuando la pediste. Hay un máximo de 20 en cola y no se puede pedir dos veces la misma acción completa sobre la misma campaña.</p>
     <h3>🔁 Regeneración automática (Campaña propia)</h3>
-    <p>Las Campañas propias tienen fecha de fin: cuando vencen desaparecen y hasta que alguien arma la nueva y le vuelve a subir las publicaciones, <b>no hay descuento</b>. Con el tilde <b>"🔁 Regeneración automática"</b> de la card, el servidor lo hace solo: <b>el día antes del vencimiento</b> (a las 6:05, con un reintento a las 15:05) crea la campaña siguiente, que <b>arranca justo cuando termina la actual</b> y dura <b>30 días</b>; y le copia <b>las mismas publicaciones con el mismo %</b> y el mismo <b>% meli+</b> (el precio exclusivo para miembros meli+). Queda pendiente y arranca sola a las 00:00: <b>cero horas sin descuento</b>. El último día vuelve a pasar para sumar lo que se haya agregado a la campaña actual a último momento. El nombre se actualiza solo: "05-10-2026 MENSUAL FIJA" → "05-11-2026 MENSUAL FIJA" (si el nombre no empieza con fecha, se le agrega "(dd-mm)"). La campaña nueva <b>hereda el tilde</b>, así que se renueva todos los meses. Debajo del tilde ves qué hizo la última vez (cuántas sumó, cuáles ML no ofreció). <b>"Regenerar ahora"</b> crea la siguiente en el momento (sirve si la campaña ya venció o te olvidaste de tildar). Ojo: el % se copia sobre el precio de lista ACTUAL de cada publicación; si una publicación ya no califica (pausada, sin stock), queda informada como omitida.</p>
+    <p>Las Campañas propias tienen fecha de fin: cuando vencen desaparecen y hasta que alguien arma la nueva y le vuelve a subir las publicaciones, <b>no hay descuento</b>. Con el tilde <b>"🔁 Regeneración automática"</b> de la card, el servidor lo hace solo: <b>2 días antes del vencimiento</b> (a las 6:05, con reintentos a las 15:05 y al día siguiente) crea la campaña siguiente, que <b>arranca el mismo día en que vence la actual</b> (ese día conviven las dos: <b>1 día de superposición</b>) y dura <b>30 días</b>; y le copia <b>las mismas publicaciones con el mismo %</b> y el mismo <b>% meli+</b> (el precio exclusivo para miembros meli+). Queda pendiente y arranca sola a las 00:00 del día de vencimiento de la actual: <b>nunca queda una publicación sin descuento</b>, aunque ML tarde en activarla. El último día (con las dos corriendo) vuelve a pasar para sumar lo que se haya agregado a la campaña actual a último momento. El nombre se actualiza solo con la fecha de arranque: "18-11 MENSUAL FIJA 5%" (vence 17/12) → "17-12 MENSUAL FIJA 5%" (si el nombre no empieza con fecha, se le agrega "(dd-mm)"). La campaña nueva <b>hereda el tilde</b>, así que se renueva todos los meses. Debajo del tilde ves qué hizo la última vez (cuántas sumó, cuáles ML no ofreció). <b>"Regenerar ahora"</b> crea la siguiente en el momento (sirve si la campaña ya venció o te olvidaste de tildar). Ojo: el % se copia sobre el precio de lista ACTUAL de cada publicación; si una publicación ya no califica (pausada, sin stock), queda informada como omitida.</p>
     <h3>📝 Notas por campaña</h3>
     <p>Con el lápiz ✏️ de cada campaña podés dejar una <b>nota del equipo</b> (hasta 1000 caracteres): se ve en la card para todos los usuarios. Sirve para recordatorios ("no sumar las planchas de imán", "revisar el % el 1° de cada mes"). Se guarda en la base junto con el nombre público y el link.</p>
     <h3>Bajar TODAS / Subir TODAS (para actualizar precios masivo) — corren en el servidor</h3>
@@ -1188,7 +1302,7 @@
 
   // --- Tickets (módulo transversal: mismo backend para todas las apps) ---
   var TICKETS_APP_ID = "grafica-promociones"; // identifica a ESTA app en el embudo común (cambiar al clonar/replicar)
-  var APP_VERSION = "2026-10-26.2";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
+  var APP_VERSION = "2026-11-24.1";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
 
   // Captura de errores recientes (se adjuntan como contexto técnico a los tickets). Buffer de 5.
   var ERRORES_RECIENTES = [];
@@ -1554,6 +1668,7 @@
     // Regeneración automática (tickets #18/#20). Si falla, las cards se ven igual (sin el estado de la regeneración).
     var pRegen = cargarRegeneracion();
     notifIniciar(); // v2026-10-26.2: contador de notificaciones + tope de descuentos (no bloquea el arranque)
+    excluidosIniciar(); // v2026-11-24.1: lista de SKU excluidos de promociones (no bloquea el arranque)
 
     Promise.all([pDiag, pAlias, pRegen])
       .then(function (par) {
@@ -1763,11 +1878,11 @@
   }
 
   /* ---------- 🔁 Regeneración automática de Campañas propias (tickets #18 y #20) ----------
-     El servidor (ml-procesos, cron 06:05 y 15:05) crea el día antes del vencimiento la campaña siguiente
-     (arranca cuando termina la actual, dura 30 días) y le copia publicaciones, % y % meli+ por la cola.
+     El servidor (ml-procesos v5, cron 06:05 y 15:05) crea 2 días antes del vencimiento la campaña siguiente
+     (arranca el MISMO DÍA en que vence la actual: 1 día de superposición; dura 30 días) y le copia publicaciones, % y % meli+ por la cola.
      Rutas: GET/POST /regeneracion, POST /regeneracion-ahora. */
   var REGEN_DIAS_DEFAULT = 30;
-  var AYUDA_REGEN = "Regeneración automática: el día antes de que venza esta campaña (6:05 h, con reintento a las 15:05) el servidor crea la siguiente, que arranca justo cuando termina esta y dura 30 días, y le copia las mismas publicaciones con el mismo % y el mismo % meli+. Arranca sola: no quedan horas sin descuento. El último día vuelve a pasar para sumar lo que se haya agregado a último momento. La nueva hereda el tilde, así que se renueva todos los meses. El nombre se actualiza solo (\"05-10 …\" → \"05-11 …\"). Datos: tabla ml_promos_regeneracion + API de campañas de Mercado Libre.";
+  var AYUDA_REGEN = "Regeneración automática: 2 días antes de que venza esta campaña (6:05 h, con reintentos a las 15:05 y al día siguiente) el servidor crea la siguiente, que arranca el mismo día en que vence esta (ese día conviven las dos: 1 día de superposición) y dura 30 días, y le copia las mismas publicaciones con el mismo % y el mismo % meli+. Arranca sola: nunca queda una publicación sin descuento. El último día vuelve a pasar para sumar lo que se haya agregado a último momento. La nueva hereda el tilde, así que se renueva todos los meses. El nombre se actualiza solo con la fecha de arranque (\"18-11 …\" → \"17-12 …\"). Datos: tabla ml_promos_regeneracion + API de campañas de Mercado Libre.";
 
   function cargarRegeneracion() {
     return fetchConTimeout(URL_PROCESOS + "/regeneracion", { headers: { Authorization: AUTH } }, 30000)
@@ -1799,9 +1914,10 @@
     } else if (r && r.ultimo_estado === "error") {
       lineas.push('<div class="regen-estado err">⚠️ ' + escapeHtml(r.ultimo_detalle || "Falló la última pasada.") + "</div>");
     } else if (activa) {
-      var cuando = fin ? "El " + fechaDia(fin - 86400000) + " (día antes del vencimiento) a las 6:05" : "El día antes del vencimiento";
+      // v2026-11-19.1: la nueva arranca el MISMO DÍA en que vence esta (1 día de superposición) y se crea 2 días antes del vencimiento.
+      var cuando = fin ? "El " + fechaDia(fin - 2 * 86400000) + " (2 días antes del vencimiento) a las 6:05" : "2 días antes del vencimiento";
       lineas.push('<div class="regen-estado activa">' + cuando + " crea la siguiente por " + ((r && r.duracion_dias) || REGEN_DIAS_DEFAULT) + " días" +
-        (fin ? ", arrancando el " + fechaDia(fin + 1000) + " a las 00:00" : "") + ", con las mismas publicaciones y %.</div>");
+        (fin ? ", arrancando el " + fechaDia(fin + 1000 - 86400000) + " a las 00:00 (ese día conviven las dos)" : ", arrancando el día en que vence esta") + ", con las mismas publicaciones y %.</div>");
     } else if (r && r.ultimo_estado === "vencida") {
       lineas.push('<div class="regen-estado">' + escapeHtml(r.ultimo_detalle || "Venció sin regenerarse.") + "</div>");
     } else {
@@ -1973,7 +2089,7 @@
           cargadoAt: Date.now(), // para saber si los precios en memoria están viejos
         };
         contenedor.innerHTML = kpiHelp("Candidatas: publicaciones invitadas a esta campaña que todavía no están aplicadas. Activas: ya están corriendo con el descuento puesto. Se calcula consultando en vivo /seller-promotions/promotions/{id}/items en ML.") +
-          ' Candidatas: <b>' + res.data.candidatos + '</b> · Activas: <b>' + res.data.activos + '</b> ' +
+          ' Candidatas: <b>' + res.data.candidatos + '</b> · Activas: <b>' + res.data.activos + '</b> ' + htmlExcluidosCard(res.data) +
           '<button class="chico secondary" data-ver-conteo data-promotion-id="' + escapeHtml(promotionId) + '" data-promotion-type="' + escapeHtml(promotionType) + '">🔄 Actualizar</button>' +
           htmlDesgloseAporte(res.data.items_activos || []);
         var btnActualizar = contenedor.querySelector("[data-ver-conteo]");
@@ -2146,6 +2262,9 @@
         }
       }
       texto += ". Esto cambia precios reales visibles en ML. Entra a la cola del servidor: lee la campaña en vivo cuando le toca el turno.";
+      var estEx = promoItemsState[promotionId];
+      var nEx = estEx && estEx.candidatos ? estEx.candidatos.filter(function (c) { return c.excluido; }).length : 0;
+      if (nEx) texto += " " + nEx + " candidata(s) tienen un SKU excluido de promociones: no se suben (quedan como \"Excluida\").";
     } else {
       texto = 'Va a sacar de "' + nombre + '" a cada publicación que esté activa ahí. No se puede deshacer con un botón — habría que volver a aplicarlas a mano.';
       if (TIPOS_BAJA_RESTRINGIDA_ML.indexOf(promotionType) !== -1) {
@@ -2610,6 +2729,7 @@
       total: total != null ? redondear1(total) : null,
       ml: ml != null ? redondear1(ml) : null,
       vendedor: vend != null ? redondear1(vend) : null,
+      excluido: !!it.excluido, skus_excluidos: it.skus_excluidos || [],   // v2026-11-24.1
       item: it,
     };
   }
@@ -2662,10 +2782,11 @@
       var base = selValorBase(f);
       var cls = [];
       if (selMarcadas[f.id]) cls.push("sel-marcada");
-      if (max != null && base != null) cls.push(base <= max ? "sel-dentro" : "sel-fuera");
+      if (f.excluido) cls.push("sel-excluida");
+      else if (max != null && base != null) cls.push(base <= max ? "sel-dentro" : "sel-fuera");
       return "<tr class='" + cls.join(" ") + "' data-sel-id='" + escapeHtml(f.id) + "'>" +
-        "<td><input type='checkbox' class='sel-check' " + (selMarcadas[f.id] ? "checked" : "") + "></td>" +
-        "<td>" + escapeHtml(f.id) + "</td><td>" + escapeHtml(f.sku || "—") + "</td>" +
+        "<td><input type='checkbox' class='sel-check' " + (f.excluido ? "disabled title='Tiene un SKU excluido de promociones: no se puede subir'" : (selMarcadas[f.id] ? "checked" : "")) + "></td>" +
+        "<td>" + escapeHtml(f.id) + "</td><td>" + escapeHtml(f.sku || "—") + (f.excluido ? " <span class='ex-tag' title='SKU excluido: " + escapeHtml(f.skus_excluidos.join(", ")) + "'>🚫 excluida</span>" : "") + "</td>" +
         "<td class='num'>" + fmtPrecio(f.original_price) + "</td>" +
         "<td class='num'>" + fmtPrecio(f.price) + "</td>" +
         "<td class='num" + (!baseEsVendedor ? " sel-pct-base" : "") + "'>" + fmtPct(f.total) + "</td>" +
@@ -2692,14 +2813,16 @@
       kpi("Promedio del descuento total (precio final vs. precio de lista) de las publicaciones tildadas. Es el % que ve el comprador. Sale del precio que informa ML para cada candidata.", "Desc. total prom.", fmtPct(prom(marcadas, "total"))) +
       kpi("Promedio de la parte del descuento que ponés vos (seller_percentage que informa ML) en las tildadas. El resto lo pone Mercado Libre.", "Ponés vos prom.", fmtPct(prom(marcadas, "vendedor"))) +
       (sobre != null ? kpi("Candidatas cuyo % (según lo que elegiste comparar) supera tu % máximo. Quedan sin tildar al usar \"Seleccionar hasta ese %\".", "Sobre tu máximo", sobre) : "") +
-      (sinDato ? kpi("Candidatas para las que ML no informó el %. No se tildan solas con el filtro; si querés sumarlas, tildalas a mano.", "Sin dato de %", sinDato) : "");
+      (sinDato ? kpi("Candidatas para las que ML no informó el %. No se tildan solas con el filtro; si querés sumarlas, tildalas a mano.", "Sin dato de %", sinDato) : "") +
+      (function () { var nEx = selFilas.filter(function (f) { return f.excluido; }).length; return nEx ? kpi("Candidatas con un SKU de la lista de SKU excluidos (panel de Promociones). No se pueden tildar: el servidor no las sube a ninguna promoción.", "🚫 Excluidas", nEx) : ""; })();
     var btn = document.getElementById("btnSelConfirmar");
     btn.textContent = "Subir seleccionadas (" + marcadas.length + ")";
     btn.disabled = marcadas.length === 0;
     var visibles = document.querySelectorAll("#tablaSelBody .sel-check");
     var todas = document.getElementById("selCheckTodas");
-    todas.checked = visibles.length > 0 && marcadas.length === selFilas.length;
-    todas.indeterminate = marcadas.length > 0 && marcadas.length < selFilas.length;
+    var tildables = selFilas.filter(function (f) { return !f.excluido; }).length;
+    todas.checked = tildables > 0 && marcadas.length === tildables;
+    todas.indeterminate = marcadas.length > 0 && marcadas.length < tildables;
   }
 
   document.getElementById("tablaSelBody").addEventListener("change", function (e) {
@@ -2712,7 +2835,7 @@
   document.getElementById("selCheckTodas").addEventListener("change", function () {
     var marcar = this.checked;
     selMarcadas = {};
-    if (marcar) selFilas.forEach(function (f) { selMarcadas[f.id] = true; });
+    if (marcar) selFilas.forEach(function (f) { if (!f.excluido) selMarcadas[f.id] = true; });
     renderSeleccion();
   });
   document.querySelectorAll("#tablaSel th[data-sel-sort]").forEach(function (th) {
@@ -2728,7 +2851,7 @@
     if (max == null) { estadoEl.textContent = "Poné un % máximo válido (entre 0 y 99)."; estadoEl.className = "estado err"; return; }
     try { localStorage.setItem(LS_SEL_PCT_MAX, String(max)); } catch (e) { /* sin storage */ }
     selMarcadas = {};
-    selFilas.forEach(function (f) { var b = selValorBase(f); if (b != null && b <= max) selMarcadas[f.id] = true; });
+    selFilas.forEach(function (f) { var b = selValorBase(f); if (!f.excluido && b != null && b <= max) selMarcadas[f.id] = true; });
     var n = Object.keys(selMarcadas).length;
     estadoEl.textContent = n + " publicación(es) quedan en " + max + "% o menos (" + (document.getElementById("selBase").value === "vendedor" ? "lo que ponés vos" : "descuento total") + "). Revisalas y confirmá.";
     estadoEl.className = "estado ok";
@@ -2738,12 +2861,12 @@
   document.getElementById("selPctMax").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); seleccionarHastaMax(); } });
   document.getElementById("selPctMax").addEventListener("input", renderSeleccion); // recolorea sin tildar
   document.getElementById("selBase").addEventListener("change", renderSeleccion);
-  document.getElementById("btnSelTodas").addEventListener("click", function () { selMarcadas = {}; selFilas.forEach(function (f) { selMarcadas[f.id] = true; }); renderSeleccion(); });
+  document.getElementById("btnSelTodas").addEventListener("click", function () { selMarcadas = {}; selFilas.forEach(function (f) { if (!f.excluido) selMarcadas[f.id] = true; }); renderSeleccion(); });
   document.getElementById("btnSelNinguna").addEventListener("click", function () { selMarcadas = {}; renderSeleccion(); });
   document.getElementById("btnSelCancelar").addEventListener("click", function () { selContexto = null; document.getElementById("modalSeleccionSubir").classList.add("oculto"); });
   document.getElementById("btnSelConfirmar").addEventListener("click", function () {
     if (!selContexto) return;
-    var ids = selFilas.filter(function (f) { return selMarcadas[f.id]; }).map(function (f) { return f.id; });
+    var ids = selFilas.filter(function (f) { return selMarcadas[f.id] && !f.excluido; }).map(function (f) { return f.id; });
     if (ids.length === 0) return;
     var max = selPctMax();
     var ctx = selContexto;
@@ -2782,6 +2905,9 @@
     if (l.estado === "APLICADO") return { tipo: "ok", txt: "✓ " + l.porcentaje + "% ($" + l.precio_aplicado + ")" + (l.verificado === false ? " · sin confirmar en ML todavía" : " · verificado en ML") + (l.aviso_lista ? " · " + l.aviso_lista : "") };
     // v2026-10-26.2: motivos nuevos del control de descuentos (servidor ml-promos-bulk v21)
     if (l.estado === "RETIRADA_AUTO") return { tipo: "err", txt: "Retirada automáticamente: " + textoError(l.detalle) };
+    // v2026-11-24.1: SKU excluidos (servidor ml-promos-bulk v23)
+    if (l.estado === "EXCLUIDO") return { tipo: "warn", txt: "🚫 No se sube: " + textoError(l.detalle) };
+    if (l.motivo === "excluidos_sin_confirmar") return { tipo: "warn", txt: "No se aplicó: no se pudo confirmar la lista de SKU excluidos. Probá de nuevo en un minuto." };
     if (l.estado === "REVISAR" && l.motivo === "sobre_tope") return { tipo: "warn", txt: "Frenado por el tope: " + textoError(l.detalle) };
     if (l.estado === "REVISAR" && l.motivo === "lista_dudosa") return { tipo: "warn", txt: "No se aplicó (lista dudosa): " + textoError(l.detalle) };
     if (l.motivo === "sin_verificar") return { tipo: "warn", txt: "Aplicado sin confirmar: " + textoError(l.detalle) };
@@ -3195,6 +3321,7 @@
   var ESTADOS_ITEM = {
     ok: "OK", revisar: "En revisión", error: "Error", parcial: "Parcial", omitida: "Omitida",
     ya_estaba: "Ya estaba", cancelada: "Cancelada", pendiente: "Pendiente", tomado: "En proceso",
+    excluida: "Excluida (SKU)",   // v2026-11-24.1: ml-procesos v6
   };
 
   var procesoActual = null;           // última respuesta de /estado
@@ -3324,7 +3451,7 @@
       cont.innerHTML = (d.ultimos || []).map(function (u) {
         var e = ESTADOS_PROCESO[u.estado] || { txt: u.estado, cls: "dim" };
         var cc = (u.resumen && u.resumen.conteos) || {};
-        var partes = u.resumen && u.resumen.sacado_de_la_cola ? "se sacó de la cola sin arrancar" : ["ok", "revisar", "error", "parcial", "omitida", "ya_estaba", "cancelada"].filter(function (k) { return cc[k]; })
+        var partes = u.resumen && u.resumen.sacado_de_la_cola ? "se sacó de la cola sin arrancar" : ["ok", "revisar", "error", "parcial", "omitida", "ya_estaba", "excluida", "cancelada"].filter(function (k) { return cc[k]; })
           .map(function (k) { return ESTADOS_ITEM[k] + ": " + cc[k]; }).join(" · ");
         return '<div class="tipo-fila"><span>#' + u.id + " " + escapeHtml(textosProceso(u).corto) +
           ' <span class="chip-estado ' + e.cls + '">' + escapeHtml(e.txt) + "</span><br><small>" + escapeHtml(u.creado_por || "") + " · " + fechaHora(u.creado_at) + "</small></span>" +
@@ -3401,7 +3528,9 @@
           ? statBox(noBajablesTotal, "No bajables", !noBajablesTotal,
             "Publicaciones en Oferta del día o Relámpago: ML no deja sacarlas por API, así que el proceso no las toca. Se gestionan desde el panel de Mercado Libre. Sale del listado en vivo de esas campañas.")
           : statBox(c.ya_estaba || 0, "Ya estaban", !c.ya_estaba,
-            "Publicaciones que al momento de subir ya estaban activas en la campaña (por ejemplo, se subieron a mano). Se dan por hechas.")));
+            "Publicaciones que al momento de subir ya estaban activas en la campaña (por ejemplo, se subieron a mano). Se dan por hechas."))) +
+      (esSubir && c.excluida ? statBox(c.excluida, "🚫 Excluidas", false,
+        "Publicaciones con un SKU de la lista de SKU excluidos (panel de Promociones): el servidor no las sube a ninguna promoción. No es un error. En Subir TODAS además salen del respaldo.") : "");
 
     var html =
       '<div class="proceso-cab"><div class="proceso-titulo">' + escapeHtml(tx.titulo) +
@@ -3775,6 +3904,370 @@
   Object.keys(VISTAS).forEach(function (k) {
     document.getElementById(VISTAS[k].tab).addEventListener("click", function () { mostrarVista(k); });
   });
+
+  /* ============================================================
+     SKU EXCLUIDOS DE PROMOCIONES — v2026-11-24.1
+     Backend: función ml-promos-excluidos. Rutas: GET lista | POST previsualizar / agregar / quitar / retirar / barrido-ahora.
+     El bloqueo real lo hace el servidor (ml-promos-bulk v23 devuelve EXCLUIDO, ml-procesos v6 lo cuenta como 'excluida').
+     Esta pantalla administra la lista, muestra qué se va a tocar y saca de las promos lo que se acaba de excluir.
+     Para sumar algo (ej. excluir por MLA): ruta nueva en ml-promos-excluidos + un bloque acá.
+     ============================================================ */
+  var URL_EXCLUIDOS = FN_BASE + "/ml-promos-excluidos";
+  var EX_MAX_SKUS = 100;             // igual que el servidor
+  var EX_TANDA_RETIRO = 20;          // publicaciones por llamada a /retirar (el servidor acepta hasta 60)
+  var EX_REINTENTOS_PENDIENTES = 2;  // vueltas extra para lo que ML no dejó confirmar
+  var EX_TIMEOUT_MS = 130000;        // el servidor corta a los ~100 s
+  var LS_EX_ABIERTO = TICKETS_APP_ID + ":excluidos_abierto";
+  var exDatos = null;                // última respuesta de /lista
+  var exCargando = false;
+  var exPreview = null;              // { skus, motivo, datos } de /previsualizar
+  var exTrabajando = false;
+
+  function exPedir(ruta, body, timeoutMs) {
+    var op = body === undefined ? { headers: { Authorization: AUTH } }
+      : { method: "POST", headers: { Authorization: AUTH, "Content-Type": "application/json" }, body: JSON.stringify(body) };
+    return fetchConTimeout(URL_EXCLUIDOS + "/" + ruta, op, timeoutMs || EX_TIMEOUT_MS).then(function (r) {
+      if (!r.data || !r.data.ok) throw new Error((r.data && r.data.error) || ("error del servidor (" + r.status + ")"));
+      return r.data;
+    });
+  }
+  function exKpi(help, label, valor) { return '<div class="kpi">' + kpiHelp(help) + " " + label + " <b>" + valor + "</b></div>"; }
+  function exSetEstado(txt, tipo) {
+    var el = document.getElementById("estadoExcluidos");
+    el.textContent = txt || "";
+    el.className = "estado" + (tipo ? " " + tipo : "");
+  }
+  // Una línea por SKU; si pegan varias columnas de Excel se toma la primera. Sin repetidos (sin importar mayúsculas/espacios).
+  function exLeerSkusTextarea() {
+    var vistos = {}, out = [];
+    document.getElementById("exSkus").value.split(/\r?\n/).forEach(function (l) {
+      var s = l.split("\t")[0].replace(/\s+/g, " ").trim();
+      if (!s) return;
+      var k = s.toUpperCase();
+      if (vistos[k]) return;
+      vistos[k] = true;
+      out.push(s);
+    });
+    return out;
+  }
+  function exActualizarContador() {
+    var n = exLeerSkusTextarea().length;
+    var el = document.getElementById("exContador");
+    el.textContent = n ? n + " SKU" + (n > EX_MAX_SKUS ? " · máximo " + EX_MAX_SKUS + " por vez" : "") : "";
+    el.style.color = n > EX_MAX_SKUS ? "var(--err)" : "";
+  }
+  function exAbrirPanel(abrir) {
+    document.getElementById("excluidosBody").classList.toggle("oculto", !abrir);
+    document.getElementById("toggleExcluidosIcono").textContent = abrir ? "▾" : "▸";
+    document.getElementById("toggleExcluidos").setAttribute("aria-expanded", abrir ? "true" : "false");
+  }
+
+  function excluidosIniciar() {
+    var abierto = true;
+    try { abierto = localStorage.getItem(LS_EX_ABIERTO) !== "0"; } catch (e) { /* sin storage */ }
+    exAbrirPanel(abierto);
+    exCargar();
+  }
+  function exCargar() {
+    if (exCargando) return Promise.resolve();
+    exCargando = true;
+    return exPedir("lista", undefined, 60000)
+      .then(function (d) { exDatos = d; exRender(); })
+      .catch(function (e) {
+        document.getElementById("exChip").textContent = "sin datos";
+        document.getElementById("exResumen").innerHTML = "";
+        document.getElementById("tablaExcluidosBody").innerHTML = '<tr><td colspan="5" class="ex-err">No se pudo leer la lista: ' + escapeHtml(e.message) + '. Tocá 🔄 Recargar. (El servidor igual sigue frenando los SKU excluidos.)</td></tr>';
+      })
+      .finally(function () { exCargando = false; });
+  }
+
+  function exRender() {
+    var d = exDatos || { excluidos: [], total_skus: 0, total_publicaciones: 0, historial: [] };
+    var chip = document.getElementById("exChip");
+    chip.textContent = d.total_skus ? d.total_skus + " SKU" : "ninguno";
+    chip.classList.toggle("activo", d.total_skus > 0);
+    var b = d.barrido && d.barrido.ultimo;
+    var txtBarrido = !b ? "todavía no corrió"
+      : escapeHtml(haceCuanto(b.terminado_at)) + (b.retiradas ? " · sacó " + b.retiradas : "") + (b.completo === false ? " · incompleto" : "");
+    document.getElementById("exResumen").innerHTML =
+      exKpi("Cantidad de SKU en la lista. Ninguna publicación con alguno de estos SKU puede entrar en una promoción: lo frena el servidor. Sale de la tabla ml_promos_sku_excluidos.", "SKU excluidos", d.total_skus) +
+      exKpi("Publicaciones del catálogo con al menos un SKU excluido. Si una publicación con variaciones tiene uno, cuenta entera. Sale del catálogo diario de publicaciones; las creadas hoy se suman en el próximo barrido.", "Publicaciones afectadas", d.total_publicaciones) +
+      exKpi("Último control automático: revisa todas las publicaciones de los SKU excluidos (catálogo + búsqueda en vivo en ML) y las saca de cualquier promo en la que hayan entrado por fuera de la app. Corre a las 7:23, 10:23, 13:23, 16:23 y 19:23.", "Último barrido", txtBarrido) +
+      (b && b.fallas ? exKpi("Publicaciones con SKU excluido que siguen en una promo que ML no deja sacar por API (Oferta del día o Relámpago). Hay que sacarlas a mano desde el panel de ML. El detalle está en 🔔 Notificaciones.", "Para sacar a mano", '<span class="ex-err">' + b.fallas + "</span>") : "");
+    exRenderTabla();
+    exRenderHistorial();
+  }
+
+  function exRenderTabla() {
+    var lista = (exDatos && exDatos.excluidos) || [];
+    var q = document.getElementById("exBuscar").value.replace(/\s+/g, " ").trim().toUpperCase();
+    var filas = lista.filter(function (e) { return !q || (e.sku + " " + (e.motivo || "")).toUpperCase().indexOf(q) !== -1; });
+    var body = document.getElementById("tablaExcluidosBody");
+    if (!lista.length) { body.innerHTML = '<tr><td colspan="5" style="color:var(--text-dim);">Todavía no hay SKU excluidos: todos pueden entrar en promociones.</td></tr>'; return; }
+    if (!filas.length) { body.innerHTML = '<tr><td colspan="5" style="color:var(--text-dim);">Ningún SKU coincide con la búsqueda.</td></tr>'; return; }
+    body.innerHTML = filas.map(function (e) {
+      var pubs = e.publicaciones || [];
+      var arrastra = [];
+      pubs.forEach(function (p) { (p.otros_skus || []).forEach(function (s) { if (arrastra.indexOf(s) === -1) arrastra.push(s); }); });
+      var htmlPubs = pubs.length
+        ? "<details><summary>" + pubs.length + " publicaci" + (pubs.length > 1 ? "ones" : "ón") + "</summary>" + pubs.map(function (p) {
+            return "<div>" + linkItemML(p.item_id) + ' <span style="color:var(--text-dim);">' + escapeHtml((p.title || "").slice(0, 60)) +
+              (p.status && p.status !== "active" ? " · " + escapeHtml(p.status) : "") + "</span></div>";
+          }).join("") + "</details>"
+        : '<span style="color:var(--text-dim);">Ninguna en el catálogo</span>';
+      return "<tr><td class='ex-sku'>" + escapeHtml(e.sku) + "</td><td class='ex-motivo'>" + escapeHtml(e.motivo || "—") + "</td>" +
+        "<td class='ex-pubs'>" + htmlPubs + (arrastra.length ? "<div class='ex-arrastra'>Arrastra por variaciones: " + escapeHtml(arrastra.join(", ")) + "</div>" : "") + "</td>" +
+        "<td class='ex-meta'>" + escapeHtml(fechaHora(e.creado_at)) + "<br>" + escapeHtml(e.creado_por || "") + "</td>" +
+        "<td><button class='chico secondary' type='button' data-ex-quitar='" + escapeHtml(e.sku) + "'>Quitar</button></td></tr>";
+    }).join("");
+  }
+  function exRenderHistorial() {
+    var h = (exDatos && exDatos.historial) || [];
+    document.getElementById("exHistorial").innerHTML = h.length ? h.map(function (x) {
+      return '<div class="tipo-fila"><span>' + (x.accion === "agregar" ? "🚫 Excluyó " : "✅ Habilitó ") + "<b>" + escapeHtml(x.sku) + "</b>" +
+        (x.motivo ? ' <span style="color:var(--text-dim);">(' + escapeHtml(x.motivo) + ")</span>" : "") + "</span>" +
+        '<span class="ex-meta">' + escapeHtml(x.usuario || "") + " · " + escapeHtml(fechaHora(x.creado_at)) + "</span></div>";
+    }).join("") : '<div style="color:var(--text-dim);padding:4px 0;">Sin cambios todavía.</div>';
+  }
+
+  // Línea extra en la card de cada campaña (lo informa ml-promos-bulk v23 en el GET).
+  function htmlExcluidosCard(d) {
+    var n = (Number(d.excluidos_candidatos) || 0) + (Number(d.excluidos_activos) || 0);
+    if (d.excluidos_error) return '<span class="ex-warn" style="font-size:0.72rem;">(no se pudo leer la lista de SKU excluidos; el servidor igual los frena al subir)</span> ';
+    if (!n) return "";
+    return '<span class="ex-tag">🚫 ' + n + " con SKU excluido</span>" +
+      kpiHelp("Publicaciones de esta campaña con un SKU de la lista de SKU excluidos. Candidatas: " + (d.excluidos_candidatos || 0) + " (no se suben; quedan como \"Excluida\"). Activas: " + (d.excluidos_activos || 0) + " (el barrido las saca; si es una Oferta del día o Relámpago, hay que sacarla a mano). Sale del catálogo de publicaciones.") + " ";
+  }
+
+  // --- Revisar (preview) -> confirmar -> guardar + sacar de promos -------------------------
+  function exRevisar() {
+    if (exTrabajando) return;
+    var skus = exLeerSkusTextarea();
+    var motivo = document.getElementById("exMotivo").value.replace(/\s+/g, " ").trim();
+    if (!skus.length) { exSetEstado("Pegá al menos un SKU (uno por renglón).", "err"); document.getElementById("exSkus").focus(); return; }
+    if (skus.length > EX_MAX_SKUS) { exSetEstado("Máximo " + EX_MAX_SKUS + " SKU por vez: dividilos en tandas.", "err"); return; }
+    if (motivo.length < 3) { exSetEstado("Escribí el motivo de la exclusión (sirve para saber después por qué está afuera).", "err"); document.getElementById("exMotivo").focus(); return; }
+    var btn = document.getElementById("btnExRevisar");
+    btn.disabled = true;
+    btn.textContent = "Revisando en Mercado Libre…";
+    exSetEstado("Buscando las publicaciones de cada SKU y sus promos vigentes (puede tardar hasta un minuto).", "");
+    exPedir("previsualizar", { skus: skus })
+      .then(function (d) { exPreview = { skus: skus, motivo: motivo, datos: d }; exSetEstado(""); exAbrirModal(); })
+      .catch(function (e) { exSetEstado("No se pudo revisar: " + (e.message === "timeout" ? "Mercado Libre tardó demasiado. Probá con menos SKU por vez." : e.message), "err"); })
+      .finally(function () { btn.disabled = false; btn.textContent = "🔍 Revisar antes de excluir"; });
+  }
+
+  function exHtmlPromo(q) {
+    var aMano = q.type === "DOD" || q.type === "LIGHTNING";
+    return escapeHtml(q.name || q.id || q.type) + " <small style='color:var(--text-dim);'>(" + escapeHtml(NOMBRES_TIPO[q.type] || q.type) + (q.status === "pending" ? ", pendiente" : "") + ")</small>" +
+      (aMano ? " <span class='ex-tag' title='ML no deja sacar este tipo por API'>sacar a mano</span>" : "");
+  }
+  function exAbrirModal() {
+    var d = exPreview.datos, t = d.totales || {};
+    document.getElementById("exModalTitulo").textContent = "🚫 Revisar " + t.skus + " SKU a excluir";
+    document.getElementById("exPrevResumen").innerHTML =
+      exKpi("SKU de tu lista que todavía no estaban excluidos. Los repetidos o ya excluidos no se vuelven a cargar.", "SKU nuevos", t.nuevos + " de " + t.skus) +
+      exKpi("Publicaciones que tienen alguno de estos SKU (catálogo + búsqueda en vivo en ML). Todas quedan fuera de las promociones.", "Publicaciones", t.publicaciones) +
+      exKpi("Publicaciones que hoy están en al menos una promo activa o pendiente. Al confirmar se sacan de todas. Consultado en vivo en ML.", "En promo hoy", t.con_promo) +
+      exKpi("Total de promociones de las que se van a sacar esas publicaciones (una publicación puede estar en varias a la vez).", "Promos a sacar", t.promos) +
+      (t.arrastradas ? exKpi("Publicaciones con variaciones que tienen otros SKU además del excluido. Como ML aplica la promo a la publicación entera, esos otros SKU también quedan sin promo.", "Arrastran otros SKU", '<span class="ex-warn">' + t.arrastradas + "</span>") : "") +
+      (t.no_encontrados ? exKpi("SKU que no aparecen en ninguna publicación (ni en el catálogo ni buscando en vivo en ML). Se guardan igual: si se publican, ya quedan afuera.", "Sin publicaciones", t.no_encontrados) : "");
+    var avisos = [];
+    if (t.arrastradas) avisos.push("<b>Ojo:</b> " + t.arrastradas + " publicación(es) tienen variaciones con otros SKU. Al excluir, la publicación entera sale de las promos (ML no permite promo por variación).");
+    if (t.sin_consultar) avisos.push(t.sin_consultar + " publicación(es) no se llegaron a consultar en ML: se revisan igual al confirmar.");
+    if (!t.nuevos) avisos.push("Todos estos SKU ya estaban excluidos. Si confirmás, solo se vuelve a controlar que no estén en ninguna promo.");
+    document.getElementById("exPrevAviso").innerHTML = avisos.length ? '<div class="aviso-7d">' + avisos.join("<br>") + "</div>" : "";
+    var lista = document.getElementById("exPrevLista");
+    lista.classList.remove("oculto");
+    lista.innerHTML = (d.skus || []).map(function (s) {
+      var pubs = s.publicaciones || [];
+      var cab = "<h4><span class='ex-sku'>" + escapeHtml(s.sku) + "</span>" +
+        (s.ya_excluido ? "<span class='ex-chip'>ya estaba excluido</span>" : "") +
+        "<span class='ex-chip'>" + (pubs.length ? pubs.length + " publicaci" + (pubs.length > 1 ? "ones" : "ón") : "sin publicaciones") + "</span>" +
+        (s.busqueda_en_vivo_pendiente ? "<span class='ex-chip'>no se pudo buscar en vivo</span>" : "") + "</h4>";
+      var filas = pubs.map(function (p) {
+        var promos = p.promos == null ? "<span class='ex-warn'>" + escapeHtml(p.error_promos || "sin consultar") + "</span>"
+          : (p.promos.length ? "Sale de: " + p.promos.map(exHtmlPromo).join(", ") : "<span style='color:var(--text-dim);'>No está en ninguna promo.</span>");
+        return "<div class='ex-prev-pub'>" + linkItemML(p.item_id) + " <span style='color:var(--text-dim);'>" + escapeHtml((p.title || "").slice(0, 70)) + "</span>" +
+          (p.fuente === "vivo" ? " <span class='ex-chip' title='Todavía no está en el catálogo: se encontró buscando en vivo en ML'>en vivo</span>" : "") +
+          (p.otros_skus && p.otros_skus.length ? "<div class='ex-arrastra'>⚠ También tiene: " + escapeHtml(p.otros_skus.join(", ")) + " (también queda sin promo)</div>" : "") +
+          "<div>" + promos + "</div></div>";
+      }).join("");
+      return "<div class='ex-prev-sku'>" + cab + (filas || "<div class='ex-prev-pub' style='color:var(--text-dim);'>No hay publicaciones con este SKU. Se guarda igual: si se publica, ya queda afuera.</div>") + "</div>";
+    }).join("");
+    document.getElementById("exProgreso").classList.add("oculto");
+    document.getElementById("exResultado").innerHTML = "";
+    var btn = document.getElementById("btnExConfirmar");
+    btn.classList.remove("oculto");
+    btn.disabled = false;
+    btn.textContent = t.promos ? "Excluir y sacar de " + t.promos + " promo(s)" : "Excluir " + t.skus + " SKU";
+    var btnC = document.getElementById("btnExCancelar");
+    btnC.disabled = false;
+    btnC.textContent = "Cancelar";
+    document.getElementById("modalExcluir").classList.remove("oculto");
+  }
+
+  function exProgreso(hechas, total, txt, esError) {
+    document.getElementById("exProgreso").classList.remove("oculto");
+    document.getElementById("exBarra").style.width = (total > 0 ? Math.round(hechas / total * 100) : 100) + "%";
+    var el = document.getElementById("exProgresoTxt");
+    el.textContent = txt || "";
+    el.className = "estado" + (esError ? " err" : "");
+  }
+
+  // Saca de sus promos, en tandas, las publicaciones recién excluidas. El servidor vuelve a controlar cada una.
+  function exRetirarTodo(ids) {
+    var total = ids.length;
+    var resultados = {};
+    var pendientes = [];
+    var cola = ids.slice();
+    var vuelta = 0;
+    if (!total) return Promise.resolve({ resultados: [], pendientes: [] });
+    function hechas() { return Object.keys(resultados).length; }
+    function tanda() {
+      if (!cola.length) return Promise.resolve();
+      var lote = cola.splice(0, EX_TANDA_RETIRO);
+      exProgreso(hechas(), total, "Sacando de las promos: " + hechas() + " de " + total + " publicaciones (se verifica cada una en Mercado Libre)…");
+      return exPedir("retirar", { item_ids: lote }).then(function (r) {
+        var pend = r.pendientes || [];
+        (r.resultados || []).forEach(function (x) { if (pend.indexOf(x.item_id) === -1) resultados[x.item_id] = x; });
+        (r.no_excluidas || []).forEach(function (id) { resultados[id] = { item_id: id, estado: "NO_EXCLUIDA", detalle: "Ya no tiene un SKU excluido (alguien lo quitó de la lista): no se tocó." }; });
+        pend.forEach(function (id) { if (!resultados[id] && pendientes.indexOf(id) === -1) pendientes.push(id); });
+      }).catch(function () {
+        lote.forEach(function (id) { if (!resultados[id] && pendientes.indexOf(id) === -1) pendientes.push(id); });
+      }).then(tanda);
+    }
+    function ronda() {
+      return tanda().then(function () {
+        if (pendientes.length && vuelta < EX_REINTENTOS_PENDIENTES) {
+          vuelta++;
+          cola = pendientes.splice(0);
+          exProgreso(hechas(), total, "Mercado Libre no dejó confirmar " + cola.length + " publicación(es): reintentando…");
+          return new Promise(function (ok) { setTimeout(ok, 4000); }).then(ronda);
+        }
+      });
+    }
+    return ronda().then(function () {
+      exProgreso(total, total, "Listo.");
+      return { resultados: ids.map(function (id) { return resultados[id]; }).filter(Boolean), pendientes: pendientes.filter(function (id) { return !resultados[id]; }) };
+    });
+  }
+
+  function exMostrarResultado(agregado, res) {
+    var c = { RETIRADA: 0, SIN_PROMOS: 0, PARCIAL: 0, ERROR: 0, NO_EXCLUIDA: 0 };
+    var promosSacadas = 0;
+    res.resultados.forEach(function (x) { c[x.estado] = (c[x.estado] || 0) + 1; promosSacadas += (x.retiradas || []).length; });
+    var problemas = res.resultados.filter(function (x) { return x.estado === "PARCIAL" || x.estado === "ERROR"; });
+    var html = '<h3>Resultado</h3><div class="resumen-precios" style="margin-top:6px;">' +
+      exKpi("SKU que quedaron en la lista en esta carga (los que ya estaban no se cuentan).", "SKU agregados", (agregado.agregados || []).length) +
+      exKpi("Publicaciones que salieron de todas sus promos, con confirmación de Mercado Libre de que ya no están en ninguna.", "Sacadas de promos", '<span class="ex-ok">' + c.RETIRADA + "</span>") +
+      exKpi("Cantidad de promociones de las que se sacaron, sumando todas las publicaciones.", "Promos sacadas", promosSacadas) +
+      exKpi("Publicaciones con SKU excluido que no estaban en ninguna promo: no hubo que tocarlas.", "Ya estaban sin promo", c.SIN_PROMOS) +
+      (problemas.length ? exKpi("Publicaciones que siguen en alguna promo. Casi siempre es una Oferta del día o Relámpago, que ML no deja sacar por API. Sacalas a mano desde el panel de ML: el aviso queda en 🔔 Notificaciones.", "Para revisar", '<span class="ex-err">' + problemas.length + "</span>") : "") +
+      (res.pendientes.length ? exKpi("Publicaciones que ML no dejó confirmar ahora (error pasajero). El barrido automático las vuelve a revisar y las saca.", "Pendientes", '<span class="ex-warn">' + res.pendientes.length + "</span>") : "") +
+      "</div>";
+    if (problemas.length) {
+      html += '<div class="caja-scroll modal"><table class="log"><thead><tr><th>Publicación</th><th>Qué pasó</th></tr></thead><tbody>' +
+        problemas.map(function (x) { return "<tr><td>" + linkItemML(x.item_id) + "</td><td class='ex-err'>" + escapeHtml(x.detalle || "") + "</td></tr>"; }).join("") + "</tbody></table></div>";
+    }
+    if (agregado.aviso) html += '<div class="aviso-7d" style="margin-top:10px;">' + escapeHtml(agregado.aviso) + "</div>";
+    document.getElementById("exResultado").innerHTML = html;
+    document.getElementById("exPrevLista").classList.add("oculto");
+    document.getElementById("exPrevAviso").innerHTML = "";
+    mostrarToast("Listo: " + (agregado.agregados || []).length + " SKU excluido(s)" + (c.RETIRADA ? ", " + c.RETIRADA + " publicación(es) sacadas de promos" : "") + ".");
+  }
+
+  function exConfirmar() {
+    if (!exPreview || exTrabajando) return;
+    var p = exPreview;
+    var etapa = "guardar";
+    exTrabajando = true;
+    var btn = document.getElementById("btnExConfirmar"), btnC = document.getElementById("btnExCancelar");
+    btn.disabled = true;
+    btnC.disabled = true;
+    exProgreso(0, 1, "Guardando la lista…");
+    exPedir("agregar", { skus: p.skus.map(function (s) { return { sku: s, motivo: p.motivo }; }) })
+      .then(function (r) {
+        etapa = "retirar";
+        return exRetirarTodo(r.item_ids || []).then(function (res) { exMostrarResultado(r, res); });
+      })
+      .then(function () {
+        document.getElementById("exSkus").value = "";
+        document.getElementById("exMotivo").value = "";
+        exActualizarContador();
+        exPreview = null;
+        btn.classList.add("oculto");
+        if (typeof refrescarBadge === "function") refrescarBadge();
+      })
+      .catch(function (e) {
+        exProgreso(1, 1, etapa === "guardar"
+          ? "No se guardó nada: " + e.message
+          : "Se cortó mientras sacaba de las promos: " + e.message + ". Los SKU ya quedaron excluidos; el barrido automático termina de sacar lo que falte (o tocá 🧹 Barrer ahora).", true);
+        if (etapa === "guardar") btn.disabled = false;
+      })
+      .finally(function () {
+        exTrabajando = false;
+        btnC.disabled = false;
+        btnC.textContent = "Cerrar";
+        exCargar();
+      });
+  }
+
+  function exQuitar(sku) {
+    pedirConfirmacion("\"" + sku + "\" vuelve a poder entrar en promociones.\n\nOjo: no se sube solo a ninguna. La regeneración automática tampoco lo suma (copia solo lo que ya está en la campaña actual). Si lo querés en la mensual, usá \"Subir a todas\" en su card.", function () {
+      exSetEstado("Quitando " + sku + " de la lista…", "");
+      exPedir("quitar", { skus: [sku] })
+        .then(function (r) { exSetEstado((r.quitados || []).length ? "Listo: " + sku + " ya puede entrar en promociones." : sku + " ya no estaba en la lista.", "ok"); exCargar(); })
+        .catch(function (e) { exSetEstado("No se pudo quitar: " + e.message, "err"); });
+    }, { titulo: "¿Volver a habilitar este SKU?", si: "Habilitar" });
+  }
+
+  function exBarrer() {
+    var btn = document.getElementById("btnExBarrer");
+    btn.disabled = true;
+    btn.textContent = "Barriendo…";
+    exSetEstado("Revisando en Mercado Libre todas las publicaciones de los SKU excluidos (hasta 2 minutos)…", "");
+    exPedir("barrido-ahora", {}, 170000)
+      .then(function (r) {
+        if (r.nada) { exSetEstado(r.nada, ""); return; }
+        var b = r.resumen || {};
+        exSetEstado("Barrido listo: " + (b.publicaciones || 0) + " publicación(es) revisadas" +
+          (b.retiradas ? ", " + b.retiradas + " sacadas de promos" : ", ninguna estaba en promo") +
+          (b.fallas ? ", " + b.fallas + " para sacar a mano (ver 🔔 Notificaciones)" : "") +
+          (b.completo === false ? ". Quedó incompleto: se completa en el próximo barrido." : "."), b.fallas ? "err" : "ok");
+        if ((b.retiradas || b.fallas) && typeof refrescarBadge === "function") refrescarBadge();
+        exCargar();
+      })
+      .catch(function (e) { exSetEstado("No se pudo barrer: " + (e.message === "timeout" ? "tardó demasiado; el barrido sigue en el servidor, recargá en un par de minutos." : e.message), "err"); })
+      .finally(function () { btn.disabled = false; btn.textContent = "🧹 Barrer ahora"; });
+  }
+
+  (function exCablear() {
+    var head = document.getElementById("toggleExcluidos");
+    function alternar() {
+      var abrir = document.getElementById("excluidosBody").classList.contains("oculto");
+      exAbrirPanel(abrir);
+      try { localStorage.setItem(LS_EX_ABIERTO, abrir ? "1" : "0"); } catch (e) { /* sin storage */ }
+    }
+    head.addEventListener("click", alternar);
+    head.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); alternar(); } });
+    document.getElementById("exSkus").addEventListener("input", exActualizarContador);
+    document.getElementById("btnExRevisar").addEventListener("click", exRevisar);
+    document.getElementById("exMotivo").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); exRevisar(); } });
+    document.getElementById("exBuscar").addEventListener("input", exRenderTabla);
+    document.getElementById("btnExRecargar").addEventListener("click", function () { exSetEstado(""); exCargar(); });
+    document.getElementById("btnExBarrer").addEventListener("click", exBarrer);
+    document.getElementById("tablaExcluidosBody").addEventListener("click", function (e) {
+      var b = e.target.closest ? e.target.closest("[data-ex-quitar]") : null;
+      if (b) exQuitar(b.getAttribute("data-ex-quitar"));
+    });
+    document.getElementById("btnExConfirmar").addEventListener("click", exConfirmar);
+    document.getElementById("btnExCancelar").addEventListener("click", function () {
+      if (exTrabajando) return;
+      exPreview = null;
+      document.getElementById("modalExcluir").classList.add("oculto");
+    });
+  })();
 
   /* ---------- Catálogo SKU -> publicación (función ml-catalogo) ----------
      GET  /estado -> cuántas publicaciones/SKUs hay y cuándo fue la última corrida completa.
