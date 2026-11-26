@@ -304,6 +304,27 @@
   .proceso-fase { font-size: 0.82rem; color: var(--text-dim); margin-bottom: 8px; }
   .proceso-kpis { margin-top: 10px; }
   @media (min-width: 560px) { .proceso-kpis { grid-template-columns: repeat(5, 1fr); } }
+  /* v2026-11-26.1: cartel "están en promociones" al aplicar precios */
+  .promos-aplicar { border: 1px solid var(--amber); background: var(--amber-soft); border-radius: 10px; padding: 12px 14px; margin: 10px 0 12px; }
+  .promos-aplicar h3 { margin: 0 0 6px; font-size: 0.92rem; color: var(--text); line-height: 1.35; }
+  .promos-aplicar .pa-lista { margin: 4px 0 10px; padding: 0; list-style: none; font-size: 0.8rem; }
+  .promos-aplicar .pa-lista li { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 5px 0; border-bottom: 1px dashed rgba(201, 90, 10, 0.25); }
+  .promos-aplicar .pa-lista li:last-child { border-bottom: 0; }
+  .promos-aplicar .pa-pregunta { font-size: 0.84rem; font-weight: 600; color: var(--text); margin: 10px 0 2px; }
+  .pa-opcion { display: flex; gap: 10px; align-items: flex-start; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 8px; padding: 9px 11px; margin-top: 8px; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+  .pa-opcion:hover { border-color: var(--amber); }
+  .pa-opcion.elegida { border-color: var(--amber); box-shadow: 0 0 0 2px rgba(255, 116, 14, 0.25); }
+  .pa-opcion input { margin-top: 3px; accent-color: var(--amber); flex: none; }
+  .pa-opcion .pa-titulo { font-weight: 600; font-size: 0.84rem; color: var(--text); }
+  .pa-opcion .pa-detalle { font-size: 0.76rem; color: var(--text-dim); margin-top: 3px; line-height: 1.45; }
+  .pa-num { font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+  .pa-num.malo { color: var(--err); }
+  .pa-num.bueno { color: var(--ok); }
+  .pa-nota { font-size: 0.74rem; color: var(--text-dim); margin-top: 8px; line-height: 1.4; }
+  .pa-falta { font-size: 0.78rem; color: var(--err); margin: 0 0 8px; }
+  .promo-chip { display: inline-block; font-size: 0.68rem; line-height: 1.3; padding: 1px 7px; border-radius: 10px; background: var(--info-soft); color: var(--teal); margin: 3px 4px 0 0; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .promo-chip.no-toca { background: var(--panel-2); color: var(--text-dim); }
+  @media (max-width: 600px) { .pa-opcion { padding: 8px 9px; } .promos-aplicar { padding: 10px; } }
   .proceso-nota { font-size: 0.8rem; color: var(--text-dim); background: var(--panel-2); border: 1px solid var(--panel-border); border-radius: 8px; padding: 10px 12px; margin-top: 10px; }
   .proceso-nota.ok { color: var(--ok); background: var(--ok-soft); border-color: var(--ok); }
   .proceso-acciones { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
@@ -896,9 +917,12 @@
      MODAL: confirmar aplicar precios (dura)
      ============================================================ -->
 <div id="modalAplicarPrecios" class="modal-fondo oculto">
-  <div class="modal-caja">
+  <div class="modal-caja" style="max-width:640px;">
     <h2>⚠️ Aplicar precios en Mercado Libre</h2>
     <p id="aplicarPreciosResumen"></p>
+    <!-- v2026-11-26.1: publicaciones en promo (lo arma renderPromosAplicar con lo que trajo el preview) -->
+    <div id="aplicarPreciosPromos" class="promos-aplicar oculto"></div>
+    <p class="pa-falta oculto" id="aplicarPreciosFaltaOpcion">Elegí qué hacer con las promociones para poder confirmar.</p>
     <p>Esto cambia <b>precios reales de venta</b>. Para confirmar, escribí <b>APLICAR PRECIOS</b> en el campo:</p>
     <input type="text" id="inputConfirmarAplicarPrecios" style="width:100%;margin-bottom:10px;" autocomplete="off">
     <div class="modal-cerrar" style="justify-content:space-between;">
@@ -1008,6 +1032,7 @@
     <h3>🚫 SKU excluidos de promociones (desde el 24/11)</h3>
     <p>Es el panel que está debajo de "Acciones globales". Un SKU de la lista <b>no entra en ninguna promoción</b>: Campaña propia, Deal, Oferta del día, compartidas con ML, cupones, todas.</p>
     <p><b>Cómo se usa:</b> pegás uno o varios SKU (uno por renglón), escribís el motivo y tocás <b>🔍 Revisar antes de excluir</b>. La app te muestra, SKU por SKU, sus publicaciones, en qué promos están hoy y qué otros SKU arrastra. Si confirmás, el SKU queda en la lista y cada publicación sale de <b>todas</b> sus promos; la app verifica en Mercado Libre que haya salido. Lo pueden hacer Gerencia y Stock. Todo queda en el historial: quién, cuándo y por qué.</p>
+    <p><b>"Esperando a ML":</b> a veces Mercado Libre <b>acepta</b> la baja pero tarda unos minutos en reflejarla. Esas publicaciones no son un error: la app las vuelve a verificar sola (sin pedir la baja de nuevo) y el barrido automático las confirma. Si a los <b>30 minutos</b> ML todavía las muestra en la promo, pasan a "Para revisar" con un aviso crítico en 🔔 Notificaciones para sacarlas a mano.</p>
     <p><b>Publicaciones con variaciones:</b> ML aplica la promo a la publicación entera, no por variación. Si el SKU excluido es una variación, <b>sale la publicación completa</b>, y con ella los otros SKU de esa publicación. En la revisión aparecen como "También tiene…".</p>
     <p><b>Quién lo controla:</b> el servidor, no tu navegador. Frena cualquier alta de una publicación con SKU excluido: Subir a todas, Sumar seleccionadas, Subir TODAS, el sugerido de ML, "% aplicados" y la regeneración automática. En los resultados figura como <b>"Excluida"</b> y no cuenta como error. Si alguien la suma desde el panel de ML o entra por otro lado, el <b>barrido automático</b> (7:23, 10:23, 13:23, 16:23 y 19:23) la saca y deja un aviso en 🔔 Notificaciones. "🧹 Barrer ahora" lo corre en el momento.</p>
     <p><b>Lo que la app no puede sacar:</b> la Oferta del día y la Relámpago activas, porque ML no lo permite por API. En ese caso queda un aviso crítico en Notificaciones para sacarla a mano desde el panel de ML.</p>
@@ -1031,6 +1056,12 @@
     <p><b>💡 Subir las que quedaron con el precio sugerido de ML:</b> para lo que sigue en el respaldo (normalmente las "en revisión"), aplica el precio que sugiere ML, con un <b>tope de %</b> que elegís: si el sugerido implica más descuento que el tope, no se toca. <b>✋ Cancelar proceso</b> lo frena en segundos; lo ya hecho queda hecho. Al terminar, <b>📋 Ver detalle</b> lista solo lo que hay que mirar (con link a cada publicación, SKU y qué pasó) y se puede bajar en CSV; <b>🕘 Procesos anteriores</b> muestra los últimos 8 con quién los lanzó. <b>🗑️ Descartar respaldo</b> borra la cola de % guardados sin tocar Mercado Libre.</p>
     <h3>Pestaña "Actualizar precios"</h3>
     <p>Sirve para actualizar el <b>precio de lista</b> (no el de promo) de muchas publicaciones de una. Cargás <b>SKU y precio</b> en la tabla (podés copiar las columnas de Excel y pegarlas en la primera celda: se completa sola); la tercera columna, <b>Mayorista</b>, indica si ese SKU lleva también los escalones mayoristas (ver más abajo). Como un mismo SKU suele estar en varias publicaciones, el precio se aplica a <b>todas las publicaciones activas y pausadas</b> de ese SKU (a la pausada le queda listo para cuando la reactivés; las cerradas se omiten). El flujo es en dos pasos: primero <b>Previsualizar</b> (no toca nada: trae de ML el precio actual de cada publicación y te muestra antes → después → Δ%, con un tiempo estimado mientras corre), y recién después <b>Aplicar en ML</b> (con confirmación escribiendo "APLICAR PRECIOS"). En el preview podés <b>editar el precio de cualquier fila</b> a mano antes de aplicar, y <b>clickear las tarjetas</b> de arriba (A actualizar / A revisar / Omitidas / Con problema) para filtrar la tabla por ese estado. <b>Publicaciones con variaciones</b> (ej. una tinta con 6 colores, cada color con su SKU): Mercado Libre usa un solo precio de lista y los mismos escalones para toda la publicación. Si todas las variaciones tienen el mismo precio, la app la actualiza entera (avisa "🎨 N variaciones: valen para todas"). Si cargás varios SKU de la misma publicación, tienen que tener los mismos valores: con valores distintos quedan en "Conflicto entre variaciones" y no se toca nada; con valores iguales se aplica una sola vez. Si las variaciones tienen precios distintos entre sí, quedan "a revisar" y se editan a mano en ML. Podés exportar todo a CSV. Encaja con el flujo masivo: bajás las promos, actualizás precios acá, y volvés a subir las promos.</p>
+    <h3>🏷️ Publicaciones en promoción al actualizar precios (desde el 26/11)</h3>
+    <p>El preview lee <b>en vivo</b> las promociones de cada publicación (la tarjeta <b>"En promociones"</b> las cuenta y en cada fila ves el chip 🏷️ con la promo y su % actual). Al tocar <b>Aplicar en ML</b>, si al menos una de las publicaciones a las que les cambia el precio de lista está en una promo, el cartel te muestra <b>cuántas de cuántas</b> están en promo y <b>en cuáles</b>, y te pide elegir una de tres opciones para toda la tanda:</p>
+    <p><b>1) Quitar, actualizar y volver a subir al mismo %.</b> Para cada publicación: la saca de sus promos, cambia el precio y deja anotado qué volver a subir. La re-subida la hace <b>el servidor</b> (proceso "Volver a subir al mismo %" en Acciones globales), así que podés cerrar la pestaña: espera a que ML la vuelva a ofrecer en la promo (unos segundos o minutos) y la sube al <b>mismo %</b> sobre la lista nueva, con los mismos controles de siempre (tope, SKU excluidos, verificación del precio). <b>El "mismo %" es el % con el que se cargó la promo</b> (lo que registró la app; si la promo ya tenía el % corrido por una suba anterior, vuelve al cargado, ej. 5 %). Si no hay registro, se usa el % que tiene hoy. <b>Ojo con las subas:</b> Mercado Libre acepta como máximo el 99 % de la lista más baja de los últimos ~7 días (medido el 26/11 en 22 de 22 publicaciones frenadas). Traducido: con la MENSUAL al 5 %, si la suba es mayor a ~4 %, ML no la acepta al mismo % por unos días. Esas <b>quedan sin promo</b> y te avisa una notificación 🔔 con cada publicación y el % que pide ML (decisión de Gerencia: no se suben a otro %). El cartel estima de antemano cuántas van a quedar afuera.</p>
+    <p><b>2) Quitar y actualizar, sin volver a colocarlas.</b> Las saca de sus promos y cambia el precio. Quedan sin promo.</p>
+    <p><b>3) Actualizar sin tocar las promos (como hasta ahora).</b> Cambia solo el precio: la promo mantiene su precio fijo, así que el % real cambia (si subís la lista, el descuento crece). Si alguna pasa su tope, se retira sola y queda en 🔔 Notificaciones. El cartel te muestra entre qué % quedarían.</p>
+    <p>En las tres opciones <b>no se tocan</b> las Ofertas del día / Relámpago (las ofrece ML y no se podrían volver a subir), los cupones y los tipos que la app no conoce. Si no se pueden leer las promos de una publicación, o ML no deja sacarla de alguna, <b>no se le cambia el precio</b> (la fila queda en error y se puede volver a aplicar); lo que ya se había sacado vuelve solo con el precio de antes. Las filas que solo cambian escalones, o con el mismo precio de lista, no tocan las promos. Mientras dura la re-subida, los otros procesos de promos esperan en la cola (corre uno a la vez).</p>
     <h3>Escalones mayoristas (precio por cantidad)</h3>
     <p>En Mercado Libre, el "precio por cantidad" es un precio por unidad más bajo cuando alguien compra <b>desde N unidades</b>, y <b>solo lo ven los compradores empresa</b> (cuentas con factura A). La app lo maneja con <b>escalones</b> (por ejemplo "desde 5 u." y "desde 10 u."). ML permite <b>hasta 5 escalones</b> por publicación, con unidades que crecen y un precio que baja en cada escalón.</p>
     <p><b>Quién define qué:</b> <b>Gerencia</b> define, con "✏️ Editar escalones", las <b>unidades</b> de cada escalón (las mismas para todos los SKU) y el <b>% de la promo general</b> (la campaña propia que está activa todos los meses sobre todas las publicaciones; hoy 10 %). Se guarda en la base y lo usa todo el equipo. El <b>precio de cada escalón lo escribís vos, SKU por SKU</b>, en la tabla: hay una columna "Desde N u." por cada escalón, donde va el precio final por unidad.</p>
@@ -1302,7 +1333,7 @@
 
   // --- Tickets (módulo transversal: mismo backend para todas las apps) ---
   var TICKETS_APP_ID = "grafica-promociones"; // identifica a ESTA app en el embudo común (cambiar al clonar/replicar)
-  var APP_VERSION = "2026-11-24.1";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
+  var APP_VERSION = "2026-11-26.1";          // se adjunta a cada ticket; actualizar al deployar una versión nueva
 
   // Captura de errores recientes (se adjuntan como contexto técnico a los tickets). Buffer de 5.
   var ERRORES_RECIENTES = [];
@@ -3309,6 +3340,7 @@
     bajar_todo: { titulo: "⬇️ Bajar TODAS las promociones", corto: "Bajar TODAS" },
     subir_todo: { titulo: "⬆️ Subir TODAS (con los % guardados)", corto: "Subir TODAS" },
     subir_sugerido: { titulo: "💡 Subir con el precio sugerido de ML", corto: "Subir con sugerido" },
+    resubir_precios: { titulo: "🔁 Volver a subir al mismo % (actualización de precios)", corto: "Re-subir promos (precios)" }, // v2026-11-26.1
   };
   var ESTADOS_PROCESO = {
     en_cola: { txt: "En cola", cls: "dim" },
@@ -3322,6 +3354,7 @@
     ok: "OK", revisar: "En revisión", error: "Error", parcial: "Parcial", omitida: "Omitida",
     ya_estaba: "Ya estaba", cancelada: "Cancelada", pendiente: "Pendiente", tomado: "En proceso",
     excluida: "Excluida (SKU)",   // v2026-11-24.1: ml-procesos v6
+    esperando: "Esperando a ML",  // v2026-11-26.1: ml-procesos v8 (re-subida tras actualizar precios)
   };
 
   var procesoActual = null;           // última respuesta de /estado
@@ -3481,7 +3514,8 @@
     var total = d.total_cola || 0;
     var hechas = Math.max(0, total - (d.pendientes || 0));
     var pct = total > 0 ? Math.round(hechas / total * 100) : 0;
-    var esSubir = p.tipo === "subir_todo" || p.tipo === "regenerar" || (p.tipo === "campana" && par.accion === "subir");
+    var esSubir = p.tipo === "subir_todo" || p.tipo === "regenerar" || p.tipo === "resubir_precios" || (p.tipo === "campana" && par.accion === "subir");
+    var esResubir = p.tipo === "resubir_precios"; // v2026-11-26.1
 
     // Línea de fase (en preparación todavía no hay cola completa).
     var fase = "";
@@ -3494,6 +3528,9 @@
       else if (p.fase === "pausadas") fase = "Revisando publicaciones pausadas (ML no las muestra en las campañas)" + (ap.por_consultar ? " (" + ap.consultadas + "/" + ap.por_consultar + ")" : "") + "…";
       else if (p.fase === "verificar") fase = "Consultando una por una las que no aparecen en su campaña" + (ap.por_consultar ? " (" + ap.consultadas + "/" + ap.por_consultar + ")" : "") + "…";
       if (p.tipo === "bajar_todo" || p.tipo === "subir_todo") fase += " Ya van " + total + " publicaciones en la cola.";
+    } else if (p.estado === "en_curso" && esResubir) {
+      fase = "Volviendo a subir al mismo %: " + hechas + " de " + total + (c.esperando ? " · " + c.esperando + " esperando que ML las vuelva a ofrecer en su promo (tarda segundos o minutos después de sacarlas)" : "") +
+        (par.cerrado_at ? "." : ". La actualización de precios sigue en curso: se van sumando las que se sacan.");
     } else if (p.estado === "en_curso") {
       fase = "Trabajando en Mercado Libre: " + hechas + " de " + total + " publicaciones" + (d.por_minuto ? " (" + d.por_minuto + " por minuto)" : "") + ".";
     } else if (p.terminado_at) {
@@ -3503,7 +3540,9 @@
 
     var errores = (c.error || 0) + (c.parcial || 0);
     var noBajablesTotal = (p.no_bajables || []).reduce(function (a, n) { return a + (Number(n.items) || 0); }, 0);
-    var ayudaProcesadas = p.tipo === "campana"
+    var ayudaProcesadas = esResubir
+      ? "Promos ya trabajadas sobre el total que se sacaron al actualizar precios (una publicación en dos promos cuenta dos veces). La lista la arma la pestaña Precios a medida que saca cada publicación de su promo, antes de cambiarle el precio."
+      : p.tipo === "campana"
       ? "Publicaciones ya trabajadas sobre el total. La lista la arma el servidor leyendo la campaña EN VIVO cuando le toca el turno: " + (par.accion === "subir" ? "las candidatas" + (par.cantidad_items ? " que elegiste" : "") : "las activas" + (par.cantidad_items ? " que elegiste" : "")) + "."
       : p.tipo === "regenerar"
         ? "Publicaciones activas en la campaña que vence, que se copian a la nueva con el mismo % y el mismo % meli+. La lista se lee en vivo de Mercado Libre."
@@ -3514,7 +3553,10 @@
         esSubir
           ? "Publicaciones que quedaron en la campaña. El servidor calcula el precio con el % sobre el precio de lista ACTUAL y después relee en ML el precio que quedó." + (p.tipo === "regenerar" ? " Incluye las que quedaron con el % normal pero no con el meli+ (esas figuran también como parciales)." : "")
           : "Publicaciones que ML confirmó que salieron de " + (p.tipo === "campana" ? "esta campaña." : "sus promociones (o que ya no tenían ninguna activa).")) +
-      (esSubir
+      (esResubir
+        ? statBox(c.revisar || 0, "Sin promo", !c.revisar,
+          "No volvieron a su promo: ML no acepta el mismo % con la lista nueva (mide el descuento contra la lista más baja de los últimos ~7 días), el % supera el tope, o ML ya no la ofrece en esa promo. Quedan SIN PROMO, como se decidió, y se avisa en Notificaciones. En el detalle ves el % mínimo que pide ML.")
+        : esSubir
         ? statBox(c.revisar || 0, "En revisión", !c.revisar,
           "ML no aceptó el %: pide otro rango (en general un % mayor, por la regla de los ~7 días: mide el descuento contra el precio más bajo de la última semana). No se tocó nada en ML. En el detalle ves el % mínimo que pide ML y su precio sugerido" + (p.tipo === "campana" ? ", y botones para usar el sugerido o aplicar otro %." : "."))
         : statBox(c.parcial || 0, "Parciales", !c.parcial,
@@ -3529,6 +3571,8 @@
             "Publicaciones en Oferta del día o Relámpago: ML no deja sacarlas por API, así que el proceso no las toca. Se gestionan desde el panel de Mercado Libre. Sale del listado en vivo de esas campañas.")
           : statBox(c.ya_estaba || 0, "Ya estaban", !c.ya_estaba,
             "Publicaciones que al momento de subir ya estaban activas en la campaña (por ejemplo, se subieron a mano). Se dan por hechas."))) +
+      (esResubir && (activo || c.esperando) ? statBox(c.esperando || 0, "Esperando a ML", !c.esperando,
+        "Promos de las que se sacó la publicación y que ML todavía no vuelve a ofrecer (las bajas tardan en reflejarse). El servidor las mira cada 20 s: apenas ML la ofrece, la sube al mismo %. Si a los 30 min ML la sigue mostrando en la promo, o a los 10 min no la ofrece, queda en 'Sin promo'.") : "") +
       (esSubir && c.excluida ? statBox(c.excluida, "🚫 Excluidas", false,
         "Publicaciones con un SKU de la lista de SKU excluidos (panel de Promociones): el servidor no las sube a ninguna promoción. No es un error. En Subir TODAS además salen del respaldo.") : "");
 
@@ -3559,6 +3603,12 @@
     }
     if (p.estado === "terminado" && p.tipo === "campana" && ((c.revisar || 0) + (c.error || 0)) > 0) {
       html += '<div class="proceso-nota">Quedaron ' + ((c.revisar || 0) + (c.error || 0)) + " para mirar: en <b>📋 Ver detalle</b> podés reintentar los errores, usar el sugerido de ML o aplicar otro % a las que quedaron en revisión.</div>";
+    }
+    if (p.estado === "terminado" && esResubir) {
+      var sinPromo = (c.revisar || 0) + (c.error || 0);
+      html += sinPromo
+        ? '<div class="proceso-nota">Quedaron ' + sinPromo + " sin promo (te avisamos en 🔔 Notificaciones). ML vuelve a aceptar el mismo % cuando pasan ~7 días desde la suba: ahí las podés sumar desde la card de la campaña (Subir a todas). " + escapeHtml(TEXTO_REGLA_7D) + "</div>"
+        : '<div class="proceso-nota ok">Todo lo que se sacó para actualizar el precio volvió a su promo al mismo %.</div>';
     }
     if (p.estado === "terminado" && p.tipo === "regenerar") {
       html += '<div class="proceso-nota ok">La campaña "' + escapeHtml(par.nombre_destino || "") + '" quedó armada y arranca sola cuando termina la actual. Lo que ML no ofreció en la nueva figura en el detalle.</div>';
@@ -3906,7 +3956,7 @@
   });
 
   /* ============================================================
-     SKU EXCLUIDOS DE PROMOCIONES — v2026-11-24.1
+     SKU EXCLUIDOS DE PROMOCIONES — v2026-11-24.1 (v2026-11-25.1: estado "Esperando a ML" = SIN_CONFIRMAR, ml-promos-excluidos v2)
      Backend: función ml-promos-excluidos. Rutas: GET lista | POST previsualizar / agregar / quitar / retirar / barrido-ahora.
      El bloqueo real lo hace el servidor (ml-promos-bulk v23 devuelve EXCLUIDO, ml-procesos v6 lo cuenta como 'excluida').
      Esta pantalla administra la lista, muestra qué se va a tocar y saca de las promos lo que se acaba de excluir.
@@ -3916,6 +3966,9 @@
   var EX_MAX_SKUS = 100;             // igual que el servidor
   var EX_TANDA_RETIRO = 20;          // publicaciones por llamada a /retirar (el servidor acepta hasta 60)
   var EX_REINTENTOS_PENDIENTES = 2;  // vueltas extra para lo que ML no dejó confirmar
+  // v2026-11-25.1: ML a veces acepta la baja pero tarda en reflejarla (estado SIN_CONFIRMAR, ml-promos-excluidos v2).
+  // Antes de volver a verificarlas se espera más, para darle tiempo a ML. En esa vuelta el servidor no pide la baja otra vez.
+  var EX_ESPERA_SIN_CONFIRMAR_MS = 20000;
   var EX_TIMEOUT_MS = 130000;        // el servidor corta a los ~100 s
   var LS_EX_ABIERTO = TICKETS_APP_ID + ":excluidos_abierto";
   var exDatos = null;                // última respuesta de /lista
@@ -3988,12 +4041,12 @@
     chip.classList.toggle("activo", d.total_skus > 0);
     var b = d.barrido && d.barrido.ultimo;
     var txtBarrido = !b ? "todavía no corrió"
-      : escapeHtml(haceCuanto(b.terminado_at)) + (b.retiradas ? " · sacó " + b.retiradas : "") + (b.completo === false ? " · incompleto" : "");
+      : escapeHtml(haceCuanto(b.terminado_at)) + (b.retiradas ? " · sacó " + b.retiradas : "") + (b.sin_confirmar ? " · " + b.sin_confirmar + " esperando a ML" : "") + (b.completo === false ? " · incompleto" : "");
     document.getElementById("exResumen").innerHTML =
       exKpi("Cantidad de SKU en la lista. Ninguna publicación con alguno de estos SKU puede entrar en una promoción: lo frena el servidor. Sale de la tabla ml_promos_sku_excluidos.", "SKU excluidos", d.total_skus) +
       exKpi("Publicaciones del catálogo con al menos un SKU excluido. Si una publicación con variaciones tiene uno, cuenta entera. Sale del catálogo diario de publicaciones; las creadas hoy se suman en el próximo barrido.", "Publicaciones afectadas", d.total_publicaciones) +
       exKpi("Último control automático: revisa todas las publicaciones de los SKU excluidos (catálogo + búsqueda en vivo en ML) y las saca de cualquier promo en la que hayan entrado por fuera de la app. Corre a las 7:23, 10:23, 13:23, 16:23 y 19:23.", "Último barrido", txtBarrido) +
-      (b && b.fallas ? exKpi("Publicaciones con SKU excluido que siguen en una promo que ML no deja sacar por API (Oferta del día o Relámpago). Hay que sacarlas a mano desde el panel de ML. El detalle está en 🔔 Notificaciones.", "Para sacar a mano", '<span class="ex-err">' + b.fallas + "</span>") : "");
+      (b && b.fallas ? exKpi("Publicaciones con SKU excluido que siguen en una promo que ML no deja sacar por API (Oferta del día o Relámpago), o cuya baja ML aceptó pero sigue mostrando después de 30 minutos. Hay que sacarlas a mano desde el panel de ML. El detalle está en 🔔 Notificaciones.", "Para sacar a mano", '<span class="ex-err">' + b.fallas + "</span>") : "");
     exRenderTabla();
     exRenderHistorial();
   }
@@ -4116,10 +4169,13 @@
   }
 
   // Saca de sus promos, en tandas, las publicaciones recién excluidas. El servidor vuelve a controlar cada una.
+  // v2026-11-25.1: las SIN_CONFIRMAR (ML aceptó la baja pero todavía la muestra) vuelven en pendientes; se re-verifican
+  // en las vueltas siguientes y, si al final siguen igual, se muestran como "Esperando a ML" (no como error).
   function exRetirarTodo(ids) {
     var total = ids.length;
     var resultados = {};
     var pendientes = [];
+    var sinConfirmar = {};             // item_id -> último resultado SIN_CONFIRMAR que mandó el servidor
     var cola = ids.slice();
     var vuelta = 0;
     if (!total) return Promise.resolve({ resultados: [], pendientes: [] });
@@ -4127,10 +4183,14 @@
     function tanda() {
       if (!cola.length) return Promise.resolve();
       var lote = cola.splice(0, EX_TANDA_RETIRO);
-      exProgreso(hechas(), total, "Sacando de las promos: " + hechas() + " de " + total + " publicaciones (se verifica cada una en Mercado Libre)…");
-      return exPedir("retirar", { item_ids: lote }).then(function (r) {
+      exProgreso(hechas(), total, (vuelta ? "Verificando de nuevo en Mercado Libre: " : "Sacando de las promos: ") + hechas() + " de " + total + " publicaciones (se verifica cada una en Mercado Libre)…");
+      // Solo en la última vuelta el servidor deja aviso por lo que siga sin confirmar (antes lo vamos a reintentar).
+      return exPedir("retirar", { item_ids: lote, avisar_sin_confirmar: vuelta >= EX_REINTENTOS_PENDIENTES }).then(function (r) {
         var pend = r.pendientes || [];
-        (r.resultados || []).forEach(function (x) { if (pend.indexOf(x.item_id) === -1) resultados[x.item_id] = x; });
+        (r.resultados || []).forEach(function (x) {
+          if (x.estado === "SIN_CONFIRMAR") sinConfirmar[x.item_id] = x; else delete sinConfirmar[x.item_id];
+          if (pend.indexOf(x.item_id) === -1) resultados[x.item_id] = x;
+        });
         (r.no_excluidas || []).forEach(function (id) { resultados[id] = { item_id: id, estado: "NO_EXCLUIDA", detalle: "Ya no tiene un SKU excluido (alguien lo quitó de la lista): no se tocó." }; });
         pend.forEach(function (id) { if (!resultados[id] && pendientes.indexOf(id) === -1) pendientes.push(id); });
       }).catch(function () {
@@ -4142,39 +4202,51 @@
         if (pendientes.length && vuelta < EX_REINTENTOS_PENDIENTES) {
           vuelta++;
           cola = pendientes.splice(0);
-          exProgreso(hechas(), total, "Mercado Libre no dejó confirmar " + cola.length + " publicación(es): reintentando…");
-          return new Promise(function (ok) { setTimeout(ok, 4000); }).then(ronda);
+          var nSinConf = cola.filter(function (id) { return sinConfirmar[id]; }).length;
+          var espera = nSinConf ? EX_ESPERA_SIN_CONFIRMAR_MS : 4000;
+          exProgreso(hechas(), total, nSinConf
+            ? "Mercado Libre aceptó la baja de " + nSinConf + " publicación(es) pero todavía no la refleja: vuelvo a verificar en " + Math.round(espera / 1000) + " segundos…"
+            : "Mercado Libre no dejó confirmar " + cola.length + " publicación(es): reintentando…");
+          return new Promise(function (ok) { setTimeout(ok, espera); }).then(ronda);
         }
       });
     }
     return ronda().then(function () {
       exProgreso(total, total, "Listo.");
+      // Lo que al final sigue sin confirmar se informa como tal (no como pendiente genérico ni como error).
+      pendientes.forEach(function (id) { if (!resultados[id] && sinConfirmar[id]) resultados[id] = sinConfirmar[id]; });
       return { resultados: ids.map(function (id) { return resultados[id]; }).filter(Boolean), pendientes: pendientes.filter(function (id) { return !resultados[id]; }) };
     });
   }
 
   function exMostrarResultado(agregado, res) {
-    var c = { RETIRADA: 0, SIN_PROMOS: 0, PARCIAL: 0, ERROR: 0, NO_EXCLUIDA: 0 };
+    var c = { RETIRADA: 0, SIN_PROMOS: 0, PARCIAL: 0, ERROR: 0, NO_EXCLUIDA: 0, SIN_CONFIRMAR: 0 };
     var promosSacadas = 0;
     res.resultados.forEach(function (x) { c[x.estado] = (c[x.estado] || 0) + 1; promosSacadas += (x.retiradas || []).length; });
     var problemas = res.resultados.filter(function (x) { return x.estado === "PARCIAL" || x.estado === "ERROR"; });
+    var esperando = res.resultados.filter(function (x) { return x.estado === "SIN_CONFIRMAR"; }); // v2026-11-25.1
     var html = '<h3>Resultado</h3><div class="resumen-precios" style="margin-top:6px;">' +
       exKpi("SKU que quedaron en la lista en esta carga (los que ya estaban no se cuentan).", "SKU agregados", (agregado.agregados || []).length) +
-      exKpi("Publicaciones que salieron de todas sus promos, con confirmación de Mercado Libre de que ya no están en ninguna.", "Sacadas de promos", '<span class="ex-ok">' + c.RETIRADA + "</span>") +
+      exKpi("Publicaciones que salieron de todas sus promos, con confirmación de Mercado Libre de que ya no están en ninguna. Incluye las que ML tardó en reflejar y se confirmaron al volver a verificar.", "Sacadas de promos", '<span class="ex-ok">' + c.RETIRADA + "</span>") +
       exKpi("Cantidad de promociones de las que se sacaron, sumando todas las publicaciones.", "Promos sacadas", promosSacadas) +
       exKpi("Publicaciones con SKU excluido que no estaban en ninguna promo: no hubo que tocarlas.", "Ya estaban sin promo", c.SIN_PROMOS) +
-      (problemas.length ? exKpi("Publicaciones que siguen en alguna promo. Casi siempre es una Oferta del día o Relámpago, que ML no deja sacar por API. Sacalas a mano desde el panel de ML: el aviso queda en 🔔 Notificaciones.", "Para revisar", '<span class="ex-err">' + problemas.length + "</span>") : "") +
+      (esperando.length ? exKpi("Publicaciones donde Mercado Libre aceptó la baja pero todavía las muestra en la promo. No es un error: ML suele tardar unos minutos en reflejarlo. La app ya las volvió a verificar; el barrido automático las confirma solo (no se pide la baja de nuevo). Si a los 30 minutos ML las sigue mostrando, pasan a 'Para revisar' con un aviso crítico en 🔔 Notificaciones.", "Esperando a ML", '<span class="ex-warn">' + esperando.length + "</span>") : "") +
+      (problemas.length ? exKpi("Publicaciones que siguen en alguna promo porque Mercado Libre rechazó la baja (por ejemplo, Oferta del día o Relámpago, que ML no deja sacar por API) o porque ML la aceptó pero la sigue mostrando después de 30 minutos. Sacalas a mano desde el panel de ML: el aviso crítico queda en 🔔 Notificaciones.", "Para revisar", '<span class="ex-err">' + problemas.length + "</span>") : "") +
       (res.pendientes.length ? exKpi("Publicaciones que ML no dejó confirmar ahora (error pasajero). El barrido automático las vuelve a revisar y las saca.", "Pendientes", '<span class="ex-warn">' + res.pendientes.length + "</span>") : "") +
       "</div>";
-    if (problemas.length) {
+    if (problemas.length || esperando.length) {
+      // Primero lo que hay que sacar a mano (rojo); después lo que solo espera a ML (ámbar).
+      var fila = function (x, cls, etiqueta) { return "<tr><td>" + linkItemML(x.item_id) + "</td><td class='" + cls + "'><b>" + etiqueta + ":</b> " + escapeHtml(x.detalle || "") + "</td></tr>"; };
       html += '<div class="caja-scroll modal"><table class="log"><thead><tr><th>Publicación</th><th>Qué pasó</th></tr></thead><tbody>' +
-        problemas.map(function (x) { return "<tr><td>" + linkItemML(x.item_id) + "</td><td class='ex-err'>" + escapeHtml(x.detalle || "") + "</td></tr>"; }).join("") + "</tbody></table></div>";
+        problemas.map(function (x) { return fila(x, "ex-err", "Para revisar"); }).join("") +
+        esperando.map(function (x) { return fila(x, "ex-warn", "Esperando a ML"); }).join("") + "</tbody></table></div>";
     }
     if (agregado.aviso) html += '<div class="aviso-7d" style="margin-top:10px;">' + escapeHtml(agregado.aviso) + "</div>";
     document.getElementById("exResultado").innerHTML = html;
     document.getElementById("exPrevLista").classList.add("oculto");
     document.getElementById("exPrevAviso").innerHTML = "";
-    mostrarToast("Listo: " + (agregado.agregados || []).length + " SKU excluido(s)" + (c.RETIRADA ? ", " + c.RETIRADA + " publicación(es) sacadas de promos" : "") + ".");
+    mostrarToast("Listo: " + (agregado.agregados || []).length + " SKU excluido(s)" + (c.RETIRADA ? ", " + c.RETIRADA + " publicación(es) sacadas de promos" : "") +
+      (esperando.length ? ", " + esperando.length + " esperando confirmación de ML" : "") + ".");
   }
 
   function exConfirmar() {
@@ -4233,6 +4305,8 @@
         var b = r.resumen || {};
         exSetEstado("Barrido listo: " + (b.publicaciones || 0) + " publicación(es) revisadas" +
           (b.retiradas ? ", " + b.retiradas + " sacadas de promos" : ", ninguna estaba en promo") +
+          (b.confirmadas_previas ? ", " + b.confirmadas_previas + " bajas anteriores confirmadas" : "") +
+          (b.sin_confirmar ? ", " + b.sin_confirmar + " esperando que ML refleje la baja" : "") +
           (b.fallas ? ", " + b.fallas + " para sacar a mano (ver 🔔 Notificaciones)" : "") +
           (b.completo === false ? ". Quedó incompleto: se completa en el próximo barrido." : "."), b.fallas ? "err" : "ok");
         if ((b.retiradas || b.fallas) && typeof refrescarBadge === "function") refrescarBadge();
@@ -5024,6 +5098,8 @@
     QUITAR: function (f) { return filasResultadoPrecios ? !!f.quitar_metodo : (f.estado === "OK" && !!f.quitar_escalones); },
     // v2026-10-05.1: algún escalón no queda por debajo del precio con la promo general.
     SOBRE_PROMO: function (f) { return !filasResultadoPrecios && f.estado === "OK" && !!f.escalones_nuevos && pctPromoPreview > 0 && f.precio_promo_ref != null && f.escalones_nuevos.some(function (e) { return e.monto >= f.precio_promo_ref; }); },
+    // v2026-11-26.1: publicaciones en promo (preview) / que salieron de alguna promo (resultado).
+    EN_PROMO: function (f) { return filasResultadoPrecios ? !!(f.promos_sacadas && f.promos_sacadas.length) : (f.estado === "OK" && ((Array.isArray(f.promos) && f.promos.length > 0) || !!f.promos_error)); },
   };
   function pasaFiltroPrecios(f) {
     if (!filtroEstadoPrecios) return true;
@@ -5090,6 +5166,16 @@
       var detalle = f.detalle ? '<div style="color:var(--text-dim);font-size:0.7rem;">' + escapeHtml(textoError(f.detalle)) + "</div>" : "";
       var aviso = (f.aviso_mayorista ? '<div class="aviso-may">⚠️ ' + escapeHtml(f.aviso_mayorista) + "</div>" : "") +
         (f.aviso_promos ? '<div class="aviso-may">🛡️ ' + escapeHtml(f.aviso_promos) + "</div>" : ""); // v2026-10-26.2: control de promos tras cambiar la lista
+      // v2026-11-26.1: promos de la publicación (solo en el preview).
+      if (!esResultado && Array.isArray(f.promos) && f.promos.length) {
+        aviso += "<div>" + f.promos.map(function (pr) {
+          var tit = (pr.tipo_nombre || pr.type) + " · " + (pr.status === "pending" ? "programada" : "activa") + " · precio de promo " + fmtPrecio(pr.price) +
+            (pr.pct_objetivo != null ? " · se cargó al " + fmtPctPromo(pr.pct_objetivo) : "") + (pr.se_saca ? "" : " · no se toca al actualizar");
+          return '<span class="promo-chip' + (pr.se_saca ? "" : " no-toca") + '" title="' + escapeHtml(tit) + '">🏷️ ' + escapeHtml(pr.name) + " · " + escapeHtml(fmtPctPromo(pr.pct_actual)) + "</span>";
+        }).join("") + "</div>";
+      } else if (!esResultado && f.promos_error) {
+        aviso += '<div class="aviso-may">⚠️ ' + escapeHtml(f.promos_error) + "</div>";
+      }
       var filaCls = (f.warning_grande || f.aviso_mayorista || f.aviso_promos) ? ' class="fila-warning"' : "";
       var editable = filaEditablePrecio(f);
       var sinCambio = '<span class="sin-cambio">sin cambio</span>';
@@ -5190,6 +5276,7 @@
     var avisosMay = fuenteMay.filter(function (f) { return !!f.aviso_mayorista; }).length;
     var nQuitar = fuenteMay.filter(FILTROS_ESPECIALES.QUITAR).length;
     var nSobrePromo = fuenteMay.filter(FILTROS_ESPECIALES.SOBRE_PROMO).length;
+    var nEnPromo = fuenteMay.filter(FILTROS_ESPECIALES.EN_PROMO).length; // v2026-11-26.1
     function kpi(filtro, help, label, valor) {
       var activo = filtroEstadoPrecios === filtro ? " filtro-activo" : "";
       return '<div class="kpi clickable' + activo + '" data-filtro="' + filtro + '">' + kpiHelp(help) + ' ' + label + ' <b>' + valor + '</b></div>';
@@ -5208,6 +5295,10 @@
         : "Publicaciones a las que se les van a quitar TODOS los escalones mayoristas (Mayorista vacío = quitar). Solo cuenta las que hoy tienen escalones o en las que ML no deja verlo. Clic para filtrar.",
         "Se quitan escalones", nQuitar) : "") +
       (nSobrePromo ? kpi("SOBRE_PROMO", "Publicaciones donde algún escalón NO queda por debajo del precio con la promo general (lista − " + fmtPctEsc(pctPromoPreview) + "). Mientras esa promo esté activa ML esconde ese escalón y el comprador empresa paga la promo. Se calcula con la lista final de cada publicación y el % de promo general guardado por Gerencia. Clic para filtrar.", "Escalón sobre la promo", nSobrePromo) : "") +
+      (nEnPromo ? kpi("EN_PROMO", filasResultadoPrecios
+        ? "Publicaciones que salieron de al menos una promoción para cambiarles el precio (según lo que elegiste en el cartel). Si elegiste volver a subirlas, el avance está en el proceso de Acciones globales (pestaña Promociones). Sale de la respuesta de ML al aplicar. Clic para filtrar."
+        : "Publicaciones que hoy están en al menos una promoción activa o programada (o cuyas promos no se pudieron leer). Al aplicar, si les cambia el precio de lista, el cartel te pregunta qué hacer con esas promos. Sale de leer en vivo las promos de cada publicación al previsualizar. Clic para filtrar.",
+        filasResultadoPrecios ? "Sacadas de promos" : "En promociones", nEnPromo) : "") +
       (avisosMay ? kpi("AVISO_MAY", "Publicaciones con un aviso de escalones: (1) tienen una promo vigente más barata que algún escalón (el comprador empresa paga el precio más bajo, así que ese escalón no sirve mientras dure la promo), o (2) les cambia la lista sin recalcular los escalones que ya tenían (quedan en monto fijo). Sale de leer los precios de cada publicación en ML al previsualizar. Clic para filtrar.", "Aviso escalones", avisosMay) : "");
     document.querySelectorAll("#resumenPrecios .kpi.clickable").forEach(function (k) {
       k.addEventListener("click", function (e) {
@@ -5226,7 +5317,7 @@
     var filas = esResultado ? filasResultadoPrecios : filasPreviewPrecios;
     if (!filas || filas.length === 0) { mostrarAviso("No hay nada para exportar todavía."); return; }
     var cab = ["sku", "item_id", "titulo", "estado", "precio_antes", esResultado ? "precio_despues" : "precio_nuevo", "pct_dif",
-      esResultado ? "escalones_antes" : "escalones_actuales", esResultado ? "escalones_despues" : "escalones_nuevos", "precio_con_promo_general", "promo_vigente", "escalones_confirmados", "quitar_escalones", "aviso_escalones", "detalle"];
+      esResultado ? "escalones_antes" : "escalones_actuales", esResultado ? "escalones_despues" : "escalones_nuevos", "precio_con_promo_general", "promo_vigente", "escalones_confirmados", "quitar_escalones", "aviso_escalones", "promos", "aviso_promos", "detalle"];
     var txtEsc = function (l) { return l == null ? "" : l.map(function (e) { return e.min_unidades + "u:" + e.monto + (e.pct_promo != null ? " (" + fmtPctMenos(e.pct_promo) + " s/promo)" : ""); }).join(" | "); };
     var lineas = [cab.join(",")];
     filas.forEach(function (f) {
@@ -5236,6 +5327,9 @@
         f.precio_promo_ref != null ? f.precio_promo_ref : "", f.promo_vigente != null ? f.promo_vigente : "", esResultado ? (f.mayorista_verificado ? "si" : "") : "",
         esResultado ? (f.quitar_metodo ? (f.estado !== "APLICADO" ? "error" : f.quitar_verificado === true ? "quitados (confirmado)" : "quitados (sin confirmar)") : "") : (f.quitar_escalones ? "si" : ""),
         f.aviso_mayorista || "",
+        // v2026-11-26.1: promos de la publicación (preview) o de las que salió (resultado)
+        esResultado ? (f.promos_sacadas || []).join(" | ") : (Array.isArray(f.promos) ? f.promos.map(function (pr) { return pr.name + " " + fmtPctPromo(pr.pct_actual); }).join(" | ") : (f.promos_error || "")),
+        f.aviso_promos || "",
         (f.detalle != null ? textoError(f.detalle) : "")];
       lineas.push(fila.map(function (v) {
         var s = v == null ? "" : String(v);
@@ -5251,6 +5345,149 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   });
 
+  /* ============================================================
+     v2026-11-26.1 · PUBLICACIONES EN PROMO AL APLICAR PRECIOS
+     El preview (ml-precios-bulk v15) trae por fila: promos[] (id, nombre, tipo, % actual, % con el que se cargó =
+     pct_objetivo, tope, si se saca o no) y lista_min_7d. Si alguna publicación a la que le cambia la lista está en
+     promo, el cartel de Aplicar muestra cuántas de cuántas y en qué promos, y pide elegir una opción para la tanda:
+       resubir  -> sacar, actualizar y volver a subir al mismo % (lo hace el servidor: proceso resubir_precios)
+       quitar   -> sacar y actualizar, sin volver a colocarlas
+       mantener -> actualizar sin tocar las promos (lo de siempre)
+     Estimaciones con la regla de ML medida el 26/11: acepta como máximo el 99 % de la lista más baja de ~7 días.
+     Para sumar una opción: agregala en OPCIONES_PROMOS, en renderPromosAplicar y en PROMOS_MODOS del servidor.
+     ============================================================ */
+  var REF_ML_FACTOR = 0.99;          // ML: precio de promo <= 99 % de la lista más baja de los últimos ~7 días
+  var TOLERANCIA_TOPE_PP_FRONT = 0.05; // igual que controles.ts
+  var MARGEN_TECHO_PP = 0.1;         // igual que ml-promos-bulk (si el techo queda a <= 0,1 pp se usa el techo)
+  var TIPOS_PRECIO_FIJO_FRONT = ["SELLER_CAMPAIGN", "DEAL", "DOD"];
+  var OPCIONES_PROMOS = {
+    resubir: { titulo: "Quitar, actualizar y volver a subir al mismo %" },
+    quitar: { titulo: "Quitar y actualizar, sin volver a colocarlas" },
+    mantener: { titulo: "Actualizar sin tocar las promos (como hasta ahora)" },
+  };
+  var promosModoElegido = null;      // opción elegida en el cartel (null = no se eligió)
+  var analisisPromos = null;         // último análisis del cartel
+
+  function nuevoLote() {
+    if (window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID();
+    var b = new Uint8Array(16);
+    window.crypto.getRandomValues(b);
+    b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+    var hx = Array.prototype.map.call(b, function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
+    return hx.slice(0, 8) + "-" + hx.slice(8, 12) + "-" + hx.slice(12, 16) + "-" + hx.slice(16, 20) + "-" + hx.slice(20);
+  }
+  function fmtPctPromo(n) { return n == null || !isFinite(n) ? "?" : (Math.round(n * 10) / 10).toString().replace(".", ",") + "\u00a0%"; }
+  function plural(n, uno, varios) { return n === 1 ? uno : varios; }
+
+  // Qué pasaría con UNA promo de una fila en cada opción.
+  function estimarPromo(f, p) {
+    var nuevo = Number(f.precio_nuevo), antes = Number(f.precio_antes);
+    var out = { resubir: null, pctMin: null, pctMantener: null, retiraMantener: false };
+    if (!p.se_saca || (p.con_precio && p.pct_objetivo == null)) out.resubir = "no_toca";
+    else if (!p.con_precio) out.resubir = "ml_fija";
+    else if (p.tope != null && p.pct_objetivo > p.tope + TOLERANCIA_TOPE_PP_FRONT) out.resubir = "sobre_tope";
+    else {
+      var precio = Math.floor(nuevo * (1 - p.pct_objetivo / 100) - 0.005);
+      var ref = Math.min(f.lista_min_7d != null ? Number(f.lista_min_7d) : antes, antes, nuevo);
+      var techo = REF_ML_FACTOR * ref;
+      out.resubir = precio <= techo + nuevo * MARGEN_TECHO_PP / 100 ? "vuelve" : "ml_no_acepta";
+      out.pctMin = Math.ceil((1 - techo / nuevo) * 1000) / 10;
+    }
+    if (TIPOS_PRECIO_FIJO_FRONT.indexOf(p.type) !== -1 && nuevo > 0) {
+      out.pctMantener = Math.round((1 - p.price / nuevo) * 10000) / 100;
+      // Misma regla que el servidor (v14): se retira sola si ESTE cambio de lista la lleva por encima de su tope.
+      out.retiraMantener = p.tope != null && nuevo > antes && out.pctMantener > p.tope + TOLERANCIA_TOPE_PP_FRONT && !(p.pct_actual > p.tope + TOLERANCIA_TOPE_PP_FRONT);
+    }
+    return out;
+  }
+
+  // Resumen para el cartel: solo las filas a las que les cambia el precio de lista.
+  function analizarPromosAplicar(filasOk) {
+    var conLista = filasOk.filter(function (f) { return f.precio_nuevo != null; });
+    var a = { total: conLista.length, enPromo: 0, sinLeer: 0, conSacables: 0, porPromo: {}, orden: [],
+      res: { vuelven: 0, mlFija: 0, noAcepta: 0, sobreTope: 0, pctMinMax: null }, man: { min: null, max: null, retiran: 0 }, noToca: 0 };
+    conLista.forEach(function (f) {
+      if (f.promos_error) { a.sinLeer++; return; }
+      var promos = Array.isArray(f.promos) ? f.promos : [];
+      if (!promos.length) return;
+      a.enPromo++;
+      var sacable = false;
+      promos.forEach(function (p) {
+        if (!a.porPromo[p.id]) { a.porPromo[p.id] = { name: p.name, tipo: p.tipo_nombre || p.type, n: 0, seSaca: p.se_saca }; a.orden.push(p.id); }
+        a.porPromo[p.id].n++;
+        var e = estimarPromo(f, p);
+        if (e.resubir === "no_toca") a.noToca++; else sacable = true;
+        if (e.resubir === "vuelve") a.res.vuelven++;
+        else if (e.resubir === "ml_fija") a.res.mlFija++;
+        else if (e.resubir === "ml_no_acepta") { a.res.noAcepta++; a.res.pctMinMax = Math.max(a.res.pctMinMax || 0, e.pctMin); }
+        else if (e.resubir === "sobre_tope") a.res.sobreTope++;
+        if (e.pctMantener != null && p.se_saca) {
+          a.man.min = a.man.min == null ? e.pctMantener : Math.min(a.man.min, e.pctMantener);
+          a.man.max = a.man.max == null ? e.pctMantener : Math.max(a.man.max, e.pctMantener);
+        }
+        if (e.retiraMantener) a.man.retiran++;
+      });
+      if (sacable) a.conSacables++;
+    });
+    a.orden.sort(function (x, y) { return a.porPromo[y].n - a.porPromo[x].n; });
+    return a;
+  }
+  function hayPromosEnCartel(a) { return !!a && (a.enPromo + a.sinLeer) > 0; }
+
+  function renderPromosAplicar(a) {
+    var cont = document.getElementById("aplicarPreciosPromos");
+    if (!hayPromosEnCartel(a)) { cont.classList.add("oculto"); cont.innerHTML = ""; return; }
+    cont.classList.remove("oculto");
+    var num = function (n, cls) { return '<span class="pa-num' + (cls ? " " + cls : "") + '">' + n + "</span>"; };
+    var lista = a.orden.map(function (k) {
+      var p = a.porPromo[k];
+      return "<li><span><b>" + escapeHtml(p.name) + "</b>" + (p.tipo && p.tipo !== p.name ? " · " + escapeHtml(p.tipo) : "") + (p.seSaca ? "" : ' <span class="promo-chip no-toca">no se toca</span>') +
+        "</span>" + num(p.n + " " + plural(p.n, "publicación", "publicaciones")) + "</li>";
+    }).join("");
+    var r = a.res;
+    var quedanAfuera = r.noAcepta + r.sobreTope;
+    var vuelven = r.vuelven + r.mlFija;
+    var detResubir = "Se sacan de sus promos, se actualiza el precio y el <b>servidor</b> las vuelve a subir solas al mismo % (podés cerrar la pestaña). Estimado: " +
+      num(vuelven, "bueno") + " " + plural(vuelven, "promo vuelve", "promos vuelven") + " a entrar" +
+      (r.noAcepta ? " · " + num(r.noAcepta, "malo") + " ML no " + plural(r.noAcepta, "la acepta", "las acepta") + " al mismo % (subieron más de ~4 % sobre la lista más baja de los últimos 7 días; ML pide hasta " + escapeHtml(fmtPctPromo(r.pctMinMax)) + ")" : "") +
+      (r.sobreTope ? " · " + num(r.sobreTope, "malo") + " " + plural(r.sobreTope, "supera", "superan") + " el tope de descuento" : "") +
+      (quedanAfuera ? ". <b>Esas quedan sin promo</b> y te avisamos en 🔔 Notificaciones." : ".");
+    var detQuitar = "Se sacan de sus promos y se actualiza el precio. " + num(a.conSacables, a.conSacables ? "malo" : "") + " " + plural(a.conSacables, "publicación queda", "publicaciones quedan") + " sin promo.";
+    var detMantener = "La promo mantiene su precio fijo y el % real cambia con la lista nueva" +
+      (a.man.min != null ? ": " + (Math.abs(a.man.max - a.man.min) < 0.05 ? "queda en " + num(escapeHtml(fmtPctPromo(a.man.min))) : "queda entre " + num(escapeHtml(fmtPctPromo(a.man.min))) + " y " + num(escapeHtml(fmtPctPromo(a.man.max)))) : "") +
+      (a.man.retiran ? " · " + num(a.man.retiran, "malo") + " " + plural(a.man.retiran, "pasa", "pasan") + " su tope y se retira" + (a.man.retiran === 1 ? "" : "n") + " sola" + (a.man.retiran === 1 ? "" : "s") + " (queda en 🔔 Notificaciones)." : ".");
+    var opcion = function (modo, detalle, ayuda) {
+      var elegida = promosModoElegido === modo;
+      return '<label class="pa-opcion' + (elegida ? " elegida" : "") + '" data-opcion-promos="' + modo + '"><input type="radio" name="promosModo" value="' + modo + '"' + (elegida ? " checked" : "") + ">" +
+        '<div><div class="pa-titulo">' + escapeHtml(OPCIONES_PROMOS[modo].titulo) + " " + kpiHelp(ayuda) + '</div><div class="pa-detalle">' + detalle + "</div></div></label>";
+    };
+    var notas = [];
+    if (a.sinLeer) notas.push("⚠️ " + a.sinLeer + " " + plural(a.sinLeer, "publicación no se pudo revisar", "publicaciones no se pudieron revisar") + " en el preview: al aplicar se leen sus promos en vivo y se hace lo que elijas (si no se pueden leer, no se les cambia el precio).");
+    if (a.noToca) notas.push("Ofertas del día / Relámpago y cupones no se tocan en ninguna opción.");
+    cont.innerHTML =
+      "<h3>🏷️ " + num(a.enPromo) + " de " + num(a.total) + " publicaciones que vas a actualizar están en promociones " +
+      kpiHelp("Publicaciones a las que les cambia el precio de lista y que hoy están en al menos una promoción activa o programada, sobre el total de publicaciones a las que les cambia la lista en esta tanda. Sale de leer en vivo las promos de cada publicación al previsualizar. Abajo, cuántas hay en cada promo (una publicación puede estar en más de una). Las filas que solo cambian escalones no cuentan: no tocan las promos.") + "</h3>" +
+      (lista ? '<ul class="pa-lista">' + lista + "</ul>" : "") +
+      '<div class="pa-pregunta">¿Qué hacemos con esas promociones? (vale para toda la tanda)</div>' +
+      opcion("resubir", detResubir, "Estimación: el precio de promo sería la lista nueva menos el % con el que se cargó cada promo (redondeado a pesos). Mercado Libre acepta como máximo el 99 % de la lista más baja de los últimos 7 días (la sacamos de la auditoría diaria): si el precio queda por encima, no la acepta al mismo % y queda sin promo. 'Supera el tope' = el % es mayor que el tope de descuento de esa promo. Las co-fondeadas vuelven al precio que fija ML. El resultado real queda en el proceso de Acciones globales y en Notificaciones.") +
+      opcion("quitar", detQuitar, "Publicaciones que van a salir de al menos una promo (no cuentan Ofertas del día / Relámpago ni cupones, que no se tocan). Quedan con el precio nuevo y sin esas promos hasta que las vuelvas a subir.") +
+      opcion("mantener", detMantener, "% real de cada promo de precio fijo con la lista nueva: 1 − (precio de promo actual ÷ lista nueva). Si subís la lista, el descuento crece; si la bajás, achica. 'Se retira sola': con la lista nueva pasa su tope y antes no lo pasaba (misma regla del control de topes).") +
+      (notas.length ? '<div class="pa-nota">' + notas.map(escapeHtml).join("<br>") + "</div>" : "");
+    cont.querySelectorAll('input[name="promosModo"]').forEach(function (inp) {
+      inp.addEventListener("change", function () {
+        promosModoElegido = inp.value;
+        cont.querySelectorAll(".pa-opcion").forEach(function (l) { l.classList.toggle("elegida", l.getAttribute("data-opcion-promos") === promosModoElegido); });
+        actualizarConfirmarAplicarPrecios();
+      });
+    });
+  }
+  function actualizarConfirmarAplicarPrecios() {
+    var textoOk = document.getElementById("inputConfirmarAplicarPrecios").value.trim() === "APLICAR PRECIOS";
+    var faltaOpcion = hayPromosEnCartel(analisisPromos) && !promosModoElegido;
+    document.getElementById("btnConfirmarAplicarPrecios").disabled = !textoOk || faltaOpcion;
+    document.getElementById("aplicarPreciosFaltaOpcion").classList.toggle("oculto", !faltaOpcion);
+  }
+
   // --- aplicar ---
   document.getElementById("btnAplicarPrecios").addEventListener("click", function () {
     var ok = filasPreviewPrecios.filter(function (f) { return f.estado === "OK"; });
@@ -5265,16 +5502,33 @@
     document.getElementById("aplicarPreciosResumen").textContent = "Vas a aplicar " + partes.join(" y ") + " en Mercado Libre (activas y pausadas). " +
       (nLista ? "Ojo: si subís precios y después volvés a poner promos, ML puede tardar ~" + DIAS_REFERENCIA_ML + " días en considerar \"creíbles\" los descuentos chicos." : "");
     document.getElementById("inputConfirmarAplicarPrecios").value = "";
-    document.getElementById("btnConfirmarAplicarPrecios").disabled = true;
+    // v2026-11-26.1: si hay publicaciones en promo, el cartel pide elegir qué hacer con ellas.
+    analisisPromos = analizarPromosAplicar(ok);
+    promosModoElegido = null;
+    renderPromosAplicar(analisisPromos);
+    actualizarConfirmarAplicarPrecios();
     document.getElementById("modalAplicarPrecios").classList.remove("oculto");
   });
-  document.getElementById("inputConfirmarAplicarPrecios").addEventListener("input", function () {
-    document.getElementById("btnConfirmarAplicarPrecios").disabled = this.value.trim() !== "APLICAR PRECIOS";
-  });
+  document.getElementById("inputConfirmarAplicarPrecios").addEventListener("input", actualizarConfirmarAplicarPrecios);
   document.getElementById("btnCancelarAplicarPrecios").addEventListener("click", function () {
     document.getElementById("modalAplicarPrecios").classList.add("oculto");
   });
   document.getElementById("btnConfirmarAplicarPrecios").addEventListener("click", ejecutarAplicarPrecios);
+
+  // v2026-11-26.1: cierre de una actualización con "volver a subir al mismo %".
+  function mostrarFinResubir(est, base, sacadas, procesoId) {
+    est.innerHTML = escapeHtml(base) + " " + (sacadas
+      ? "<b>" + sacadas + " " + plural(sacadas, "publicación salió", "publicaciones salieron") + " de sus promos</b> y el servidor las está volviendo a subir al mismo %" + (procesoId ? " (proceso #" + escapeHtml(procesoId) + ")" : "") +
+        ". Podés cerrar la pestaña. Lo que ML no acepte al mismo % queda sin promo y te avisa en 🔔 Notificaciones. " +
+        '<button type="button" class="chico secondary" data-ver-resubir>Ver el avance</button>'
+      : "No hubo que sacar ninguna de sus promos.") + " (Para volver a operar, previsualizá de nuevo.)";
+    var b = est.querySelector("[data-ver-resubir]");
+    if (b) b.addEventListener("click", function () {
+      mostrarVista("promos");
+      cargarEstadoProcesos(false);
+      if (els.panelAccionesGlobales) els.panelAccionesGlobales.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
 
   function ejecutarAplicarPrecios() {
     document.getElementById("modalAplicarPrecios").classList.add("oculto");
@@ -5287,6 +5541,10 @@
       });
     var est = document.getElementById("estadoAplicarPrecios");
     if (ok.length === 0) return;
+    // v2026-11-26.1: qué hacer con las promos (si no hubo cartel, lo de siempre) + lote para el proceso de re-subida.
+    var promosModo = hayPromosEnCartel(analisisPromos) && promosModoElegido ? promosModoElegido : "mantener";
+    var lote = promosModo === "resubir" ? nuevoLote() : null;
+    var procesoResubir = null;
 
     var tandas = chunk(ok, BATCH_SIZE), ti = 0, proc = 0;
     var logAcum = [], aplicados = 0, errores = 0;
@@ -5302,23 +5560,38 @@
         filasResultadoPrecios = logAcum;
         filtroEstadoPrecios = null;
         registrarPreciosAplicados(logAcum);
-        est.textContent = "Listo — " + aplicados + " aplicados, " + errores + " con error. (Para volver a operar, previsualizá de nuevo.)";
+        var sacadas = logAcum.filter(function (l) { return l.promos_sacadas && l.promos_sacadas.length; }).length;
+        var base = "Listo — " + aplicados + " aplicados, " + errores + " con error.";
         est.className = errores ? "estado err" : "estado ok";
         document.getElementById("btnPreviewPrecios").disabled = false;
         renderResumenPrecios();
         renderTablaPrecios();
+        if (lote) {
+          // v2026-11-26.1: se avisa al servidor que terminó la tanda (si falla, el proceso cierra solo a los 10 min).
+          est.textContent = base + " Avisando al servidor que terminó la actualización…";
+          postPreciosConReintento({ accion: "cerrar_lote", lote: lote })
+            .then(function (res) { if (res.data && res.data.proceso_id) procesoResubir = res.data.proceso_id; })
+            .catch(function () { /* el proceso igual cierra solo */ })
+            .then(function () { mostrarFinResubir(est, base, sacadas, procesoResubir); cargarEstadoProcesos(false); });
+          return;
+        }
+        est.textContent = base + (promosModo === "quitar" && sacadas ? " " + sacadas + " " + plural(sacadas, "publicación salió", "publicaciones salieron") + " de sus promos (quedan sin promo, como elegiste)." : "") + " (Para volver a operar, previsualizá de nuevo.)";
         return;
       }
       var tanda = tandas[ti];
       // Reintentar es seguro: poner el mismo precio / los mismos escalones dos veces deja el mismo resultado
-      // (y el servidor no reescribe un precio que ya es igual).
-      postPreciosConReintento({ accion: "aplicar", items: tanda }, function (n, espera) {
+      // (y el servidor no reescribe un precio que ya es igual). v2026-11-26.1: con promos, una publicación ya sacada
+      // no se vuelve a sacar (el servidor lee sus promos en vivo) y la re-subida queda una sola vez en el proceso del lote.
+      var bodyTanda = { accion: "aplicar", items: tanda, promos_modo: promosModo };
+      if (lote) bodyTanda.lote = lote;
+      postPreciosConReintento(bodyTanda, function (n, espera) {
         est.textContent = "Aplicando " + proc + "/" + ok.length + " — falló la conexión, reintento " + n + "/" + ESPERAS_REINTENTO_TANDA_MS.length + " en " + Math.round(espera / 1000) + "s...";
       })
         .then(function (res) {
           logAcum = logAcum.concat(res.data.log || []);
           aplicados += res.data.aplicados || 0;
           errores += res.data.errores || 0;
+          if (res.data.resubir_proceso_id) procesoResubir = res.data.resubir_proceso_id; // v2026-11-26.1
           proc += tanda.length; ti++;
           var restApl = (Date.now() - t0Aplicar) / 1000 / ti * (tandas.length - ti);
           est.textContent = "Aplicando " + proc + "/" + ok.length + " (resta " + fmtSeg(restApl) + ")...";
